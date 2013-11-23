@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<!--
+    ComponentJS - Component System for JavaScript <http://componentjs.com>
+    Copyright (c) 2009-2013 Ralf S. Engelschall <http://engelschall.com>
+
+    This Source Code Form is subject to the terms of the Mozilla Public
+    License, v. 2.0. If a copy of the MPL was not distributed with this
+    file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>ComponentJS: Application Programming Interface (API)</title>
+        <link rel="stylesheet" type="text/css" href="http://componentjs.com/fonts/out/DejaVu.css"/>
+        <link rel="shortcut icon" href="http://componentjs.com/ComponentJS-icon.ico"/>
+        <link rel="icon" type="image/png" href="http://componentjs.com/ComponentJS-icon.png"/>
+        <style type="text/css">
+            /*
+             *  HTML
+             */
+            @media screen {
+                body {
+                    background-color: #808080;
+                    color: #000000;
+                    font-family: "DejaVu Sans", sans-serif;
+                    font-size: 10pt;
+                }
+                div.head {
+                    position: fixed;
+                    z-index: 100;
+                    left: 20px;
+                    top: 0px;
+                    width: 860px;
+                    height: 30px;
+                    background-color: #2068b0;
+                }
+                div.head1 {
+                    color: #ffffff;
+                    position: absolute;
+                    top: 8px;
+                    left: 50px;
+                    font-family: "DejaVu Sans Condensed", sans-serif;
+                    font-size: 9pt;
+                    font-weight: bold;
+                }
+                div.head2 {
+                    color: #c2dbf4;
+                    position: absolute;
+                    top: 8px;
+                    left: 135px;
+                    font-family: "DejaVu Sans Condensed", sans-serif;
+                    font-size: 9pt;
+                    padding-left: 8px;
+                    border-left: 1px solid #60aefc;
+                    margin-left: 6px;
+                }
+                div.foot {
+                    position: fixed;
+                    z-index: 100;
+                    left: 20px;
+                    bottom: 0px;
+                    width: 860px;
+                    height: 30px;
+                    background-color: #2068b0;
+                }
+                div.foot1 {
+                    color: #ffffff;
+                    position: absolute;
+                    top: 8px;
+                    left: 50px;
+                    font-family: "DejaVu Sans Condensed", sans-serif;
+                    font-size: 9pt;
+                    font-weight: bold;
+                }
+                div.foot2 {
+                    color: #c2dbf4;
+                    position: absolute;
+                    top: 8px;
+                    left: 135px;
+                    font-family: "DejaVu Sans Condensed", sans-serif;
+                    font-size: 9pt;
+                    padding-left: 8px;
+                    border-left: 0.1px solid #60aefc;
+                    margin-left: 6px;
+                }
+                div.the_version {
+                    font-family: "DejaVu Sans Condensed", sans-serif;
+                    font-size: 8pt;
+                    color: #c2dbf4;
+                    position: fixed;
+                    left: 800px;
+                    top: 10px;
+                    z-index: 1000;
+                }
+                div.spec {
+                    -webkit-box-shadow: 0px 0px 8px 2px rgba(0, 0, 0, 0.5);
+                    box-shadow: 0px 0px 8px 2px rgba(0, 0, 0, 0.5);
+                    background-color: #ffffff;
+                    padding: 40px 80px 40px 80px;
+                    width: 700px;
+                    position: absolute;
+                    left: 20px;
+                    top: 0px;
+                }
+                div.navi {
+                    z-index: 200;
+                    width: 230px;
+                    height: 100%;
+                    position: fixed;
+                    top: 0px;
+                    left: 900px;
+                    background-color: #808080;
+                    overflow: scroll;
+                    overflow-x: hidden;
+                    padding-left: 5px;
+                }
+                div.navi h1 {
+                    margin-top: 8px;
+                    margin-bottom: 0px;
+                }
+                div.navi h2 {
+                    margin-top: 8px;
+                    margin-bottom: 0px;
+                }
+                div.navi h1 a {
+                    font-family: "DejaVu Sans Condensed", sans-serif;
+                    font-size: 14pt;
+                    color: #c0c0c0;
+                    text-decoration: none;
+                }
+                div.navi h2 a {
+                    font-family: "DejaVu Sans Condensed", sans-serif;
+                    font-size: 12pt;
+                    color: #c0c0c0;
+                    text-decoration: none;
+                }
+                div.navi ul {
+                    list-style-type: none;
+                    padding-left: 0px;
+                    margin: 0px;
+                }
+                div.navi ul li {
+                    margin-bottom: 0px;
+                }
+                div.navi ul li a {
+                    font-size: 10pt;
+                    color: #e0e0e0;
+                    text-decoration: none;
+                }
+            }
+
+            /*
+             *  PDF
+             */
+            @media print {
+                @page {
+                    size: A4;
+                    margin-left:    2.00cm;
+                    margin-right:   2.00cm;
+                    margin-top:     0.75cm;
+                    margin-bottom:  0.75cm;
+                    padding-top:    0.75cm;
+                    padding-bottom: 0.75cm;
+                    @top-left-corner {
+                        content: "";
+                        background: #2068b0;
+                    }
+                    @top-center {
+                        font-family: "DejaVu Sans", sans-serif;
+                        font-family: sans-serif;
+                        font-size:   10pt;
+                        content: flow(head);
+                        background: #2068b0;
+                        color: #ffffff;
+                    }
+                    @top-right-corner {
+                        content: flow(the_version);
+                        background: #2068b0;
+                    }
+                    @bottom-left-corner {
+                        content: "";
+                        background: #2068b0;
+                    }
+                    @bottom-center {
+                        content: flow(head);
+                        background: #2068b0;
+                        font-family: "DejaVu Sans", sans-serif;
+                        font-family: sans-serif;
+                        font-size:   10pt;
+                        color: #ffffff;
+                    }
+                    @bottom-right-corner {
+                        content: counter(page) " / " counter(pages);
+                        background: #2068b0;
+                        font-family: "DejaVu Sans", sans-serif;
+                        font-family: sans-serif;
+                        font-size:   9pt;
+                        color: #ffffff;
+                    }
+                }
+                body {
+                    margin: 0px;
+                    padding: 0px;
+                    background-color: #ffffff;
+                    color: #000000;
+                    font-family: "DejaVu Sans", sans-serif;
+                    font-size: 9pt;
+                    position: relative;
+                }
+                h1 {
+                    prince-bookmark-level: 1;
+                }
+                h2 {
+                    prince-bookmark-level: 2;
+                }
+                div.spec ul li a[name] {
+                    prince-bookmark-level: 3;
+                }
+                div.head {
+                    flow: static(head);
+                }
+                div.head div.head1 {
+                    font-family: "DejaVu Sans Condensed", sans-serif;
+                    font-size: 9pt;
+                    font-weight: bold;
+                    color: #ffffff;
+                    display: inline;
+                }
+                div.head div.head2 {
+                    font-family: "DejaVu Sans Condensed", sans-serif;
+                    font-size: 9pt;
+                    color: #c2dbf4;
+                    display: inline;
+                    padding-left: 8px;
+                    border-left: 0.5px solid #60aefc;
+                    margin-left: 6px;
+                }
+                div.foot {
+                    flow: static(foot);
+                }
+                div.foot div.foot1 {
+                    font-family: "DejaVu Sans Condensed", sans-serif;
+                    font-size: 9pt;
+                    font-weight: bold;
+                    color: #ffffff;
+                    display: inline;
+                }
+                div.foot div.foot2 {
+                    font-family: "DejaVu Sans Condensed", sans-serif;
+                    font-size: 9pt;
+                    color: #ffffff;
+                    display: inline;
+                    padding-left: 8px;
+                    border-left: 0.5px solid #60aefc;
+                    margin-left: 6px;
+                }
+                div.the_version {
+                    flow: static(the_version);
+                    font-family: "DejaVu Sans Condensed", sans-serif;
+                    font-size: 7pt;
+                    color: #c2dbf4;
+                }
+                div.spec {
+                    width: 100%;
+                }
+                div.navi {
+                    display: none;
+                }
+            }
+
+            /*
+             *  COMMON
+             */
+            div.spec h1 {
+                font-family: "DejaVu Sans Condensed", sans-serif;
+                color: #2068b0;
+                margin-bottom: 4px;
+                font-size: 20pt;
+            }
+            div.spec h2 {
+                font-family: "DejaVu Sans Condensed", sans-serif;
+                color: #2068b0;
+                margin-bottom: 4px;
+                font-size: 14pt;
+            }
+            div.spec > ul {
+            }
+            div.spec > ul > li {
+                list-style-type: none;
+            }
+            a {
+                text-decoration: none;
+            }
+            span.M, span.M a {
+                color: #2068b0;
+            }
+            span.meta {
+                font-family: "DejaVu Sans", sans-serif;
+                color: #999999;
+            }
+            span.P {
+                font-family: "DejaVu Sans", sans-serif;
+                font-style: italic;
+                color: #408edc;
+            }
+            span.F {
+                font-family: "DejaVu Sans Mono", monospace;
+                color: #408edc;
+            }
+            span.T {
+                font-family: "DejaVu Sans", sans-serif;
+                font-style: italic;
+                color: #707070;
+            }
+            span.O {
+                font-family: "DejaVu Sans", sans-serif;
+                font-style: italic;
+            }
+            span.M {
+                font-family: "DejaVu Sans Mono", sans-serif;
+                font-weight: bold;
+            }
+            code {
+                font-family: "DejaVu Sans Mono", monospace;
+            }
+            div.intro {
+                margin-bottom: 12px;
+            }
+            div.synopsis {
+                margin-top: 8px;
+            }
+            div.synopsis + div.synopsis {
+                margin-top: 4px;
+            }
+            div.synopsis {
+                font-family: "DejaVu Sans Mono", monospace;
+                border: 1px solid #d0d0d0;
+                background-color: #f8f8f8;
+                padding: 4px 8px 4px 8px;
+            }
+            div.desc {
+                margin-top: 8px;
+                margin-bottom: 8px;
+            }
+            div.example {
+                white-space: pre;
+                font-family: "DejaVu Sans Mono", monospace;
+                border-left: 1px solid #d0d0d0;
+                padding-left: 20px;
+                margin-bottom: 20px;
+                color: #707070;
+            }
+            span.componentjs {
+                font-family: "DejaVu Sans Condensed", sans-serif;
+                font-weight: bold;
+                font-style: italic;
+            }
+            span.FIXME {
+                color: #ffffff;
+                background-color:  #cc3333;
+                padding: 3px 4px 1px 4px;
+            }
+            img.logo {
+                margin-top: 20px;
+                width: 70%;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="head" class="head">
+            <div id="head1" class="head1">ComponentJS</div>
+            <div id="head2" class="head2">Application Programming Interface (API)</div>
+        </div>
+        <div id="the_version" class="the_version">0.9.2</div>
+        <div class="spec">
+            <img class="logo" src="http://componentjs.com/ComponentJS-logo.svg" alt="ComponentJS"/>
+            <h2><a name="api_management">API Management</a></h2>
+<div class="intro">
+Change the API symbol in the global variable namespace under which ComponentJS
+is exposed. By default ComponentJS is exposed under the symbol name
+<code>ComponentJS</code>. It is a common convention to change the symbol to <code>cs</code> (for
+"component system/service") to have a convenient short-hand.
+</div><ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="symbol">symbol</a></span>(<span class="meta">[</span><span class="P">name</span><span class="meta">:</span> <span class="T">String</span><span class="meta">]</span>)<span class="meta">:</span> <span class="T">ComponentJS</span>
+</div><div class="desc"> Change symbol of ComponentJS API to global variable <span class="P">name</span> and return it.
+ If <span class="P">name</span> is not given, ComponentJS does not occupy any global namespace slot at all &mdash;
+ then it is required to store the return value and use ComponentJS directly through it.
+</div><div class="example">ComponentJS.symbol("cs")        /* standard    */
+var cs = ComponentJS.symbol()   /* alternative */
+</div></li></ul>
+<ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="version">version</a></span><span class="meta"> = </span>{
+ <span class="F">major</span><span class="meta">:</span> <span class="T">Number</span>, <span class="F">minor</span><span class="meta">:</span> <span class="T">Number</span>, <span class="F">micro</span><span class="meta">:</span> <span class="T">Number</span>, <span class="F">date</span><span class="meta">:</span> <span class="T">Number</span>
+ }
+</div><div class="desc"> Access the ComponentJS implementation version "<span class="F">major</span><code>.</code><span class="F">minor</span><code>.</code><span class="F">micro</span>"
+ and the corresponding release <span class="F">date</span> (in format YYYYMMDD).
+</div><div class="example">if (ComponentJS.version.date &lt; 20120101)
+     throw new Error("need at least ComponentJS as of 20120101")
+</div></li></ul>
+<h2><a name="library_management">Library Management</a></h2>
+<div class="intro">
+ComponentJS can be extended through plugins, so it can initialize
+some of its internals only once all plugins were loaded and executed.
+</div><ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="bootstrap">bootstrap</a></span>()<span class="meta">:</span> <span class="T">Void</span>
+</div><div class="desc"> Bootstrap the ComponentJS library by Initializing its internals.
+ This has to be called at least before any calls to <span class="M"><a href="#create">create</a></span>(),
+ but can by called after calls to <span class="M"><a href="#symbol">symbol</a></span>, <span class="M"><a href="#debug">debug</a></span> or <span class="M"><a href="#ns">ns</a></span>.
+</div><div class="example">cs.bootstrap()
+</div></li></ul>
+<ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="shutdown">shutdown</a></span>()<span class="meta">:</span> <span class="T">Void</span>
+</div><div class="desc"> Shutdown the ComponentJS library by destroying its internals.
+ This implicitly destroy the existing component tree, too.
+</div><div class="example">cs.shutdown()
+</div></li></ul>
+<ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="plugin">plugin</a></span>()<span class="meta">:</span> <span class="T">String<span class="meta">[</span><span class="meta">]</span></span></div><div class="synopsis">
+ ComponentJS.<span class="M">plugin</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Boolean</span></div><div class="synopsis">
+ ComponentJS.<span class="M">plugin</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>, <span class="P">callback</span><span class="meta">:</span> <span class="T">Function</span>)<span class="meta">:</span> <span class="T">Void</span>
+</div><div class="desc"> Return the names of all registered plugins, check for the
+ registration of a particular plugin with name <span class="P">name</span> or register
+ a new plugin under name <span class="P">name</span> with callback function <span class="P">callback</span>.
+ The callback function <span class="P">callback</span> should have the signature
+ "<span class="P">callback</span>(<span class="P">_cs</span>: <span class="T">ComponentJS_API_internal</span>, <span class="P">$cs</span>:
+ <span class="T">ComponentJS_API_external</span>, <span class="P">GLOBAL</span>: <span class="T">Environment</span>,
+ <span class="P">DOCUMENT</span>: <span class="T">Document</span>): <span class="T">Void</span>" where <span class="P">_cs</span> is the internal ComponentJS
+ API (you have to check the source code of ComponentJS to know
+ what you can do with it), <span class="P">$cs</span> is the external ComponentJS API
+ (the one described in this document), <span class="P">GLOBAL</span> is the global
+ environment object (usually <code>window</code> in a browser, <code>global</code> in
+ Node.js, etc) and <span class="P">DOCUMENT</span> is the global document (usually
+ <code>document</code> in a browser and none in Node.js, etc).
+</div><div class="example">/*  add a "foo()" method to all components  */
+ComponentJS.plugin("foo", function (_cs, $cs, GLOBAL, DOCUMENT) {
+    var trait = $cs.trait({
+        protos: {
+            foo: function () {
+                ...
+            }
+        }
+    });
+    _cs.latch("ComponentJS:bootstrap:comp:mixin", function (mixins) {
+        mixins.push(trait);
+    });
+});
+</div></li></ul>
+<h2><a name="debugging">Debugging</a></h2>
+<div class="intro">
+ComponentJS has special support for debugging its run-time processing,
+especially for visualizing the current component tree in real-time.
+</div><ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="debug">debug</a></span>()<span class="meta">:</span> <span class="T">Number</span></div><div class="synopsis">
+ ComponentJS.<span class="M">debug</span>(<span class="P">level</span><span class="meta">:</span> <span class="T">Number</span>)<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
+ ComponentJS.<span class="M">debug</span>(<span class="P">level</span><span class="meta">:</span> <span class="T">Number</span>, <span class="P">message</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Void</span>
+</div><div class="desc"> Get current debug level, or configure the debugging through maximum debug-level <span class="P">level</span>
+ (<code>0</code> disables all debug messages, <code>9</code> enables all debug messages) or log a particular
+ <span class="P">message</span> under debug-level <span class="P">level</span>.
+</div><div class="example">cs.debug(0)
+if (cs.plugin("debugger")) {
+    if (cs.debug_instrumented()) {
+         cs.debug(9)
+         cs.debug_window({ ... })
+    }
+}
+</div></li></ul>
+<ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="debug_instrumented">debug_instrumented</a></span>()<span class="meta">:</span> <span class="T">Boolean</span>
+</div><div class="desc"> [AVAILABLE THROUGH THE COMPONENTJS PLUGIN "debugger" ONLY]
+ Determine whether the current browser is "instrumented" for debugging, i.e., whether
+ the browser's built-in debugger is activated (in detached mode only). Currently
+ ComponentJS is able to determine Firefox's Firebug and Chrome's Inspector only.
+</div><div class="example">if (cs.debug_instrumented()) ...
+</div></li></ul>
+<ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="debug_window">debug_window</a></span>({
+ <span class="F">enable</span><span class="meta">:</span> <span class="T">Boolean</span>,
+ <span class="F">autoclose</span><span class="meta">:</span> <span class="T">Boolean</span>,
+ <span class="F">name</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="F">width</span><span class="meta">:</span> <span class="T">Number</span><span class="meta"> = </span>800,
+ <span class="F">height</span><span class="meta">:</span> <span class="T">Number</span><span class="meta"> = </span>600,
+ <span class="F">natural</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span>false
+ })</div><div class="synopsis">
+ ComponentJS.<span class="M">debug_window</span>(<span class="P">enable</span><span class="meta">:</span> <span class="T">Boolean</span>,
+ <span class="P">autoclose</span><span class="meta">:</span> <span class="T">Boolean</span>,
+ <span class="P">name</span><span class="meta">:</span> <span class="T">String</span>)
+</div><div class="desc"> [AVAILABLE THROUGH THE COMPONENTJS PLUGIN "debugger" ONLY]
+ On <span class="F">enable</span> <code>true</code>/<code>false</code> open/close the extra browser window
+ containing the ComponentJS debugger view for the ComponentJS application
+ identified by <span class="F">name</span>. If <span class="F">autoclose</span> is <code>true</code>,
+ optionally automatically close the debugger window with application window
+ (which usually is inconvenient during debugging because on application
+ reloads the ComponentJS debugger window is recreated with default width/height
+ at default position instead of reused). Parameters <span class="F">width</span> and <span class="F">height</span> can be
+ used to change the initial window size. Parameter <span class="F">natural</span> controls whether
+ the component tree is drawn with the root component at the bottom (<code>true</code>)
+ or at the top (<code>false</code>).
+</div><div class="example">cs.debug_window({
+    enable: true,
+    autoclose: false,
+    name "My App"
+    width: 800,
+    height: 800,
+    natural: true
+})
+</div></li></ul>
+<h2><a name="code_structuring">Code Structuring</a></h2>
+<div class="intro">
+ComponentJS internally uses a few code structuring utility functions for implementing
+class method parameters and class attributes. Those utility functions
+are also exposed for consumption by application developers, but they are
+NOT(!) required for using ComponentJS. Especially, it is NOT(!) required
+that component shadow objects are defined by <code>cs.clazz</code>!
+</div><ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="ns">ns</a></span>(<span class="P">path</span><span class="meta">:</span> <span class="T">String</span><span class="meta">[</span>, <span class="P">leaf</span><span class="meta">:</span> <span class="T">Object</span><span class="meta"> = </span>{}<span class="meta">]</span>)<span class="meta">:</span> <span class="T">Object</span>
+</div><div class="desc"> Classes and traits should be structured through namespaces. A namespace is a
+ JavaScript (hash) object, potentially itself part of a parent namespace
+ object. The top-most implicit namespace object is <code>window</code>. A namespace has a
+ dot-separated fully-qualified symbol path like <code>foo.bar.quux</code>. This
+ method allows to create the fully-qualified path of nested objects throught the
+ dot-separated <span class="P">path</span> of object names, optionally assign the
+ right-most/leaf object to <span class="P">leave</span> and finally return the right-most/leaf <span class="T">Object</span>.
+</div><div class="example">cs.ns("my.app"); my.app.ui = cs.clazz({ ... })  /* standard    */
+cs.ns("my.app").ui = cs.clazz({ ... })          /* alternative */
+cs.ns("my.app.ui", cs.clazz({ ... })            /* alternative */
+</div></li></ul>
+<ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="params">params</a></span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>, <span class="P">args</span><span class="meta">:</span> <span class="T">Object<span class="meta">[</span><span class="meta">]</span></span>, <span class="P">spec</span><span class="meta">:</span> <span class="T">Object</span>)<span class="meta">:</span> <span class="T">Object</span>
+</div><div class="desc"> Handle positional and named function parameters by processing
+ a function's <code>arguments</code> array. Parameter <span class="P">name</span> is the name
+ of the function for use in exceptions in case of invalid parameters.
+ Parameter <span class="P">args</span> usually is the JavaScript <code>arguments</code> pseudo-array of
+ a function. Parameter <span class="P">spec</span> is the parameter specification: each key
+ is the name of a parameter and the value has to be an <span class="T">Object</span> with
+ the following possible fields: <span class="P">pos</span> for the optional position in case
+ of positional usage, <span class="P">def</span> for the default value (of not required
+ and hence optional parameters), <span class="P">req</span> to indicate whether the
+ parameter is required and <span class="P">valid</span> for type validation (either
+ the string returned by JavaScript <code>typeof</code> operator, or the string
+ <code>"array(...)"</code> for arrays or a valid regular expression C</.../>
+ for validating a <span class="T">String</span> against it.
+</div><div class="example">function config () {
+    var params = $cs.params("config", arguments, {
+        scope: { pos: 0, req: true,      valid: "boolean"           },
+        key:   { pos: 1, req: true,      valid: /^[a-z][a-z0-9_]*$/ },
+        value: { pos: 2, def: undefined, valid: "object"            },
+        force: {         def: false,     valid: "boolean"           }
+    });
+    var result = db_get(params.scope, params.key);
+    if (typeof params.value !== "undefined")
+        db_set(params.scope, params.key, params.value, params.force);
+    return result;
+}
+var value = config("foo", "bar");
+config("foo", "bar", "quux");
+config({ scope: "foo", key: "bar", value: "quux", force: true });
+</div></li></ul>
+<ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="attribute">attribute</a></span>({ <span class="F">name</span><span class="meta">:</span> <span class="T">String</span>, <span class="F">def</span><span class="meta">:</span> <span class="T">Object</span>, <span class="F">validate</span><span class="meta">:</span> <span class="T">Object</span> })<span class="meta">:</span> <span class="T">Function</span></div><div class="synopsis">
+ ComponentJS.<span class="M">attribute</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>, <span class="P">def</span><span class="meta">:</span> <span class="T">Object</span>, <span class="P">validate</span><span class="meta">:</span> <span class="T">Object</span>)<span class="meta">:</span> <span class="T">Function</span>
+</div><div class="desc"> Create a clonable attribute capturing getter/setter function with name <span class="P">name</span> (for exception
+ handling reasons only), the default value <span class="P">def</span> and the value validation <span class="P">validate</span>.
+</div><div class="example">var id = ComponentJS.attribute("id", "foo", /^[a-z][a-zA-Z0-9_]*/);
+id() === "foo"
+id("bar") &rarr; "foo"; id() &rarr; "bar"
+</div></li></ul>
+<ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="clazz">clazz</a></span>({
+ <span class="meta">[</span><span class="F">name</span><span class="meta">:</span> <span class="T">String</span>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">extend</span><span class="meta">:</span> <span class="T">Clazz</span>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">mixin</span><span class="meta">:</span> <span class="T">Array(Trait)</span>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">cons</span><span class="meta">:</span> <span class="T">Function</span>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">dynamics</span><span class="meta">:</span> <span class="T">Object</span>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">protos</span><span class="meta">:</span> <span class="T">Object</span>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">statics</span><span class="meta">:</span> <span class="T">Object</span><span class="meta">]</span>
+ })
+</div><div class="desc"> Define a JavaScript Class, optionally stored under the absolute dot-separated
+ object path <span class="F">name</span>, optionally extending the base/super/parent Class <span class="F">extend</span>
+ and optionally mixing in the functionality of one or more Traits via <span class="F">mixin</span>. The class
+ can have a constructor function <span class="F">cons</span> which is called once the
+ Class is instanciated and which can further initialize the dynamic fields of the class.
+ On each instanciation, all fields which are specified with <span class="F">dynamics</span> are
+ cloned and instanciated and all methods in <span class="F">protos</span> are copied into the
+ Class <code>prototypes</code> object. The <span class="F">statics</span> content is copied into the
+ Class itself only. In case of <span class="F">extend</span> and/or <span class="F">mixin</span>, both the <span class="F">cons</span>
+ and methods of <span class="F">protos</span> can call <code>this.base(...)</code> for the base/super/parent
+ method.
+</div><div class="example">var foo = cs.clazz({
+    cons: function (bar, baz) {
+        this._bar = bar;
+        this._baz = baz;
+    },
+    dynamics: {
+        _bar: "bar",
+        _baz: 42
+    },
+    protos: {
+        bar: function (value_new) {
+            var value_old = this._bar;
+            if (typeof value_new !=== "undefined")
+                this._bar = value_new;
+            return value_old;
+        }
+        [...]
+    }
+})
+</div></li></ul>
+<ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="trait">trait</a></span>({
+ <span class="meta">[</span><span class="F">name</span><span class="meta">:</span> <span class="T">String</span>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">mixin</span><span class="meta">:</span> <span class="T">Array(trait)</span>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">cons</span><span class="meta">:</span> <span class="T">Function</span>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">setup</span><span class="meta">:</span> <span class="T">Function</span>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">dynamics</span><span class="meta">:</span> <span class="T">Object</span>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">protos</span><span class="meta">:</span> <span class="T">Object</span>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">statics</span><span class="meta">:</span> <span class="T">Object</span><span class="meta">]</span>
+ })
+</div><div class="desc"> Define a JavaScript Trait (a Class which can be mixed in), optionally stored under the absolute dot-separated
+ object path <span class="F">name</span> and
+ optionally mixing in the functionality of one or more other Traits via <span class="F">mixin</span>. The trait
+ can have a constructor function <span class="F">cons</span> which is called once the
+ Class the Trait is mixed in is instanciated and which can further initialize the dynamic fields of the Class.
+ On each instanciation, all fields which are specified with <span class="F">dynamics</span> are
+ cloned and instanciated and all methods in <span class="F">protos</span> are copied into the
+ Class <code>prototypes</code> object. The <span class="F">statics</span> content is copied into the
+ Class itself only. The optional <span class="F">setup</span> function is called directly at the end of Class
+ definition (not instanciation) and can further refine the defined Class.
+</div><div class="example">var foo = cs.trait({
+    protos: {
+        bar: function () {
+            [...]
+        }
+    }
+})
+</div></li></ul>
+<h2><a name="component_creation">Component Creation</a></h2>
+<div class="intro">
+Components are managed in hierarchical fashion within a component tree.
+The component tree can be traversed and its components can be created,
+looked up, state transitioned, communicated on and be destroyed.
+</div><ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="create">create</a></span>(<span class="P">abs-tree-spec</span><span class="meta">:</span> <span class="T">String</span>, <span class="P">class</span><span class="meta">:</span> <span class="T">Class</span><span class="meta">[</span>, ...<span class="meta">]</span>)<span class="meta">:</span> <span class="T">Object</span></div><div class="synopsis">
+ ComponentJS.<span class="M">create</span>(<span class="P">base</span><span class="meta">:</span> <span class="T">Component</span>, <span class="P">rel-tree-spec</span><span class="meta">:</span> <span class="T">String</span>, <span class="P">class</span><span class="meta">:</span> <span class="T">Class</span><span class="meta">[</span>, ...<span class="meta">]</span>)<span class="meta">:</span> <span class="T">Object</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">create</span>(<span class="P">rel-tree-spec</span><span class="meta">:</span> <span class="T">String</span>, <span class="P">class</span><span class="meta">:</span> <span class="T">Class</span><span class="meta">[</span>, ...<span class="meta">]</span>)<span class="meta">:</span> <span class="T">Object</span>
+</div><div class="desc"> Create one or more components. Their structure is specified by the
+ absolute (<span class="P">abs-tree-spec</span>) or relative (<span class="P">rel-tree-spec</span>) tree specification
+ which is string containing a set (<code>{...}</code>) of slash-separated (<code>.../...</code>) paths
+ of component names. For instance, the specification <code>foo/{bar/baz,quux}</code> is the
+ tree consisting of the two maximum length paths: <code>foo/bar/baz</code> and <code>foo/quux</code>.
+ For each name from left-to-right in the tree specification you have to give
+ either a to be instanciated class constructor (<span class="T">Function</span>) or an already
+ instanciated object (<span class="T">Object</span>).
+</div><div class="example">cs.create("/{sv,ui/{one,two}}", my.sv, {}, my.ui.one, my.ui.two);
+cs.create(this, "/model/view", model, view);
+cs(this).create("/model/view", model, view);
+</div></li></ul>
+<ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="destroy">destroy</a></span>(<span class="P">abs-path</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Void</span>
+ <span class="O">component</span>.<span class="M">destroy</span>()<span class="meta">:</span> <span class="T">Void</span>
+ <span class="O">component</span>.<span class="M">destroy</span>()<span class="meta">:</span> <span class="T">Void</span>
+</div><div class="desc"> Destroy the component uniquely identified by <span class="P">abs-path</span> or
+ the <span class="O">component</span> on which this method is called upon.
+</div><div class="example">cs.destroy("/foo/bar")
+cs.destroy(comp, "foo/bar")
+cs("/foo/bar").destroy()
+</div></li></ul>
+<h2><a name="component_information">Component Information</a></h2>
+<div class="intro">
+Components carry a few distinct information. They can be
+accessed via the following getter/setter-style methods.
+</div><ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="id">id</a></span>()<span class="meta">:</span> <span class="T">String</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">id</span>(<span class="P">id</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">String</span>
+</div><div class="desc"> Get current unique id of <span class="O">component</span> or set new <span class="P">id</span> on <span class="O">component</span> and return
+ the old id. Setting the id of a component should be not done by the application
+ as it is done by ComponentJS internally on component creation time.
+</div><div class="example">cs(this).id()
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="name">name</a></span>()<span class="meta">:</span> <span class="T">String</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">name</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">String</span>
+</div><div class="desc"> Get current non-unique name of <span class="O">component</span> or set new <span class="P">name</span> on <span class="O">component</span> and return
+ the old name. Setting the name of a component should be not done by the application
+ as it is done by ComponentJS internally on component creation time.
+</div><div class="example">cs("/foo/bar").name() === "bar"
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="obj">obj</a></span>()<span class="meta">:</span> <span class="T">Object</span>
+</div><div class="desc"> Retrieve the shadow <span class="T">Object</span> <span class="P">object</span> to the corresponding <span class="T">Component</span>.
+</div><div class="example">cs(this).obj() === this
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="cfg">cfg</a></span>()<span class="meta">:</span> <span class="T">Array(String)</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">cfg</span>(<span class="P">key</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Object</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">cfg</span>(<span class="P">key</span><span class="meta">:</span> <span class="T">String</span>, <span class="P">value</span><span class="meta">:</span> <span class="T">Object</span>)<span class="meta">:</span> <span class="T">Object</span>
+ <span class="O">component</span>.<span class="M">cfg</span>(<span class="P">key</span><span class="meta">:</span> <span class="T">String</span>, <code>undefined</code>)<span class="meta">:</span> <span class="T">Object</span>
+</div><div class="desc"> Components can have key/value pairs attached for application configuration purposes.
+ Four use cases exists for this method: 1. get array of all key strings, 2. get current configuration property identified by <span class="P">key</span>, 3. set
+ configuration property identified by <span class="P">key</span> to new value <span class="P">value</span> and return the old value, and 4. delete the
+ configuration property identified by <span class="P">key</span>.
+</div><div class="example">var value = cs("/foo/bar").cfg("quux")
+cs("/foo/bar").cfg("quux", value)
+cs("/foo/bar").cfg("quux", undefined)
+</div></li></ul>
+<h2><a name="component_lookup">Component Lookup</a></h2>
+<div class="intro">
+Before performing certain operations on a component, it first have to
+be looked up in the component tree. As this is one of the most prominent
+functionalities of ComponentJS, it is directly exposed through the
+global API symbol.
+</div><ul>
+<li><div class="synopsis"><span class="M"><a name="componentjs">ComponentJS</a></span>(<span class="P">abs-path</span><span class="meta">:</span> <span class="T">string</span>)<span class="meta">:</span> <span class="T">Component</span></div><div class="synopsis">
+ <span class="M">ComponentJS</span>(<span class="P">component</span><span class="meta">:</span> <span class="T">Component</span>, <span class="P">rel-path</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Component</span></div><div class="synopsis">
+ <span class="M">ComponentJS</span>(<span class="P">object</span><span class="meta">:</span> <span class="T">Object</span>, <span class="P">rel-path</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Component</span></div><div class="synopsis">
+ <span class="M">ComponentJS</span>(<span class="P">component</span><span class="meta">:</span> <span class="T">Component</span>)<span class="meta">:</span> <span class="T">Component</span></div><div class="synopsis">
+ <span class="M">ComponentJS</span>(<span class="P">object</span><span class="meta">:</span> <span class="T">Object</span>)<span class="meta">:</span> <span class="T">Component</span>
+</div><div class="desc"> Components can be looked up by absolute/relative paths
+ from root/base components. A path is a string of slash-separated component names
+ with four special names allowed: "<code>.</code>" for current component name, "<code>..</code>" for parent
+ component name, "<code>*</code>" for any component name and an empty name (C<//>) for
+ any component trees between current and following components. In any case, the result has
+ to uniquely identify a single component.
+ The following usages exist:
+ 1. Lookup <span class="T">Component</span> by absolute path <span class="P">path</span> (this is usually never done explicitly,
+ but occurs implicity if the input parameter is already a <span class="T">Component</span>).
+ 2. Lookup <span class="T">Component</span> by path <span class="P">path</span>, relative to <span class="T">Component</span> <span class="P">component</span>.
+ 3. Lookup <span class="T">Component</span> by path <span class="P">path</span>, relative to the <span class="T">Component</span> corresponding
+ to <span class="T">Object</span> <span class="P">object</span>.
+ 4. Lookup <span class="T">Component</span> object via shadow object <span class="P">object</span>.
+ 5. Lookup <span class="T">Component</span> object via the <span class="P">component</span> itself (no-operation).
+</div><div class="example">cs("/foo/bar")           /* absolute */
+cs(comp, "model/view")   /* relative to component */
+cs(this, "model/view")   /* relative to component via shadow object */
+cs("//bar")              /* full-tree lookup */
+cs(comp, "//bar")        /* sub-tree lookup */
+cs(this, "*/view")       /* wildcard lookup */
+cs(this, "..//view")     /* parent sub-tree lookup */
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="exists">exists</a></span>()<span class="meta">:</span> <span class="T">Boolean</span>
+</div><div class="desc"> Check whether a (usually previously looked up) <span class="O">component</span> (either a real
+ existing on or the special pre-existing singleton component with name "<code>&lt;none&gt;</code>") really
+ exists in the component tree.
+</div><div class="example">if (cs("//quux").exists()) ...
+if (cs("//quux").name() !== "&lt;none&gt;") ...
+</div></li></ul>
+<h2><a name="component_tree">Component Tree</a></h2>
+<div class="intro">
+Components are managed within a component tree.
+The following functions allow you to traverse this tree.
+</div><ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="path">path</a></span>()<span class="meta">:</span> <span class="T">Array(Component)</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">path</span>(<span class="P">separator</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">String</span>
+</div><div class="desc"> Either retrieve as an array all <span class="T">Components</span> from the current <span class="O">component</span>
+ up to and including the root component, or get the slash-separated component name path <span class="T">String</span>
+ from the root component down to and including the current <span class="O">component</span>.
+</div><div class="example">cs("/foo/bar").path("/") &rarr; "/foo/bar"
+cs("/foo/bar").path() &rarr; [ cs("/foo/bar"), cs("/foo"), cs("/") ]
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="parent">parent</a></span>()<span class="meta">:</span> <span class="T">Component</span>
+</div><div class="desc"> Return the parent component of <span class="O">component</span>, or <code>null</code> if <span class="O">component</span> is the root or none component.
+</div><div class="example">cs(this).parent() === cs(this, "..")
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="children">children</a></span>()<span class="meta">:</span> <span class="T">Array(Component)</span>
+</div><div class="desc"> Return the array of child components of <span class="O">component</span>.
+</div><div class="example">cs(this).children()
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="walk_up">walk_up</a></span>(<span class="P">callback</span><span class="meta">:</span> <span class="T">Function</span>, <span class="P">ctx</span><span class="meta">:</span> <span class="T">Object</span>)<span class="meta">:</span> <span class="T">Object</span>
+</div><div class="desc"> Walk the component tree upwards from the current component (inclusive) to
+ the root component (inclusive). The <span class="P">callback</span> <span class="T">Function</span> has to be
+ of signature <span class="P">callback</span>(<span class="P">depth</span>: <span class="T">Number</span>, <span class="P">component</span>: <span class="T">Component</span>, <span class="P">ctx</span>: <span class="T">Object</span>): <span class="T">Object</span>
+ and for each component it is called like "<code>ctx = </code><span class="P">callback</span><code>(depth++, comp, ctx)</code>" where
+ initially <code>ctx=</code><span class="P">ctx</span>, <code>comp=</code><span class="O">component</span> and <code>depth=</code><code>0</code> was set.
+</div><div class="example">var path = cs(this).walk_up("", function (depth, comp, ctx) {
+    return "/" + comp.name() + ctx;
+}, "")
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="walk_down">walk_down</a></span>(<span class="P">callback</span><span class="meta">:</span> <span class="T">Function</span>, <span class="P">ctx</span><span class="meta">:</span> <span class="T">Object</span>)<span class="meta">:</span> <span class="T">Object</span>
+</div><div class="desc"> Walk the component tree downwards from the current component (inclusive) to all the transitive child components
+ (inclusive). The <span class="P">callback</span> <span class="T">Function</span> has to be of signature <span class="P">callback</span>(<span class="P">ctx</span>: <span class="T">Object</span>, <span class="P">component</span>:
+ <span class="T">Component</span>, <span class="P">depth</span>: <span class="T">Number</span>, <span class="P">depth_first</span>: <span class="T">Boolean</span>): <span class="T">Object</span> and for each component it is called twice(!): once
+ like "<code>ctx = </code><span class="P">callback</span><code>(depth, comp, ctx, false)</code>" when entering the component (before all children will be
+ visited) and once like "<code>ctx = </code><span class="P">callback</span><code>(depth, comp, ctx, true)</code>" when leaving a component (after all children
+ were visited). Initially <code>ctx=</code><span class="P">ctx</span>, <code>comp=</code><span class="O">component</span> and <code>depth=</code><code>0</code> is set.
+</div><div class="example">var output = cs(this).walk_down(
+    function (depth, comp, output, depth_first) {
+        if (!depth_first) {
+            for (var n = 0; n &lt; depth; n++)
+                output += "    ";
+            output += "\"" + comp.name() + "\"\n";
+        }
+        return output;
+    },
+"")
+</div></li></ul>
+<h2><a name="states">States</a></h2>
+<div class="intro">
+Components, during their life-cycle, are in various particular states.
+Components can be triggered to change their state. During those state
+transitions, enter and leave methods are called accordingly.
+</div><ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="transition">transition</a></span>(<code>null</code>)</div><div class="synopsis">
+ ComponentJS.<span class="M">transition</span>(<span class="P">target</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="P">enter</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="P">leave</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="P">color</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="meta">[</span><span class="P">source</span><span class="meta">:</span> <span class="T">String</span><span class="meta">]</span>)</div><div class="synopsis">
+ ComponentJS.<span class="M">transition</span>({
+ <span class="F">target</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="F">enter</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="F">leave</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="F">color</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="meta">[</span><span class="F">source</span><span class="meta">:</span> <span class="T">String</span><span class="meta">]</span>
+ })
+</div><div class="desc"> Clear all (if passed just a single <code>null</code> parameter) or add one state transition to target state
+ <span class="P">target</span>, either at the top of the transition stack or in the middle, above the source state
+ <span class="P">source</span>. When entering the target state, the optional component shadow object method <span class="P">enter</span> is
+ called. When leaving the target state, the optional component shadow object method <span class="P">leave</span> is called.
+ The <span class="P">color</span> is a "#RRGGBB" string used for visualizing the state in the debugger view. The default
+ state transition definitions are given as an example.
+</div><div class="example">cs.transition(null);
+cs.transition("created",      "create",  "destroy", "#cc3333");
+cs.transition("prepared",     "prepare", "cleanup", "#eabc43");
+cs.transition("materialized", "render",  "release", "#6699cc");
+cs.transition("visible",      "show",    "hide",    "#669933");
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="state">state</a></span>()<span class="meta">:</span> <span class="T">String</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">state</span>(<span class="P">state</span><span class="meta">:</span> <span class="T">String</span><span class="meta">[</span>, <span class="P">callback</span><span class="meta">:</span> <span class="T">Function</span><span class="meta">]</span>)<span class="meta">:</span> <span class="T">String</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">state</span>({
+ <span class="F">state</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="meta">[</span><span class="F">callback</span><span class="meta">:</span> <span class="T">Function</span><span class="meta"> = </span>undefined,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">sync</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span>false,<span class="meta">]</span>
+ })<span class="meta">:</span> <span class="T">String</span>
+</div><div class="desc"> Determine the current state or request a transition to a new state of <span class="O">component</span>.
+ By default a state transition is performed asynchronously, but you
+ can request a synchronous transition with <span class="F">sync</span>. For asynchronous
+ transitions you can await the transition finish with <span class="F">callback</span>.
+ The old state is returned on state transitions.
+ On each state transition, for each transitively involved component and each
+ target or intermediate state, a non-capturing/non-bubbling event is
+ internally published named "<code>ComponentJS:state:</code><span class="F">state</span><code>:enter</code>"
+ or "<code>ComponentJS:state:</code><span class="F">state</span><code>:leave</code>". You can subscribe to those
+ in order to react to state transitions from outside the component, too.
+</div><div class="example">cs("/ui").state("visible")
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="state_compare">state_compare</a></span>({ <span class="F">state</span><span class="meta">:</span> <span class="T">String</span> })<span class="meta">:</span> <span class="T">Number</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">state_compare</span>(<span class="P">state</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Number</span>
+</div><div class="desc"> Compare the state of <span class="O">component</span> with <span class="F">state</span>. If <span class="O">component</span> is
+ in a lower state than <span class="F">state</span>, a negative number is returned. If
+ <span class="O">component</span> is in same state than <span class="F">state</span>, a zero is returned.
+ If <span class="O">component</span> is in a higher state than <span class="F">state</span>, a positive number
+ is returned.
+</div><div class="example">if (cs(this).state_compare("visible") &lt; 0) ...
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="state_auto_increase">state_auto_increase</a></span>(<span class="P">increase</span><span class="meta">:</span> <span class="T">Boolean</span>)<span class="meta">:</span> <span class="T">Boolean</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">state_auto_increase</span>()<span class="meta">:</span> <span class="T">Boolean</span>
+</div><div class="desc"> Get or set component <span class="O">component</span> to automatically
+ transition to same higher/increased state than its
+ parent component.
+</div><div class="example">cs(this).state_auto_increase(true)
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="state_auto_decrease">state_auto_decrease</a></span>(<span class="P">decrease</span><span class="meta">:</span> <span class="T">Boolean</span>)<span class="meta">:</span> <span class="T">Boolean</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">state_auto_decrease</span>()<span class="meta">:</span> <span class="T">Boolean</span>
+</div><div class="desc"> Get or set component <span class="O">component</span> to automatically
+ transition to same lower/decreased state than its
+ child components. Notice that this means that a child can
+ drag down the parent component and this way implicitly also
+ all of its other sibling child components. Hence, use with care!
+</div><div class="example">cs(this).state_auto_decrease(true)
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="guard">guard</a></span>({ <span class="F">method</span><span class="meta">:</span> <span class="T">String</span>, <span class="F">level</span><span class="meta">:</span> <span class="T">Number</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">guard</span>(<span class="P">method</span><span class="meta">:</span> <span class="T">String</span>, <span class="P">level</span><span class="meta">:</span> <span class="T">Number</span>)<span class="meta">:</span> <span class="T">Void</span>
+</div><div class="desc"> Guard component <span class="O">component</span> from calling the state enter/leave method <span class="F">method</span>
+ and this way prevent it from entering/leaving the corresponding state.
+ The <span class="F">level</span> can be increased and decreased. Initially it should be set to
+ a positive number to activate the guard. Then it should be set to
+ a negative number to (potentially) deactivate the guard. A usage with
+ an initial call of <code>+1</code> and then followed by a <code>-1</code> is a boolean guard.
+ An initial call of <code>+N</code> and then followed by N times a <code>-1</code> call is a semaphore-like
+ guard which ensures that only after the Nth <code>-1</code> call the guard is finally deactivated
+ again. This is useful if activate the guard in order to await N asynchronous operations.
+ Then the guard should be deactivated once the last asynchronous operation is finished
+ (independent which one of the N operations this is).
+</div><div class="example">var self = this;
+cs(self).guard("render", +2)
+$.get(url1, function (data) {
+    self.data1 = data;
+    cs(self).guard("render", -1)
+});
+$.get(url2, function (data) {
+    self.data2 = data;
+    cs(self).guard("render", -1)
+});
+</div></li></ul>
+<h2><a name="spools">Spools</a></h2>
+<div class="intro">
+In ComponentJS there are at least 4 resource allocating operations which have corresponding deallocation operations:
+Model <span class="M"><a href="#observe">observe</a></span>/<span class="M"><a href="#unobserve">unobserve</a></span>, Socket <span class="M"><a href="#plug">plug</a></span>/<span class="M"><a href="#unplug">unplug</a></span>, Event <span class="M"><a href="#subscribe">subscribe</a></span>/<span class="M"><a href="#unsubscribe">unsubscribe</a></span>, Service
+<span class="M"><a href="#register">register</a></span>/<span class="M"><a href="#unregister">unregister</a></span> and Hook <span class="M"><a href="#latch">latch</a></span>/<span class="M"><a href="#unlatch">unlatch</a></span>. For correct run-time operation it is required that each
+allocation operation, performed in a state enter method, is properly reversed with the corresponding deallocation
+operation in the state leave method. As this is extremely cumbersome (especially because you have to store the
+identifiers returned by the allocation operations as you need them for the deallocation operation), ComponentJS provides
+a convenient spool mechanism which all of the above allocation operations support and which also can be used by the
+application itself.
+</div><ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="spool">spool</a></span>({
+ <span class="F">name</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="meta">[</span><span class="F">ctx</span><span class="meta">:</span> <span class="T">Object</span><span class="meta"> = </span>this,<span class="meta">]</span>
+ <span class="F">func</span><span class="meta">:</span> <span class="T">Function</span>
+ <span class="meta">[</span><span class="F">args</span><span class="meta">:</span> <span class="T">Array(Object)</span><span class="meta"> = </span>new Array()<span class="meta">]</span>
+ })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">spool</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="P">func</span><span class="meta">:</span> <span class="T">Function</span>)<span class="meta">:</span> <span class="T">Void</span>
+</div><div class="desc"> Remember action "<span class="F">ctx</span>.<span class="F">func</span>(<span class="F">args</span>)" on spool named <span class="F">name</span>.
+</div><div class="example">cs(this).spool({
+    name: "foo",
+    ctx: this,
+    func: function (num, str) { ... },
+    args: [ 42, "foo" ]
+});
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="spooled">spooled</a></span>({ <span class="F">name</span><span class="meta">:</span> <span class="T">String</span> })<span class="meta">:</span> <span class="T">Boolean</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">spooled</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Boolean</span>
+</div><div class="desc"> Check whether any actions are spooled under spool named <span class="F">name</span>.
+ Usually done before calling <span class="M"><a href="#unspool">unspool</a></span>() as it would throw an
+ exception if there are no spooled actions at all.
+</div><div class="example">if (cs(this).spooled("foo"))
+    cs(this).unspool("foo")
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="unspool">unspool</a></span>({ <span class="F">name</span><span class="meta">:</span> <span class="T">String</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">unspool</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Void</span>
+</div><div class="desc"> Perform all actions previously spooled on spool <span class="F">name</span>
+ in reverse spooling order (those spooled last are executed first).
+</div><div class="example">release: function () {
+    cs(this).unspool("materialized")
+}
+</div></li></ul>
+<h2><a name="properties">Properties</a></h2>
+<div class="intro">
+Every component can have an arbitrary number of key/value based properties attached to it.
+The keys have to be of type <span class="T">String</span>, the values can be of any type. A property
+is set on a target component but is resolved on both the target component and
+all parent components (up to and including the root component). This way properties
+feel like inherited and overrideable values which can be used for both storing
+component-local information and to communicate information to foreign components.
+</div><ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="property">property</a></span>({
+ <span class="F">name</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="meta">[</span><span class="F">value</span><span class="meta">:</span> <span class="T">Object</span><span class="meta"> = </span>"undefined",<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">bubbling</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span>true,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">targeting</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span>true,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">returnowner</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span>false<span class="meta">]</span>
+ })<span class="meta">:</span> <span class="T">Object</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">property</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>, <span class="P">value</span><span class="meta">:</span> <span class="T">Object</span>)<span class="meta">:</span> <span class="T">Object</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">property</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Object</span>
+</div><div class="desc"> Get or set property with name <span class="F">name</span> and value <span class="F">value</span> on component <span class="O">component</span>.
+ If <span class="F">bubbling</span> is set to <code>false</code> a property get operation does not resolve
+ on any parent components ("it does not bubble up to the root").
+ If <span class="F">targeting</span> is set to <code>false</code> a property get operation does not resolve
+ on the target component <span class="O">component</span> (resolving starts on parent component).
+ If <span class="F">returnowner</span> is set to <span class="F">true</span> instead of the property value, the
+ owning component is returned.
+ Finally, properties can be scoped with a child component name: on each attempt
+ to resolve the property, first the scoped variant is tried. This means,
+ if a property was set with name "<code>bar@prop</code>" on component <code> /foo</code>,
+ if you resolve the property with <code>cs("/foo/bar/baz", "prop")</code> you
+ the value, but if you resolve the property with <code>cs("/foo/quux", "prop")</code> you
+ do not get the value. This allows you to set the same property with different
+ values for different child components.
+</div><div class="example">cs(this).property("foo")
+</div></li></ul>
+<h2><a name="sockets">Sockets</a></h2>
+<div class="intro">
+Sockets are a special form of component Properties with callback functions as the values. They are intended to link
+Views of child/descendant components into the View of a parent/ancestor component. In contrast to regular Properties,
+Sockets are never resolved directly on the target component. Instead they always start to resolve on the parent
+component because the sockets on the target component are intended for its child/ancestor components and not for the
+target component itself.
+</div><ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="socket">socket</a></span>({
+ <span class="meta">[</span><span class="F">name</span><span class="meta">:</span> <span class="T">String</span><span class="meta"> = </span>"default",<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">scope</span><span class="meta">:</span> <span class="T">Object</span><span class="meta"> = </span>null,<span class="meta">]</span>
+ <span class="F">ctx</span><span class="meta">:</span> <span class="T">Object</span>,
+ <span class="F">plug</span><span class="meta">:</span> <span class="T">Function</span>,
+ <span class="F">unplug</span><span class="meta">:</span> <span class="T">Function</span>
+ })</div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">socket</span>(<span class="P">ctx</span><span class="meta">:</span> <span class="T">Object</span>,
+ <span class="P">plug</span><span class="meta">:</span> <span class="T">Function</span>,
+ <span class="P">unplug</span><span class="meta">:</span> <span class="T">Function</span>)
+</div><div class="desc"> Create a socket on <span class="O">component</span>, named <span class="F">name</span> and optionally
+ scoped for the child component named <span class="F">scope</span>, where <span class="M"><a href="#plug">plug</a></span>()
+ and <span class="M"><a href="#unplug">unplug</a></span>() calls on child/ancestor components execute
+ the supplied <span class="F">plug</span>/<span class="F">unplug</span> functions with <span class="F">ctx</span> supplied as
+ <code>this</code>.
+</div><div class="example">var ui = $(...);
+cs(this).socket({
+    ctx:    ui,
+    plug:   function (el) { $(this).append(el); },
+    unplug: function (el) { $(el).remove(); }
+})
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="link">link</a></span>({
+ <span class="meta">[</span><span class="F">name</span><span class="meta">:</span> <span class="T">String</span><span class="meta"> = </span>"default",<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">scope</span><span class="meta">:</span> <span class="T">Object</span><span class="meta"> = </span>null,<span class="meta">]</span>
+ <span class="F">target</span><span class="meta">:</span> <span class="T">Object</span>,
+ <span class="F">socket</span><span class="meta">:</span> <span class="T">String</span>
+ })</div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">link</span>(<span class="P">target</span><span class="meta">:</span> <span class="T">Object</span>,
+ <span class="P">socket</span><span class="meta">:</span> <span class="T">String</span>)
+</div><div class="desc"> Create a socket on <span class="O">component</span>, named <span class="F">name</span> and optionally
+ scoped for the child component named <span class="F">scope</span>, and pass-through the
+ <span class="M"><a href="#plug">plug</a></span>/<span class="M"><a href="#unplug">unplug</a></span>() calls to the target component <span class="F">target</span>
+ and its socket named <span class="F">socket</span>. Usually used by Controller
+ components to link their default socket (for the View below itself) to a
+ particular socket of a parent component (because a View should be reusable
+ and hence is not allowed to know the particular socket intended for it).
+</div><div class="example">cs(this).link({ name: "default", target: this, socket: "menu1" })
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="plug">plug</a></span>({
+ <span class="meta">[</span><span class="F">name</span><span class="meta">:</span> <span class="T">String</span><span class="meta"> = </span>"default",<span class="meta">]</span>
+ <span class="F">object</span><span class="meta">:</span> <span class="T">Object</span>,
+ <span class="meta">[</span><span class="F">spool</span><span class="meta">:</span> <span class="T">String</span><span class="meta">]</span>
+ })<span class="meta">:</span> <span class="T">String</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">plug</span>(<span class="P">object</span><span class="meta">:</span> <span class="T">Object</span>)<span class="meta">:</span> <span class="T">String</span>
+</div><div class="desc"> Plugs <span class="F">object</span> into the socket named <span class="F">name</span> provided by any
+ parent/ancestor component of <span class="O">component</span>. Optionally spool the
+ corresponding <span class="M"><a href="#unplug">unplug</a></span>() operation on spool <span class="F">spool</span> attached to <span class="O">component</span>.
+ Returns an identifier for use with the corresponding <span class="M"><a href="#unplug">unplug</a></span>() operation.
+</div><div class="example">cs(this).plug({ object: ui, spool: "materialized" })
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="unplug">unplug</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">String</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">unplug</span>(<span class="P">id</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Void</span>
+</div><div class="desc"> Unplugs the object previously plugged under <span class="F">id</span>.
+ This is usually performed indirectly through the Spool mechanism.
+</div><div class="example">cs(this).unplug(id)
+</div></li></ul>
+<h2><a name="models">Models</a></h2>
+<div class="intro">
+When using Model/View/Controller roles for components, the Model
+component needs a so-called Presentation Model: an
+abstraction of presentation onto which both View and Controller
+components attach via Observer pattern. The Controller component
+for provisioning business information into the Model and triggering
+business services upon Model changes. The View component for
+displaying the Model information and storing events into it.
+</div><ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="model">model</a></span>(<span class="P">spec</span><span class="meta">:</span> <span class="T">Object</span>)<span class="meta">:</span> <span class="T">Object</span>
+</div><div class="desc"> Define a model through the specification in <span class="P">spec</span>. Each key
+ is the name of a model element and the value has to be an <span class="T">Object</span> with
+ the following possible fields: <span class="F">value</span> (<span class="T">Object</span>) for the default
+ value, <span class="F">valid</span> (<span class="T">String</span>/<span class="T">RegExp</span>) for validating the values, <span class="F">autoreset</span> (<span class="T">Boolean</span>) for
+ indicating that on each value write, the value should be
+ automatically reset to the initial <span class="F">value</span>, and <span class="F">store</span> (<span class="T">Boolean</span>) for
+ indicating that the value should be persistently stored in the browser's <code>localStorage</code>.
+ Multiple calls to the <span class="M"><a href="#model">model</a></span> method on the same component incrementally
+ add model elements.
+</div><div class="example">cs(this).model({
+    "param:realms":         { value: [],      valid: "array(string)" },
+    "data:realm":           { value: "",      valid: "string", store: true },
+    "data:username":        { value: "",      valid: "string", store: true },
+    "data:password":        { value: "",      valid: "string" },
+    "state:username":       { value: "empty", valid: "string" },
+    "state:username-hint":  { value: "",      valid: "string" },
+    "state:password":       { value: "empty", valid: "string" },
+    "state:password-hint":  { value: "",      valid: "string" },
+    "state:hashcode-col":   { value: 0,       valid: "number" },
+    "state:hashcode-txt":   { value: "",      valid: "string" },
+    "state:button-enabled": { value: false,   valid: "boolean" },
+    "event:button-clicked": { value: false,   valid: "boolean", autoreset: true }
+})
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="value">value</a></span>({
+ <span class="F">name</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="meta">[</span><span class="F">value</span><span class="meta">:</span> <span class="T">Object</span>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">force</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta">]</span>
+ })</div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">value</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="meta">[</span><span class="P">value</span><span class="meta">:</span> <span class="T">Object</span>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="P">force</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta">]</span>)
+</div><div class="desc"> Get the value of <span class="O">component</span>'s model element named <span class="F">name</span> or
+ set the value of <span class="O">component</span>'s model element named <span class="F">name</span> to <span class="F">value</span>.
+ As each value change causes observers to be triggered, by default
+ changing a value to the same value does not trigger anything.
+ But if <span class="F">force</span> is <code>true</code> even setting a model element to its
+ current value triggers observers.
+</div><div class="example">var val = cs(this).value("foo")
+cs(this).value("foo", "bar")
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="observe">observe</a></span>({
+ <span class="F">name</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="F">func</span><span class="meta">:</span> <span class="T">Function</span>,
+ <span class="meta">[</span><span class="F">touch</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span>false,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">operation</span><span class="meta">:</span> <span class="T">String</span><span class="meta"> = </span>"set",<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">spool</span><span class="meta">:</span> <span class="T">String</span><span class="meta"> = </span>null<span class="meta">]</span>
+ })<span class="meta">:</span> <span class="T">String</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">observe</span>(<span class="F">name</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="F">func</span><span class="meta">:</span> <span class="T">Function</span>)<span class="meta">:</span> <span class="T">String</span>
+</div><div class="desc"> Observe the value of <span class="O">component</span>'s model element named <span class="F">name</span>
+ for <span class="F">operation</span> operations (by default set/change operations).
+ For "get" operations, the callback function <span class="F">func</span> has to be of
+ signature <span class="F">func</span>(<span class="P">ev</span>: <span class="T">Event</span>, <span class="P">value</span>: <span class="T">Object</span>): <span class="T">Void</span>.
+ For "set" operations, the callback function <span class="F">func</span> has to be of signature
+ <span class="F">func</span>(<span class="P">ev</span>: <span class="T">Event</span>, <span class="P">value-new</span>: <span class="T">Object</span>, <span class="P">value-old</span>: <span class="T">Object</span>): <span class="T">Void</span>.
+ Both types of callbacks can override the value by using <span class="P">ev</span>.<span class="M"><a href="#result">result</a></span>(<span class="P">value</span>).
+ The <span class="M"><a href="#observe">observe</a></span> method returns an id which uniquely identifies the observation.
+ Instead of having to manually release the observation later via <span class="M"><a href="#unobserve">unobserve</a></span>()
+ you can use the spool mechanism and spool the corresponding <span class="M"><a href="#unobserve">unobserve</a></span>()
+ operation via <span class="F">spool</span>.
+</div><div class="example">id = cs(this).observe("state:username", function (ev, username) {
+    ...
+})
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="unobserve">unobserve</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">String</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">unobserve</span>(<span class="P">id</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
+</div><div class="desc"> Release the observation identified by <span class="F">id</span>, previously acquired by a call to <span class="M"><a href="#observe">observe</a></span>().
+ This is usually done implicitly through the spooling mechanism.
+</div><div class="example">cs(this).unobserve(id)
+</div></li></ul>
+<h2><a name="events">Events</a></h2>
+<div class="intro">
+The Event mechanism is a central one in ComponentJS. Both
+Models, Services and Hooks are all internally based on the Events mechanism.
+An Event is an object published towards a target component. It is delivered
+in 4 phases: in phase 1 (the "capturing" phase) the Event is delivered
+to all components on the path from the root component (inclusive) towards the target
+component (exclusive); in phase 2 (the "targeting" phase) the Event is delivered to the target component;
+in phase 3 (the "spreading" phase) the Event is delivered to all descendant components of
+the target component in a depth-first traversal order
+and in phase 4 (the "bubbling" phase) the Event is delivered (again) to all components on
+the path from the target component (exclusive) to the root component (inclusive).<p/>
+Event objects are implicitly created by the <span class="M"><a href="#publish">publish</a></span>() operation and
+they provide various getter/setter methods:
+<span class="M"><a href="#target">target</a></span> (<span class="T">Component</span>): target component the event is send to;
+<span class="M"><a href="#propagation">propagation</a></span> (<span class="T">Boolean</span>): whether event propagation should continue;
+<span class="M"><a href="#processing">processing</a></span> (<span class="T">Boolean</span>): whether final default event processing should be performed;
+<span class="M"><a href="#dispatched">dispatched</a></span> (<span class="T">Boolean</span>): whether event was dispatched at least once to a subscriber;
+<span class="M"><a href="#decline">decline</a></span> (<span class="T">Boolean</span>): whether event was declined by subscriber;
+<span class="M"><a href="#state">state</a></span> (<span class="T">Boolean</span>): state of dispatching: <code>capturing</code>, <code>targeting</code>, <code>spreading</code> or <code>bubbling</code>;
+<span class="M"><a href="#result">result</a></span> (<span class="T">Object</span>): optional result value event subscribers can provide;
+<span class="M"><a href="#async">async</a></span> (<span class="T">Boolean</span>): whether event is dispatched asynchronously.<p/>
+</div><ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="subscribe">subscribe</a></span>({
+ <span class="F">name</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="meta">[</span><span class="F">spec</span><span class="meta">:</span> <span class="T">Object</span><span class="meta"> = </span><code>{}</code><span class="meta">]</span>,
+ <span class="meta">[</span><span class="F">ctx</span><span class="meta">:</span> <span class="T">Object</span><span class="meta"> = </span><span class="O">component</span>,<span class="meta">]</span>
+ <span class="F">func</span><span class="meta">:</span> <span class="T">Function</span>,
+ <span class="meta">[</span><span class="F">args</span><span class="meta">:</span> <span class="T">Object<span class="meta">[</span><span class="meta">]</span></span><span class="meta"> = </span><code><span class="meta">[</span><span class="meta">]</span></code><span class="meta">]</span>,
+ <span class="meta">[</span><span class="F">capturing</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span><code>false</code><span class="meta">]</span>,
+ <span class="meta">[</span><span class="F">spreading</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span><code>false</code><span class="meta">]</span>,
+ <span class="meta">[</span><span class="F">bubbling</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span><code>true</code><span class="meta">]</span>,
+ <span class="meta">[</span><span class="F">noevent</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span><code>false</code><span class="meta">]</span>,
+ <span class="meta">[</span><span class="F">exclusive</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span><code>false</code><span class="meta">]</span>,
+ <span class="meta">[</span><span class="F">origin</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span><code>false</code><span class="meta">]</span>,
+ <span class="meta">[</span><span class="F">spool</span><span class="meta">:</span> <span class="T">String</span><span class="meta"> = </span><code>null</code><span class="meta">]</span>
+ })</div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">subscribe</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="P">func</span><span class="meta">:</span> <span class="T">Function</span>,
+ <span class="meta">[</span><span class="P">arg</span><span class="meta">:</span> <span class="T">Object</span>, ...<span class="meta">]</span>)
+</div><div class="desc"> Subscribe to event <span class="F">name</span> on component <span class="O">component</span> and
+ execute callback <span class="F">func</span> as <span class="F">func</span><code>(</code><span class="P">ev</span><code>: </code><span class="T">Event</span><code>, </code><span class="P">args</span><code>: </code><span class="T">Object[]</span><code>)</code>
+ once the event is dispatched to <span class="O">component</span> after it was published.
+ Option <span class="F">ctx</span> allows <span class="FIXME">FIXME</span>.
+ By default an event is dispatched in the targeting and bubbling phases.
+ Setting option <span class="F">capture</span> to <code>true</code> indicates that the event should
+ be dispatched in the capturing phase.
+</div><div class="example"><span class="FIXME">FIXME</span>
+</div></li></ul>
+<h2><a name="services">Services</a></h2>
+<div class="intro">
+<span class="FIXME">FIXME</span>
+</div><ul>
+<li><div class="synopsis"><span class="FIXME">FIXME</span>
+</div><div class="desc"> <span class="FIXME">FIXME</span>
+</div><div class="example"><span class="FIXME">FIXME</span>
+</div></li></ul>
+<h2><a name="hooks">Hooks</a></h2>
+<div class="intro">
+<span class="FIXME">FIXME</span>
+</div><ul>
+<li><div class="synopsis"><span class="FIXME">FIXME</span>
+</div><div class="desc"> <span class="FIXME">FIXME</span>
+</div><div class="example"><span class="FIXME">FIXME</span>
+</div></li></ul>
+
+        </div>
+        <div class="navi">
+            <h2><a href="#api_management">API Management</a></h2>
+<ul>
+<li><a href="#symbol">symbol</a></li><li><a href="#version">version</a></li></ul>
+<h2><a href="#library_management">Library Management</a></h2>
+<ul>
+<li><a href="#bootstrap">bootstrap</a></li><li><a href="#shutdown">shutdown</a></li><li><a href="#plugin">plugin</a></li></ul>
+<h2><a href="#debugging">Debugging</a></h2>
+<ul>
+<li><a href="#debug">debug</a></li><li><a href="#debug_instrumented">debug_instrumented</a></li><li><a href="#debug_window">debug_window</a></li></ul>
+<h2><a href="#code_structuring">Code Structuring</a></h2>
+<ul>
+<li><a href="#ns">ns</a></li><li><a href="#params">params</a></li><li><a href="#attribute">attribute</a></li><li><a href="#clazz">clazz</a></li><li><a href="#trait">trait</a></li></ul>
+<h2><a href="#component_creation">Component Creation</a></h2>
+<ul>
+<li><a href="#create">create</a></li><li><a href="#destroy">destroy</a></li></ul>
+<h2><a href="#component_information">Component Information</a></h2>
+<ul>
+<li><a href="#id">id</a></li><li><a href="#name">name</a></li><li><a href="#obj">obj</a></li><li><a href="#cfg">cfg</a></li></ul>
+<h2><a href="#component_lookup">Component Lookup</a></h2>
+<ul>
+<li><a href="#componentjs">ComponentJS</a></li><li><a href="#exists">exists</a></li></ul>
+<h2><a href="#component_tree">Component Tree</a></h2>
+<ul>
+<li><a href="#path">path</a></li><li><a href="#parent">parent</a></li><li><a href="#children">children</a></li><li><a href="#walk_up">walk_up</a></li><li><a href="#walk_down">walk_down</a></li></ul>
+<h2><a href="#states">States</a></h2>
+<ul>
+<li><a href="#transition">transition</a></li><li><a href="#state">state</a></li><li><a href="#state_compare">state_compare</a></li><li><a href="#state_auto_increase">state_auto_increase</a></li><li><a href="#state_auto_decrease">state_auto_decrease</a></li><li><a href="#guard">guard</a></li></ul>
+<h2><a href="#spools">Spools</a></h2>
+<ul>
+<li><a href="#spool">spool</a></li><li><a href="#spooled">spooled</a></li><li><a href="#unspool">unspool</a></li></ul>
+<h2><a href="#properties">Properties</a></h2>
+<ul>
+<li><a href="#property">property</a></li></ul>
+<h2><a href="#sockets">Sockets</a></h2>
+<ul>
+<li><a href="#socket">socket</a></li><li><a href="#link">link</a></li><li><a href="#plug">plug</a></li><li><a href="#unplug">unplug</a></li></ul>
+<h2><a href="#models">Models</a></h2>
+<ul>
+<li><a href="#model">model</a></li><li><a href="#value">value</a></li><li><a href="#observe">observe</a></li><li><a href="#unobserve">unobserve</a></li></ul>
+<h2><a href="#events">Events</a></h2>
+<ul>
+<li><a href="#subscribe">subscribe</a></li></ul>
+<h2><a href="#services">Services</a></h2>
+<ul>
+</ul>
+<h2><a href="#hooks">Hooks</a></h2>
+<ul>
+</ul>
+
+        </div>
+        <div id="foot" class="foot">
+            <div id="foot1" class="foot1">ComponentJS</div>
+            <div id="foot2" class="foot2">Application Programming Interface (API)</div>
+        </div>
+    </body>
+</html>

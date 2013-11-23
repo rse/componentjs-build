@@ -89,8 +89,8 @@
     $cs.version = {
         major: 1,
         minor: 0,
-        micro: 0,
-        date:  20130929
+        micro: 1,
+        date:  20131009
     };
 
 
@@ -3883,6 +3883,7 @@
 
         /*  set new state  */
         _cs.bootstrapped = true;
+
         return;
     };
 
@@ -3895,13 +3896,16 @@
         /*  give plugins a chance to shutdown, too  */
         _cs.hook("ComponentJS:shutdown", "none");
 
-        /*  destroy singleton "<none>" component
-            (its "destroy" method was intentionally killed above!)  */
+        /*  tear down the whole component tree  */
+        _cs.foreach(_cs.root.children(), function (child) {
+            child.destroy();
+        });
+        _cs.root.state({ state: "dead", sync: true });
+
+        /*  destroy singleton "<none>" component  */
         _cs.none = null;
 
-        /*  destroy singleton "<root>" component
-            (its "destroy" method will destroy whole component tree!)  */
-        _cs.root.destroy();
+        /*  destroy singleton "<root>" component  */
         _cs.root = null;
 
         /*  destroy component class  */
@@ -3909,6 +3913,7 @@
 
         /*  set new state  */
         _cs.bootstrapped = false;
+
         return;
     };
 
@@ -4246,6 +4251,8 @@
             throw _cs.exception("destroy", "no such component found to destroy");
         else if (comp === _cs.root)
             throw _cs.exception("destroy", "root component cannot be destroyed");
+        var path = comp.path("/");
+        var id   = comp.id();
 
         /*  switch component state to "dead"
             (here synchronously as one expects that after a destruction of a
@@ -4262,7 +4269,7 @@
         comp.obj(null);
 
         /*  debug hint  */
-        $cs.debug(1, "component: " + comp.path("/") + ": destroyed component [" + comp.id() + "]");
+        $cs.debug(1, "component: " + path + ": destroyed component [" + id + "]");
 
         /*  give plugins a chance to react (after final destruction of a component)  */
         _cs.hook("ComponentJS:state-invalidate", "none", "components");
@@ -4305,6 +4312,7 @@
     $cs.transition("prepared",     "prepare", "cleanup",  "#f2ec00"); /* prepared and ready for rendering */
     $cs.transition("materialized", "render",  "release",  "#6699cc"); /* rendered onto the DOM tree */
     $cs.transition("visible",      "show",    "hide",     "#669933"); /* visible to the user */
+    $cs.transition("enabled",      "enable",  "disable",  "#336600"); /* enabled for interaction */
 
 
     /*

@@ -280,6 +280,9 @@
             div.spec h2 {
                 font-family: "DejaVu Sans Condensed", sans-serif;
                 color: #2068b0;
+                margin-top: 40px;
+                border-top: 8px solid #f0f0f0;
+                padding-top: 20px;
                 margin-bottom: 4px;
                 font-size: 14pt;
             }
@@ -381,7 +384,7 @@
             <div id="head1" class="head1">ComponentJS</div>
             <div id="head2" class="head2">Application Programming Interface (API)</div>
         </div>
-        <div id="the_version" class="the_version">1.0.0</div>
+        <div id="the_version" class="the_version">1.0.1</div>
         <div class="spec">
             <img class="logo" src="http://componentjs.com/ComponentJS-logo.svg" alt="ComponentJS"/>
             <h2><a name="api_management">API Management</a></h2>
@@ -548,7 +551,7 @@ that component shadow objects are defined by <code>cs.clazz</code>!
  JavaScript (hash) object, potentially itself part of a parent namespace
  object. The top-most implicit namespace object is <code>window</code>. A namespace has a
  dot-separated fully-qualified symbol path like <code>foo.bar.quux</code>. This
- method allows to create the fully-qualified path of nested objects throught the
+ method allows to create the fully-qualified path of nested objects through the
  dot-separated <span class="P">path</span> of object names, optionally assign the
  right-most/leaf object to <span class="P">leave</span> and finally return the right-most/leaf <span class="T">Object</span>.
 
@@ -622,7 +625,7 @@ config({ scope: "foo", key: "bar", value: "quux", force: true });
 <ul>
 <li><div class="synopsis">ComponentJS.<span class="M"><a name="attribute">attribute</a></span>({ <span class="F">name</span><span class="meta">:</span> <span class="T">String</span>, <span class="F">def</span><span class="meta">:</span> <span class="T">Object</span>, <span class="F">validate</span><span class="meta">:</span> <span class="T">Object</span> })<span class="meta">:</span> <span class="T">Function</span></div><div class="synopsis">
  ComponentJS.<span class="M">attribute</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>, <span class="P">def</span><span class="meta">:</span> <span class="T">Object</span>, <span class="P">validate</span><span class="meta">:</span> <span class="T">Object</span>)<span class="meta">:</span> <span class="T">Function</span>
-</div><div class="desc"> Create a clonable attribute capturing getter/setter function with name <span class="P">name</span> (for exception
+</div><div class="desc"> Create a cloneable attribute capturing getter/setter function with name <span class="P">name</span> (for exception
  handling reasons only), the default value <span class="P">def</span> and the value validation <span class="P">validate</span>.
 
 </div><div class="example">var id = ComponentJS.attribute("id", "foo", /^[a-z][a-zA-Z0-9_]*/);
@@ -646,22 +649,17 @@ id("bar") &rarr; "foo"; id() &rarr; "bar"
  object path <span class="F">name</span>, optionally extending the base/super/parent Class <span class="F">extend</span>
  and optionally mixing in the functionality of one or more Traits via <span class="F">mixin</span>. The class
  can have a constructor function <span class="F">cons</span> which is called once the
- Class is instanciated and which can further initialize the dynamic fields of the class.
- On each instanciation, all fields which are specified with <span class="F">dynamics</span> are
- cloned and instanciated and all methods in <span class="F">protos</span> are copied into the
+ Class is instantiated and which can further initialize the dynamic fields of the class.
+ On each instantiation, all fields which are specified with <span class="F">dynamics</span> are
+ cloned and instantiated and all methods in <span class="F">protos</span> are copied into the
  Class <code>prototypes</code> object. The <span class="F">statics</span> content is copied into the
  Class itself only. In case of <span class="F">extend</span> and/or <span class="F">mixin</span>, both the <span class="F">cons</span>
  and methods of <span class="F">protos</span> can call <code>this.base(...)</code> for the base/super/parent
  method.
 
 </div><div class="example">var foo = cs.clazz({
-    cons: function (bar, baz) {
+    cons: function (bar) {
         this._bar = bar;
-        this._baz = baz;
-    },
-    dynamics: {
-        _bar: "bar",
-        _baz: 42
     },
     protos: {
         bar: function (value_new) {
@@ -673,6 +671,56 @@ id("bar") &rarr; "foo"; id() &rarr; "bar"
         [...]
     }
 })
+</div><div class="desc">
+ It is important to notice how calls to any method resolve and how
+ calls to <code>this.base()</code> in any method of a class resolves. When on
+ class <code>Foo</code> and its instanciated object <code>foo</code> a method <code>foo.bar()</code>
+ is called, the following happens:
+
+</div><ul class="list">
+<li>First, a direct property named <code>bar</code> on object <code>foo</code> is tried.
+    This can exist on <code>foo</code> through (in priority order) a <code>bar</code> in
+    either the <span class="F">dynamics</span> definition of a <span class="F">mixin</span> of <code>Foo</code>, or in the
+    <span class="F">statics</span> definition of a <span class="F">mixin</span> of <code>Foo</code>, or in the <span class="F">dynamics</span>
+    definition of <code>Foo</code>, or in the <span class="F">statics</span> definition of <code>Foo</code>.
+</li>
+</ul><ul class="list">
+<li>Second, an indirect prototype-based property named <code>bar</code> on object
+    <code>foo</code> is tried. This can exist on <code>foo</code> through (in priority order)
+    a <code>bar</code> in either the <span class="F">protos</span> definition of <code>Foo</code> or in the
+    <span class="F">protos</span> definition of any <span class="F">extend</span> of <code>Foo</code>.
+</li>
+</ul><div class="desc">
+ When on class <code>Foo</code> and its instanciated object <code>foo</code> in any method <code>foo.bar()</code>
+ the <code>this.base()</code> is called, the following happens:
+
+</div><ul class="list">
+<li>First, a call to the super/base/parent functions in the <span class="F">mixin</span> trait chain is attempted.
+    The mixins are traversed in the reverse order of the trait specification in the
+    <span class="F">mixin</span> array, i.e., the last trait's mixins are tried first.
+</li>
+</ul><ul class="list">
+<li>Second, a call to the super/base/parent functions in the <span class="F">extend</span>
+    inheritance class chain is attempted. First, the directly <span class="F">extend</span>
+    class is attempted, then the <span class="F">extend</span> class of this class, etc.
+</li>
+</ul><div class="desc">
+ NOTICE: As ComponentJS does not care at all how shadow objects of
+ components are defined, you can alternatively use an arbitrary
+ solution for Class-based OO in JavaScript (e.g. TypeScript, JSClass,
+ ExtendJS, DejaVu, Classy, jTypes, etc) or fallback to the also just
+ fine regular Prototype-based OO in JavaScript:
+
+</div><div class="example">var foo = function (bar) {
+    this._bar = bar;
+}
+foo.prototype.bar = function (value_new) {
+    var value_old = this._bar;
+    if (typeof value_new !=== "undefined")
+        this._bar = value_new;
+    return value_old;
+}
+[...]
 </div><div class="desc">
 
 
@@ -691,12 +739,12 @@ id("bar") &rarr; "foo"; id() &rarr; "bar"
  object path <span class="F">name</span> and
  optionally mixing in the functionality of one or more other Traits via <span class="F">mixin</span>. The trait
  can have a constructor function <span class="F">cons</span> which is called once the
- Class the Trait is mixed in is instanciated and which can further initialize the dynamic fields of the Class.
- On each instanciation, all fields which are specified with <span class="F">dynamics</span> are
- cloned and instanciated and all methods in <span class="F">protos</span> are copied into the
+ Class the Trait is mixed in is instantiated and which can further initialize the dynamic fields of the Class.
+ On each instantiation, all fields which are specified with <span class="F">dynamics</span> are
+ cloned and instantiated and all methods in <span class="F">protos</span> are copied into the
  Class <code>prototypes</code> object. The <span class="F">statics</span> content is copied into the
  Class itself only. The optional <span class="F">setup</span> function is called directly at the end of Class
- definition (not instanciation) and can further refine the defined Class.
+ definition (not instantiation) and can further refine the defined Class.
 
 </div><div class="example">var foo = cs.trait({
     protos: {
@@ -730,8 +778,8 @@ looked up, state transitioned, communicated on and be destroyed.
  For instance, the specification <code>foo/{bar/baz,quux}</code> is the
  tree consisting of the two maximum length paths: <code>foo/bar/baz</code> and <code>foo/quux</code>.
  For each name from left-to-right in the tree specification you have to give
- either a to be instanciated class constructor (<span class="T">Function</span>) or an already
- instanciated object (<span class="T">Object</span>).
+ either a to be instantiated class constructor (<span class="T">Function</span>) or an already
+ instantiated object (<span class="T">Object</span>).
 
 </div><div class="desc">
  The <span class="M"><a href="#create">create</a></span>() method returns the last created component, i.e., the
@@ -828,7 +876,7 @@ global API symbol.
  to uniquely identify a single component.
  The following usages exist:
  1. Lookup <span class="T">Component</span> by absolute path <span class="P">path</span> (this is usually never done explicitly,
- but occurs implicity if the input parameter is already a <span class="T">Component</span>).
+ but occurs implicitly if the input parameter is already a <span class="T">Component</span>).
  2. Lookup <span class="T">Component</span> by path <span class="P">path</span>, relative to <span class="T">Component</span> <span class="P">component</span>.
  3. Lookup <span class="T">Component</span> by path <span class="P">path</span>, relative to the <span class="T">Component</span> corresponding
  to <span class="T">Object</span> <span class="P">object</span>.
@@ -994,6 +1042,7 @@ cs.transition("configured",   "setup",   "teardown", "#eabc43");
 cs.transition("prepared",     "prepare", "cleanup",  "#f2ec00");
 cs.transition("materialized", "render",  "release",  "#6699cc");
 cs.transition("visible",      "show",    "hide",     "#669933");
+cs.transition("enabled",      "enable",  "disable",  "#336600");
 </div><div class="desc">
 
 
@@ -1507,7 +1556,7 @@ they provide various getter/setter methods:<p/>
  <span class="O">component</span>.<span class="M">subscribe</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>,
  <span class="P">func</span><span class="meta">:</span> <span class="T">Function</span>,
  <span class="meta">[</span><span class="P">args</span><span class="meta">:</span> <span class="T">Object</span>, ...<span class="meta">]</span>)<span class="meta">:</span> <span class="T">Number</span>
-</div><div class="desc"> Subscribe to event <span class="F">name</span> (optionally sub-specifified via <span class="F">spec</span>)
+</div><div class="desc"> Subscribe to event <span class="F">name</span> (optionally sub-specified via <span class="F">spec</span>)
  on component <span class="O">component</span> and
  execute callback <span class="F">func</span> as <span class="F">func</span><code>(</code><span class="P">ev</span><code>: </code><span class="T">Event</span>
  <code>, </code><span class="P">args</span><code>: </code><span class="T">Object</span><code>, ..., </code><span class="P">sargs</span><code>: </code><span class="T">Object</span><code>, ...)</code>
@@ -1588,11 +1637,11 @@ they provide various getter/setter methods:<p/>
 </div><div class="desc"> Publishes an <span class="T">Event</span> to component <span class="O">component</span> named <span class="F">name</span> and with
  optional arguments <span class="F">args</span>. By default the event is intended to be
  dispatched in the (mandatory) targeting and (optional) capturing and
- bubbling phases. The following options allow you to fruther control
+ bubbling phases. The following options allow you to further control
  the event publishing process:
 
 </div><ul class="list">
-<li>Option <span class="F">spec</span> allows you to sub-specify/parameterize the event with
+<li>Option <span class="F">spec</span> allows you to sub-specify/parametrize the event with
     arbitrary key/value pairs in case the <span class="F">name</span> is too generic.
 </li><li>Option <span class="F">async</span> allows the event processing to occur asynchronously.
 </li><li>Setting option <span class="F">capturing</span> to "<code>false</code>" indicates that the event should
@@ -1610,7 +1659,7 @@ they provide various getter/setter methods:<p/>
 </div></li></ul>
 <h2><a name="services">Services</a></h2>
 <div class="intro">
-Services are loosly coupled method calls across components.
+Services are loosely coupled method calls across components.
 The functionality provider does <span class="M"><a href="#register">register</a></span>() the service and
 the functionality consumer does <span class="M"><a href="#call">call</a></span>() the service.
 </div><ul>

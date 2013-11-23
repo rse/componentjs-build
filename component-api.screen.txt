@@ -1,6 +1,6 @@
 ComponentJS
 Application Programming Interface (API)
-1.0.0
+1.0.1
 ComponentJS
 
 API Management
@@ -110,7 +110,7 @@ that component shadow objects are defined by cs.clazz!
     a JavaScript (hash) object, potentially itself part of a parent namespace
     object. The top-most implicit namespace object is window. A namespace has a
     dot-separated fully-qualified symbol path like foo.bar.quux. This method
-    allows to create the fully-qualified path of nested objects throught the
+    allows to create the fully-qualified path of nested objects through the
     dot-separated path of object names, optionally assign the right-most/leaf
     object to leave and finally return the right-most/leaf Object.
     cs.ns("my.app"); my.app.ui = cs.clazz({ ... }) /* standard */ cs.ns
@@ -162,9 +162,9 @@ that component shadow objects are defined by cs.clazz!
     Function
     ComponentJS.attribute(name: String, def: Object, validate: Object): 
     Function
-    Create a clonable attribute capturing getter/setter function with name name
-    (for exception handling reasons only), the default value def and the value
-    validation validate.
+    Create a cloneable attribute capturing getter/setter function with name 
+    name (for exception handling reasons only), the default value def and the
+    value validation validate.
     var id = ComponentJS.attribute("id", "foo", /^[a-z][a-zA-Z0-9_]*/); id() ==
     = "foo" id("bar") ? "foo"; id() ? "bar"
 
@@ -175,17 +175,46 @@ that component shadow objects are defined by cs.clazz!
     dot-separated object path name, optionally extending the base/super/parent
     Class extend and optionally mixing in the functionality of one or more
     Traits via mixin. The class can have a constructor function cons which is
-    called once the Class is instanciated and which can further initialize the
-    dynamic fields of the class. On each instanciation, all fields which are
-    specified with dynamics are cloned and instanciated and all methods in 
+    called once the Class is instantiated and which can further initialize the
+    dynamic fields of the class. On each instantiation, all fields which are
+    specified with dynamics are cloned and instantiated and all methods in 
     protos are copied into the Class prototypes object. The statics content is
     copied into the Class itself only. In case of extend and/or mixin, both the
     cons and methods of protos can call this.base(...) for the base/super/
     parent method.
-    var foo = cs.clazz({ cons: function (bar, baz) { this._bar = bar; this._baz
-    = baz; }, dynamics: { _bar: "bar", _baz: 42 }, protos: { bar: function
+    var foo = cs.clazz({ cons: function (bar) { this._bar = bar; }, protos: {
+    bar: function (value_new) { var value_old = this._bar; if (typeof value_new
+    !=== "undefined") this._bar = value_new; return value_old; } [...] } })
+    It is important to notice how calls to any method resolve and how calls to
+    this.base() in any method of a class resolves. When on class Foo and its
+    instanciated object foo a method foo.bar() is called, the following
+    happens:
+      + First, a direct property named bar on object foo is tried. This can
+        exist on foo through (in priority order) a bar in either the dynamics
+        definition of a mixin of Foo, or in the statics definition of a mixin
+        of Foo, or in the dynamics definition of Foo, or in the statics
+        definition of Foo.
+      + Second, an indirect prototype-based property named bar on object foo is
+        tried. This can exist on foo through (in priority order) a bar in
+        either the protos definition of Foo or in the protos definition of any 
+        extend of Foo.
+    When on class Foo and its instanciated object foo in any method foo.bar()
+    the this.base() is called, the following happens:
+      + First, a call to the super/base/parent functions in the mixin trait
+        chain is attempted. The mixins are traversed in the reverse order of
+        the trait specification in the mixin array, i.e., the last trait's
+        mixins are tried first.
+      + Second, a call to the super/base/parent functions in the extend
+        inheritance class chain is attempted. First, the directly extend class
+        is attempted, then the extend class of this class, etc.
+    NOTICE: As ComponentJS does not care at all how shadow objects of
+    components are defined, you can alternatively use an arbitrary solution for
+    Class-based OO in JavaScript (e.g. TypeScript, JSClass, ExtendJS, DejaVu,
+    Classy, jTypes, etc) or fallback to the also just fine regular
+    Prototype-based OO in JavaScript:
+    var foo = function (bar) { this._bar = bar; } foo.prototype.bar = function
     (value_new) { var value_old = this._bar; if (typeof value_new !===
-    "undefined") this._bar = value_new; return value_old; } [...] } })
+    "undefined") this._bar = value_new; return value_old; } [...]
 
   * ComponentJS.trait({ [name: String,] [mixin: Array(Trait),] [cons: Function,
     ] [setup: Function,] [dynamics: Object,] [protos: Object,] [statics: Object
@@ -194,12 +223,12 @@ that component shadow objects are defined by cs.clazz!
     stored under the absolute dot-separated object path name and optionally
     mixing in the functionality of one or more other Traits via mixin. The
     trait can have a constructor function cons which is called once the Class
-    the Trait is mixed in is instanciated and which can further initialize the
-    dynamic fields of the Class. On each instanciation, all fields which are
-    specified with dynamics are cloned and instanciated and all methods in 
+    the Trait is mixed in is instantiated and which can further initialize the
+    dynamic fields of the Class. On each instantiation, all fields which are
+    specified with dynamics are cloned and instantiated and all methods in 
     protos are copied into the Class prototypes object. The statics content is
     copied into the Class itself only. The optional setup function is called
-    directly at the end of Class definition (not instanciation) and can further
+    directly at the end of Class definition (not instantiation) and can further
     refine the defined Class.
     var foo = cs.trait({ protos: { bar: function () { [...] } } })
 
@@ -227,7 +256,7 @@ state transitioned, communicated on and be destroyed.
     For instance, the specification foo/{bar/baz,quux} is the tree consisting
     of the two maximum length paths: foo/bar/baz and foo/quux. For each name
     from left-to-right in the tree specification you have to give either a to
-    be instanciated class constructor (Function) or an already instanciated
+    be instantiated class constructor (Function) or an already instantiated
     object (Object).
     The create() method returns the last created component, i.e., the
     right-most component in the tree specification.
@@ -297,7 +326,7 @@ of ComponentJS, it is directly exposed through the global API symbol.
     component trees between current and following components. In any case, the
     result has to uniquely identify a single component. The following usages
     exist: 1. Lookup Component by absolute path path (this is usually never
-    done explicitly, but occurs implicity if the input parameter is already a 
+    done explicitly, but occurs implicitly if the input parameter is already a 
     Component). 2. Lookup Component by path path, relative to Component 
     component. 3. Lookup Component by path path, relative to the Component
     corresponding to Object object. 4. Lookup Component object via shadow
@@ -406,7 +435,8 @@ transitions, enter and leave methods are called accordingly.
     cc3333"); cs.transition("configured", "setup", "teardown", "#eabc43");
     cs.transition("prepared", "prepare", "cleanup", "#f2ec00"); cs.transition
     ("materialized", "render", "release", "#6699cc"); cs.transition("visible",
-    "show", "hide", "#669933");
+    "show", "hide", "#669933"); cs.transition("enabled", "enable", "disable", "
+    #336600");
 
   * component.state(): String
     component.state(state: String[, callback: Function]): String
@@ -743,7 +773,7 @@ provide various getter/setter methods:
         = null] }): Number
         component.subscribe(name: String, func: Function, [args: Object, ...]):
         Number
-        Subscribe to event name (optionally sub-specifified via spec) on
+        Subscribe to event name (optionally sub-specified via spec) on
         component component and execute callback func as func(ev: Event , args:
         Object, ..., sargs: Object, ...) once the event is dispatched to 
         component after it was published. By default an event is dispatched in
@@ -787,9 +817,9 @@ provide various getter/setter methods:
         Publishes an Event to component component named name and with optional
         arguments args. By default the event is intended to be dispatched in
         the (mandatory) targeting and (optional) capturing and bubbling phases.
-        The following options allow you to fruther control the event publishing
+        The following options allow you to further control the event publishing
         process:
-          o Option spec allows you to sub-specify/parameterize the event with
+          o Option spec allows you to sub-specify/parametrize the event with
             arbitrary key/value pairs in case the name is too generic.
           o Option async allows the event processing to occur asynchronously.
           o Setting option capturing to "false" indicates that the event should
@@ -806,7 +836,7 @@ provide various getter/setter methods:
 
     Services
 
-    Services are loosly coupled method calls across components. The
+    Services are loosely coupled method calls across components. The
     functionality provider does register() the service and the functionality
     consumer does call() the service.
       + component.register({ name: String, [ctx: Object = component,] func: 

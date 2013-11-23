@@ -377,7 +377,7 @@
             <div id="head1" class="head1">ComponentJS</div>
             <div id="head2" class="head2">Application Programming Interface (API)</div>
         </div>
-        <div id="the_version" class="the_version">0.9.8</div>
+        <div id="the_version" class="the_version">0.9.9</div>
         <div class="spec">
             <img class="logo" src="http://componentjs.com/ComponentJS-logo.svg" alt="ComponentJS"/>
             <h2><a name="api_management">API Management</a></h2>
@@ -699,13 +699,17 @@ looked up, state transitioned, communicated on and be destroyed.
  either a to be instanciated class constructor (<span class="T">Function</span>) or an already
  instanciated object (<span class="T">Object</span>).
 
+</div><div class="desc">
+ The <span class="M"><a href="#create">create</a></span> method returns the last created component, i.e., the
+ right-most component in the tree specification.
+
 </div><div class="example">cs.create("/{sv,ui/{one,two}}", my.sv, {}, my.ui.one, my.ui.two);
 cs.create(this, "model/view", model, view);
 cs(this).create("model/view", model, view);
 </div></li></ul>
 <ul>
-<li><div class="synopsis">ComponentJS.<span class="M"><a name="destroy">destroy</a></span>(<span class="P">abs-path</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Void</span>
- <span class="O">component</span>.<span class="M">destroy</span>()<span class="meta">:</span> <span class="T">Void</span>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="destroy">destroy</a></span>(<span class="P">abs-path</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">destroy</span>()<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
  <span class="O">component</span>.<span class="M">destroy</span>()<span class="meta">:</span> <span class="T">Void</span>
 </div><div class="desc"> Destroy the component uniquely identified by <span class="P">abs-path</span> or
  the <span class="O">component</span> on which this method is called upon.
@@ -995,6 +999,10 @@ application itself.
  <span class="O">component</span>.<span class="M">spool</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>,
  <span class="P">func</span><span class="meta">:</span> <span class="T">Function</span>)<span class="meta">:</span> <span class="T">Void</span>
 </div><div class="desc"> Remember action "<span class="F">ctx</span>.<span class="F">func</span>(<span class="F">args</span>)" on spool named <span class="F">name</span>.
+ The <span class="F">name</span> parameter can be either just a plain spool-name "<code>name</code>"
+ or a combination of (relative) component-path and spool-name "<code>path</code>:<code>name</code>".
+ This allows one to spool on a component different from <span class="O">component</span> (usually
+ a relative path back to the component of the caller of the <span class="M"><a href="#spool">spool</a></span> operation).
 
 </div><div class="example">cs(this).spool({
     name: "foo",
@@ -1071,10 +1079,10 @@ component-local information and to communicate information to foreign components
 </div><ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="property">property</a></span>({
  <span class="F">name</span><span class="meta">:</span> <span class="T">String</span>,
- <span class="meta">[</span><span class="F">value</span><span class="meta">:</span> <span class="T">Object</span><span class="meta"> = </span>"undefined",<span class="meta">]</span>
- <span class="meta">[</span><span class="F">bubbling</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span>true,<span class="meta">]</span>
- <span class="meta">[</span><span class="F">targeting</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span>true,<span class="meta">]</span>
- <span class="meta">[</span><span class="F">returnowner</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span>false<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">value</span><span class="meta">:</span> <span class="T">Object</span><span class="meta"> = </span><code>undefined</code>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">bubbling</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span><code>true</code>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">targeting</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span><code>true</code>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">returnowner</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span><code>false</code><span class="meta">]</span>
  })<span class="meta">:</span> <span class="T">Object</span></div><div class="synopsis">
  <span class="O">component</span>.<span class="M">property</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>, <span class="P">value</span><span class="meta">:</span> <span class="T">Object</span>)<span class="meta">:</span> <span class="T">Object</span></div><div class="synopsis">
  <span class="O">component</span>.<span class="M">property</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Object</span>
@@ -1085,13 +1093,21 @@ component-local information and to communicate information to foreign components
  on the target component <span class="O">component</span> (resolving starts on parent component).
  If <span class="F">returnowner</span> is set to <span class="F">true</span> instead of the property value, the
  owning component is returned.
- Finally, properties can be scoped with a child component name: on each attempt
- to resolve the property, first the scoped variant is tried. This means,
- if a property was set with name "<code>bar@prop</code>" on component <code> /foo</code>,
- if you resolve the property with <code>cs("/foo/bar/baz", "prop")</code> you
- the value, but if you resolve the property with <code>cs("/foo/quux", "prop")</code> you
+ Finally, properties can be scoped with a child component name or even
+ a descendant component name path: on each attempt
+ to resolve the property, first the scoped variants are tried. This means,
+ if a property was set with name "<code>quux@bar</code>" on component <code> /foo</code>,
+ if you resolve the property with <code>cs("/foo/bar", "quux")</code> you
+ get the value, but if you resolve the property with <code>cs("/foo/baz", "quux")</code> you
  do not get the value. This allows you to set the same property with different
  values for different child components.
+ Additionally the scope can be a partial component path, too. 
+ If a property was set with name "<code>quux@bar/baz</code>" on component <code> /foo</code>,
+ if you resolve the property with <code>cs("/foo/bar/baz", "quux")</code> you
+ get the value, but if you resolve the property with <code>cs("/foo/bar/baz2", "quux")</code> you
+ do not get the value. This allows you for instance to skip so-called intermediate namespace-only
+ components.
+ Setting <span class="F">value</span> to "<code>null</code>" removes the property.
 
 </div><div class="example">cs(this).property("foo")
 </div></li></ul>
@@ -1101,7 +1117,7 @@ Sockets are a special form of component Properties with callback functions as th
 Views of child/descendant components into the View of a parent/ancestor component. In contrast to regular Properties,
 Sockets are never resolved directly on the target component. Instead they always start to resolve on the parent
 component because the sockets on the target component are intended for its child/ancestor components and not for the
-target component itself.
+target component itself. So, please remember to never plug a socket directly onto the target component!
 </div><ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="socket">socket</a></span>({
  <span class="meta">[</span><span class="F">name</span><span class="meta">:</span> <span class="T">String</span><span class="meta"> = </span>"default",<span class="meta">]</span>
@@ -1109,15 +1125,20 @@ target component itself.
  <span class="F">ctx</span><span class="meta">:</span> <span class="T">Object</span>,
  <span class="F">plug</span><span class="meta">:</span> <span class="T">Function</span>,
  <span class="F">unplug</span><span class="meta">:</span> <span class="T">Function</span>
- })</div><div class="synopsis">
+ <span class="meta">[</span>, <span class="F">spool</span><span class="meta">:</span> <span class="T">String</span><span class="meta">]</span>
+ })<span class="meta">:</span> <span class="T">Number</span></div><div class="synopsis">
  <span class="O">component</span>.<span class="M">socket</span>(<span class="P">ctx</span><span class="meta">:</span> <span class="T">Object</span>,
  <span class="P">plug</span><span class="meta">:</span> <span class="T">Function</span>,
- <span class="P">unplug</span><span class="meta">:</span> <span class="T">Function</span>)
+ <span class="P">unplug</span><span class="meta">:</span> <span class="T">Function</span>)<span class="meta">:</span> <span class="T">Number</span>
 </div><div class="desc"> Create a socket on <span class="O">component</span>, named <span class="F">name</span> and optionally
  scoped for the child component named <span class="F">scope</span>, where <span class="M"><a href="#plug">plug</a></span>()
  and <span class="M"><a href="#unplug">unplug</a></span>() calls on child/ancestor components execute
  the supplied <span class="F">plug</span>/<span class="F">unplug</span> functions with <span class="F">ctx</span> supplied as
  <code>this</code>.
+ The <span class="M"><a href="#socket">socket</a></span> method returns an id which uniquely identifies the socket.
+ Instead of having to manually release the socket later via <span class="M"><a href="#unsocket">unsocket</a></span>()
+ you can use the spool mechanism and spool the corresponding <span class="M"><a href="#unsocket">unsocket</a></span>()
+ operation via option <span class="F">spool</span>.
 
 </div><div class="example">var ui = $(...);
 cs(this).socket({
@@ -1127,11 +1148,20 @@ cs(this).socket({
 })
 </div></li></ul>
 <ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="unsocket">unsocket</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">Number</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">unsocket</span>(<span class="P">id</span><span class="meta">:</span> <span class="T">Number</span>)<span class="meta">:</span> <span class="T">Void</span>
+</div><div class="desc"> Destroy the socket identified by <span class="F">id</span>, previously created by a call to <span class="M"><a href="#socket">socket</a></span>().
+ This is usually done implicitly through the spooling mechanism.
+
+</div><div class="example">cs(this).unsocket(id)
+</div></li></ul>
+<ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="link">link</a></span>({
  <span class="meta">[</span><span class="F">name</span><span class="meta">:</span> <span class="T">String</span><span class="meta"> = </span>"default",<span class="meta">]</span>
  <span class="meta">[</span><span class="F">scope</span><span class="meta">:</span> <span class="T">Object</span><span class="meta"> = </span>null,<span class="meta">]</span>
  <span class="F">target</span><span class="meta">:</span> <span class="T">Object</span>,
  <span class="F">socket</span><span class="meta">:</span> <span class="T">String</span>
+ <span class="meta">[</span>, <span class="F">spool</span><span class="meta">:</span> <span class="T">String</span><span class="meta">]</span>
  })</div><div class="synopsis">
  <span class="O">component</span>.<span class="M">link</span>(<span class="P">target</span><span class="meta">:</span> <span class="T">Object</span>,
  <span class="P">socket</span><span class="meta">:</span> <span class="T">String</span>)
@@ -1142,16 +1172,28 @@ cs(this).socket({
  components to link their default socket (for the View below itself) to a
  particular socket of a parent component (because a View should be reusable
  and hence is not allowed to know the particular socket intended for it).
+ The <span class="M"><a href="#link">link</a></span> method returns an id which uniquely identifies the linked socket.
+ Instead of having to manually release the socket later via <span class="M"><a href="#unlink">unlink</a></span>()
+ you can use the spool mechanism and spool the corresponding <span class="M"><a href="#unlink">unlink</a></span>()
+ operation via option <span class="F">spool</span>.
 
 </div><div class="example">cs(this).link({ name: "default", target: this, socket: "menu1" })
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="unlink">unlink</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">Number</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">unlink</span>(<span class="P">id</span><span class="meta">:</span> <span class="T">Number</span>)<span class="meta">:</span> <span class="T">Void</span>
+</div><div class="desc"> Destroy the linked socket identified by <span class="F">id</span>, previously created by a call to <span class="M"><a href="#link">link</a></span>().
+ This is usually done implicitly through the spooling mechanism.
+
+</div><div class="example">cs(this).unlink(id)
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="plug">plug</a></span>({
  <span class="meta">[</span><span class="F">name</span><span class="meta">:</span> <span class="T">String</span><span class="meta"> = </span>"default",<span class="meta">]</span>
  <span class="F">object</span><span class="meta">:</span> <span class="T">Object</span>,
  <span class="meta">[</span><span class="F">spool</span><span class="meta">:</span> <span class="T">String</span><span class="meta">]</span>
- })<span class="meta">:</span> <span class="T">String</span></div><div class="synopsis">
- <span class="O">component</span>.<span class="M">plug</span>(<span class="P">object</span><span class="meta">:</span> <span class="T">Object</span>)<span class="meta">:</span> <span class="T">String</span>
+ })<span class="meta">:</span> <span class="T">Number</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">plug</span>(<span class="P">object</span><span class="meta">:</span> <span class="T">Object</span>)<span class="meta">:</span> <span class="T">Number</span>
 </div><div class="desc"> Plugs <span class="F">object</span> into the socket named <span class="F">name</span> provided by any
  parent/ancestor component of <span class="O">component</span>. Optionally spool the
  corresponding <span class="M"><a href="#unplug">unplug</a></span>() operation on spool <span class="F">spool</span> attached to <span class="O">component</span>.
@@ -1160,8 +1202,8 @@ cs(this).socket({
 </div><div class="example">cs(this).plug({ object: ui, spool: "materialized" })
 </div></li></ul>
 <ul>
-<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="unplug">unplug</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">String</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
- <span class="O">component</span>.<span class="M">unplug</span>(<span class="P">id</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Void</span>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="unplug">unplug</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">Number</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">unplug</span>(<span class="P">id</span><span class="meta">:</span> <span class="T">Number</span>)<span class="meta">:</span> <span class="T">Void</span>
 </div><div class="desc"> Unplugs the object previously plugged under <span class="F">id</span>.
  This is usually performed indirectly through the Spool mechanism.
 
@@ -1223,20 +1265,32 @@ displaying the Model information and storing events into it.
 cs(this).value("foo", "bar")
 </div></li></ul>
 <ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="touch">touch</a></span>({
+ <span class="F">name</span><span class="meta">:</span> <span class="T">String</span>,
+ })</div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">touch</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>)
+</div><div class="desc"> Touches the value of <span class="O">component</span>'s model element named <span class="F">name</span>,
+ without changing the value but with triggering all its "get" observers
+ (its "changed" observers are not triggered). This can be useful for
+ firing "set" observers manually.
+
+</div><div class="example">cs(this).touch("foo")
+</div></li></ul>
+<ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="observe">observe</a></span>({
  <span class="F">name</span><span class="meta">:</span> <span class="T">String</span>,
  <span class="F">func</span><span class="meta">:</span> <span class="T">Function</span>,
  <span class="meta">[</span><span class="F">touch</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span>false,<span class="meta">]</span>
  <span class="meta">[</span><span class="F">operation</span><span class="meta">:</span> <span class="T">String</span><span class="meta"> = </span>"set",<span class="meta">]</span>
  <span class="meta">[</span><span class="F">spool</span><span class="meta">:</span> <span class="T">String</span><span class="meta"> = </span>null<span class="meta">]</span>
- })<span class="meta">:</span> <span class="T">String</span></div><div class="synopsis">
+ })<span class="meta">:</span> <span class="T">Number</span></div><div class="synopsis">
  <span class="O">component</span>.<span class="M">observe</span>(<span class="F">name</span><span class="meta">:</span> <span class="T">String</span>,
- <span class="F">func</span><span class="meta">:</span> <span class="T">Function</span>)<span class="meta">:</span> <span class="T">String</span>
+ <span class="F">func</span><span class="meta">:</span> <span class="T">Function</span>)<span class="meta">:</span> <span class="T">Number</span>
 </div><div class="desc"> Observe the value of <span class="O">component</span>'s model element named <span class="F">name</span>
- for <span class="F">operation</span> operations (by default set/change operations).
+ for <span class="F">operation</span> operations (by default "set" operations).
  For "get" operations, the callback function <span class="F">func</span> has to be of
  signature <span class="F">func</span>(<span class="P">ev</span>: <span class="T">Event</span>, <span class="P">value</span>: <span class="T">Object</span>): <span class="T">Void</span>.
- For "set" operations, the callback function <span class="F">func</span> has to be of signature
+ For "set" and "changed" operations, the callback function <span class="F">func</span> has to be of signature
  <span class="F">func</span>(<span class="P">ev</span>: <span class="T">Event</span>, <span class="P">value-new</span>: <span class="T">Object</span>, <span class="P">value-old</span>: <span class="T">Object</span>): <span class="T">Void</span>.
  Both types of callbacks can override the value by using <span class="P">ev</span>.<span class="M"><a href="#result">result</a></span>(<span class="P">value</span>).
  The <span class="M"><a href="#observe">observe</a></span> method returns an id which uniquely identifies the observation.
@@ -1249,8 +1303,8 @@ cs(this).value("foo", "bar")
 })
 </div></li></ul>
 <ul>
-<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="unobserve">unobserve</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">String</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
- <span class="O">component</span>.<span class="M">unobserve</span>(<span class="P">id</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Void</span>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="unobserve">unobserve</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">Number</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">unobserve</span>(<span class="P">id</span><span class="meta">:</span> <span class="T">Number</span>)<span class="meta">:</span> <span class="T">Void</span>
 </div><div class="desc"> Release the observation identified by <span class="F">id</span>, previously acquired by a call to <span class="M"><a href="#observe">observe</a></span>().
  This is usually done implicitly through the spooling mechanism.
 
@@ -1294,27 +1348,25 @@ they provide various getter/setter methods:
  })<span class="meta">:</span> <span class="T">Number</span></div><div class="synopsis">
  <span class="O">component</span>.<span class="M">subscribe</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>,
  <span class="P">func</span><span class="meta">:</span> <span class="T">Function</span>,
- <span class="meta">[</span><span class="P">arg</span><span class="meta">:</span> <span class="T">Object</span>, ...<span class="meta">]</span>)<span class="meta">:</span> <span class="T">Number</span>
+ <span class="meta">[</span><span class="P">args</span><span class="meta">:</span> <span class="T">Object</span>, ...<span class="meta">]</span>)<span class="meta">:</span> <span class="T">Number</span>
 </div><div class="desc"> Subscribe to event <span class="F">name</span> (optionally sub-specifified via <span class="F">spec</span>)
  on component <span class="O">component</span> and
  execute callback <span class="F">func</span> as <span class="F">func</span><code>(</code><span class="P">ev</span><code>: </code><span class="T">Event</span>
- <code>, </code><span class="P">args</span><code>: </code><span class="T">Object</span><code>, ...,</code><span class="P">sargs</span><code>: </code><span class="T">Object</span><code>, ...)</code>
+ <code>, </code><span class="P">args</span><code>: </code><span class="T">Object</span><code>, ..., </code><span class="P">sargs</span><code>: </code><span class="T">Object</span><code>, ...)</code>
  once the event is dispatched to <span class="O">component</span> after it was published.
- Option <span class="F">ctx</span> allows you to give <code>this</code> a particular value for the
+ Option <span class="F">ctx</span> allows you to give "<code>this</code>" a particular value for the
  callback <span class="F">func</span>. Option <span class="F">args</span> allows you to pass additional
  parameters to <span class="F">func</span> (before those passed by <span class="M"><a href="#publish">publish</a></span>()).
  Option <span class="F">noevent</span> does not pass the <span class="P">ev</span>: <span class="T">Event</span> parameter to <span class="F">func</span>.
  By default an event is dispatched in the (mandatory) targeting and (optional) bubbling phases.
- Setting option <span class="F">bubbling</span> to <code>false</code> indicates that the event should
+ Setting option <span class="F">bubbling</span> to "<code>false</code>" indicates that the event should
  not be dispatched in the bubbling phase, too.
- Setting option <span class="F">capture</span> to <code>true</code> indicates that the event should
+ Setting option <span class="F">capture</span> to "<code>true</code>" indicates that the event should
  be dispatched in the capturing phase, too.
- Setting option <span class="F">spreading</span> to <code>true</code> indicates that the event should
+ Setting option <span class="F">spreading</span> to "<code>true</code>" indicates that the event should
  be dispatched in the spreading phase, too.
- Option <span class="F">exclusive</span> can be set to <code>true</code> for an exclusive subscription, i.e.,
+ Option <span class="F">exclusive</span> can be set to "<code>true</code>" for an exclusive subscription, i.e.,
  a subscription which prevents any subsequent subscriptions.
- Option <span class="F">spool</span> can be set to <code>true</code> to pass the origin component as the first
- argument to <span class="F">func</span>.
  The <span class="M"><a href="#subscribe">subscribe</a></span> method returns an id which uniquely identifies the subscription.
  Instead of having to manually release the subscription later via <span class="M"><a href="#unsubscribe">unsubscribe</a></span>()
  you can use the spool mechanism and spool the corresponding <span class="M"><a href="#unsubscribe">unsubscribe</a></span>()
@@ -1322,22 +1374,23 @@ they provide various getter/setter methods:
 
 </div><div class="example">cs(self).subscribe({
     name: "data-loaded",
+    spool: "prepared",
     func: function (ev, data) {
         ...
     }
 })
 </div></li></ul>
 <ul>
-<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="unsubscribe">unsubscribe</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">String</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
- <span class="O">component</span>.<span class="M">unsubscribe</span>(<span class="P">id</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Void</span>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="unsubscribe">unsubscribe</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">Number</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">unsubscribe</span>(<span class="P">id</span><span class="meta">:</span> <span class="T">Number</span>)<span class="meta">:</span> <span class="T">Void</span>
 </div><div class="desc"> Release the subscription identified by <span class="F">id</span>, previously acquired by a call to <span class="M"><a href="#subscribe">subscribe</a></span>().
  This is usually done implicitly through the spooling mechanism.
 
 </div><div class="example">cs(this).unsubscribe(id)
 </div></li></ul>
 <ul>
-<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="subscription">subscription</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">String</span> })<span class="meta">:</span> <span class="T">Boolean</span></div><div class="synopsis">
- <span class="O">component</span>.<span class="M">subscription</span>(<span class="P">id</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Boolean</span>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="subscription">subscription</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">Number</span> })<span class="meta">:</span> <span class="T">Boolean</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">subscription</span>(<span class="P">id</span><span class="meta">:</span> <span class="T">Number</span>)<span class="meta">:</span> <span class="T">Boolean</span>
 </div><div class="desc"> Checks whether the subscription identified by <span class="F">id</span> exists on <span class="O">component</span>.
 
 </div><div class="example">cs(this).subscription(id)
@@ -1393,16 +1446,16 @@ the functionality consumer <span class="M"><a href="#call">call</a></span>s the 
 
 </div></li></ul>
 <ul>
-<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="unregister">unregister</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">String</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
- <span class="O">component</span>.<span class="M">unregister</span>(<span class="P">id</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Void</span>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="unregister">unregister</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">Number</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">unregister</span>(<span class="P">id</span><span class="meta">:</span> <span class="T">Number</span>)<span class="meta">:</span> <span class="T">Void</span>
 </div><div class="desc"> Release the registration identified by <span class="F">id</span>, previously acquired by a call to <span class="M"><a href="#register">register</a></span>().
  This is usually done implicitly through the spooling mechanism.
 
 </div><div class="example">cs(this).unregister(id)
 </div></li></ul>
 <ul>
-<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="registration">registration</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">String</span> })<span class="meta">:</span> <span class="T">Boolean</span></div><div class="synopsis">
- <span class="O">component</span>.<span class="M">registration</span>(<span class="P">id</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Boolean</span>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="registration">registration</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">Number</span> })<span class="meta">:</span> <span class="T">Boolean</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">registration</span>(<span class="P">id</span><span class="meta">:</span> <span class="T">Number</span>)<span class="meta">:</span> <span class="T">Boolean</span>
 </div><div class="desc"> Checks whether the registration identified by <span class="F">id</span> exists on <span class="O">component</span>.
 
 </div><div class="example">cs(this).registration(id)
@@ -1469,8 +1522,8 @@ the multiple consumers have <span class="M"><a href="#latch">latch</a></span>ed 
 });
 </div></li></ul>
 <ul>
-<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="unlatch">unlatch</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">String</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
- <span class="O">component</span>.<span class="M">unlatch</span>(<span class="P">id</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Void</span>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="unlatch">unlatch</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">Number</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">unlatch</span>(<span class="P">id</span><span class="meta">:</span> <span class="T">Number</span>)<span class="meta">:</span> <span class="T">Void</span>
 </div><div class="desc"> Unlatch from the hook identified by <span class="F">id</span>, previously acquired by a call to <span class="M"><a href="#latch">latch</a></span>().
  This is usually done implicitly through the spooling mechanism.
 
@@ -1529,10 +1582,10 @@ the multiple consumers have <span class="M"><a href="#latch">latch</a></span>ed 
 <li><a href="#property">property</a></li></ul>
 <h2><a href="#sockets">Sockets</a></h2>
 <ul>
-<li><a href="#socket">socket</a></li><li><a href="#link">link</a></li><li><a href="#plug">plug</a></li><li><a href="#unplug">unplug</a></li></ul>
+<li><a href="#socket">socket</a></li><li><a href="#unsocket">unsocket</a></li><li><a href="#link">link</a></li><li><a href="#unlink">unlink</a></li><li><a href="#plug">plug</a></li><li><a href="#unplug">unplug</a></li></ul>
 <h2><a href="#models">Models</a></h2>
 <ul>
-<li><a href="#model">model</a></li><li><a href="#value">value</a></li><li><a href="#observe">observe</a></li><li><a href="#unobserve">unobserve</a></li></ul>
+<li><a href="#model">model</a></li><li><a href="#value">value</a></li><li><a href="#touch">touch</a></li><li><a href="#observe">observe</a></li><li><a href="#unobserve">unobserve</a></li></ul>
 <h2><a href="#events">Events</a></h2>
 <ul>
 <li><a href="#subscribe">subscribe</a></li><li><a href="#unsubscribe">unsubscribe</a></li><li><a href="#subscription">subscription</a></li><li><a href="#publish">publish</a></li></ul>

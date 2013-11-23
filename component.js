@@ -89,8 +89,8 @@
     $cs.version = {
         major: 0,
         minor: 9,
-        micro: 8,
-        date:  20130306
+        micro: 9,
+        date:  20130510
     };
 
 
@@ -234,6 +234,16 @@
                 type = _cs.annotation(obj, "type");
         }
         return type;
+    };
+
+    /*  utility function: retrieve keys of object  */
+    _cs.keysof = function (obj) {
+        var keys = [];
+        for (var key in obj) {
+            if (obj.hasOwnProperty(key))
+                keys.push(key);
+        }
+        return keys;
     };
 
     /*  utility function: JSON encoding of object  */
@@ -908,7 +918,7 @@
 
         /*  validate custom JavaScript type  */
         exec_class: function (value, node) {
-            /*jshint evil:true */
+            /* jshint evil:true */
             return (   typeof value === "object" &&
                       (   Object.prototype.toString.call(value) === "[object " + node.name + "]") ||
                           eval("value instanceof " + node.name)                                  );
@@ -926,13 +936,13 @@
     /*  utility function: flexible parameter handling  */
     $cs.params = function (func_name, func_args, spec) {
         /*  provide parameter processing hook  */
-        _cs.hook("ComponentJS:params:" + func_name, "none", { args: func_args, spec: spec });
+        _cs.hook("ComponentJS:params:" + func_name + ":enter", "none", { args: func_args, spec: spec });
 
         /*  start with a fresh parameter object  */
         var params = {};
 
-        /*  1. determine number of positional parameters,
-            2. determine number of required parameters,
+        /*  1. determine number of total    positional parameters,
+            2. determine number of required positional parameters,
             3. set default values  */
         var positional = 0;
         var required   = 0;
@@ -1008,7 +1018,7 @@
                 if (_cs.isown(spec, name)) {
                     if (   typeof spec[name].req !== "undefined" &&
                            spec[name].req &&
-                           args[name] === "undefined")
+                           typeof args[name] === "undefined")
                         throw _cs.exception(func_name, "required parameter \"" + name + "\" missing");
                 }
             }
@@ -1033,6 +1043,9 @@
                 params[pos2name["..."]] = args;
             }
         }
+
+        /*  provide parameter processing hook  */
+        _cs.hook("ComponentJS:params:" + func_name + ":leave", "none", { args: func_args, spec: spec, params: params });
 
         /*  return prepared parameter object  */
         return params;
@@ -1169,9 +1182,9 @@
     $cs.attribute = function () {
         /*  determine parameters  */
         var params = $cs.params("attribute", arguments, {
-            name:     { pos: 0, def: null, req: true  },
-            def:      { pos: 1, def: null, req: true  },
-            validate: { pos: 2, def: null             }
+            name:     { pos: 0, req: true  },
+            def:      { pos: 1, req: true  },
+            validate: { pos: 2, def: null  }
         });
 
         /*  return closure-based getter/setter method  */
@@ -1315,8 +1328,17 @@
         if (typeof _cs.hooks[name] !== "undefined") {
             if (args === null)
                 args = _cs.slice(arguments, 2);
-            _cs.foreach(_cs.hooks[name], function (s) {
-                var r = s.cb.apply({ args: s.args, _cs: _cs, $cs: $cs }, args);
+            _cs.foreach(_cs.hooks[name], function (l) {
+                /*  call latched callback  */
+                var r = l.cb.apply({
+                    args:   l.args,                 /*  latch arguments  */
+                    result: result,                 /*  current result   */
+                    hooks:  _cs.hooks[name].length, /*  total number of hooks latched  */
+                    _cs:    _cs,                    /*  internal ComponentJS API  */
+                    $cs:    $cs                     /*  external ComponentJS API  */
+                },  args);                          /*  hook arguments  */
+
+                /*  process/merge results  */
                 result = _cs.hook_proc[proc].step.call(null, result, r);
             });
         }
@@ -1350,19 +1372,19 @@
             /*  initialize all mixin traits and this class (or trait)  */
             var init = function (obj, clz, arg, exec_cons) {
                 /*  depth-first visit of parent class  */
-                if (_cs.annotation(clz, "extend") !== null)
-                    arguments.callee(obj, _cs.annotation(clz, "extend"), arg, false); /* RECURSION */
+                var extend = _cs.annotation(clz, "extend");
+                if (extend !== null)
+                    arguments.callee(obj, extend, arg, false); /* RECURSION */
 
                 /*  depth-first visit of mixin traits  */
-                if (_cs.annotation(clz, "mixin") !== null) {
-                    var mixin = _cs.annotation(clz, "mixin");
+                var mixin = _cs.annotation(clz, "mixin");
+                if (mixin !== null)
                     for (var i = 0; i < mixin.length; i++)
                         arguments.callee(obj, mixin[i], arg, true); /* RECURSION */
-                }
 
                 /*  establish clones of all own dynamic fields  */
-                if (_cs.annotation(clz, "dynamics") !== null) {
-                    var dynamics = _cs.annotation(clz, "dynamics");
+                var dynamics = _cs.annotation(clz, "dynamics");
+                if (dynamics !== null) {
                     for (var field in dynamics) {
                         if (_cs.isown(dynamics, field)) {
                             if (   _cs.istypeof(dynamics[field]) !== "null" &&
@@ -1383,12 +1405,14 @@
                     but a trait intentionally gets no constructor parameters
                     passed-through (as it cannot know where it gets mixed
                     into, so it cannot know what to do with the parameters)  */
-                if (exec_cons && _cs.annotation(clz, "cons") !== null) {
+                if (exec_cons) {
                     var cons = _cs.annotation(clz, "cons");
-                    if (_cs.istypeof(clz) === "clazz")
-                        cons.apply(obj, arg);
-                    else
-                        cons.call(obj);
+                    if (cons !== null) {
+                        if (_cs.istypeof(clz) === "clazz")
+                            cons.apply(obj, arg);
+                        else
+                            cons.call(obj);
+                    }
                 }
             };
             init(obj, clz, arg, true);
@@ -1444,24 +1468,23 @@
 
         /*  remember user-supplied constructor function
             (and provide fallback implementation)  */
+        var cons = $cs.nop;
         if (_cs.isdefined(params.cons))
-            _cs.annotation(clazz, "cons", params.cons);
+            cons = params.cons;
         else if (_cs.isdefined(params.extend))
-            _cs.annotation(clazz, "cons", function () { this.base(); });
-        else
-            _cs.annotation(clazz, "cons", $cs.nop);
+            cons = function () { this.base(); };
+        _cs.annotation(clazz, "cons", cons);
 
-        /*  provide name for underlying implementation of "base()"  */
-        _cs.annotation(_cs.annotation(clazz, "cons"), "name", "cons");
+        /*  provide name for underlying implementation of "base()" for constructor  */
+        _cs.annotation(cons, "name", "cons");
         if (_cs.isdefined(params.extend))
-            _cs.annotation(_cs.annotation(clazz, "cons"), "base",
-                _cs.annotation(params.extend, "cons"));
+            _cs.annotation(cons, "base", _cs.annotation(params.extend, "cons"));
 
         /*  remember user-supplied setup function  */
         if (_cs.isdefined(params.setup))
             _cs.annotation(clazz, "setup", params.setup);
 
-        /*  extend class with own poperties and methods  */
+        /*  extend class with own properties and methods  */
         if (_cs.isdefined(params.statics))
             _cs.extend(clazz, params.statics);
         if (_cs.isdefined(params.protos))
@@ -1472,7 +1495,9 @@
             _cs.annotation(clazz, "dynamics", params.dynamics);
 
         /*  internal utility method for resolving an annotation on a
-            possibly cloned function (just for the following "base" method)  */
+            possibly cloned function (just for the following "base" method).
+            Notice: for a cloned function the clone is a wrapper annotated
+            with the annoation "clone" set to "true"!  */
         var resolve = function (func, name) {
             var result = _cs.annotation(func, name);
             while (result === null && _cs.annotation(func.caller, "clone") === true) {
@@ -1729,7 +1754,7 @@
                     /*  retrieve value  */
                     result = this.__config[name];
                 }
-                else if (arguments.length === 2 && typeof value !== "undefined") {
+                else if (arguments.length === 2 && value !== null) {
                     /*  set value  */
                     result = this.__config[name];
                     this.__config[name] = value;
@@ -1757,10 +1782,10 @@
             spool: function () {
                 /*  determine parameters  */
                 var params = $cs.params("spool", arguments, {
-                    name:  { pos: 0,                   req: true },
-                    ctx:   { pos: 1,     def: this               },
-                    func:  { pos: 2,     def: $cs.nop, req: true },
-                    args:  { pos: "...", def: []                 }
+                    name:  { pos: 0,     req: true },
+                    ctx:   { pos: 1,     def: this },
+                    func:  { pos: 2,     req: true },
+                    args:  { pos: "...", def: []   }
                 });
 
                 /*  sanity check parameters  */
@@ -1814,6 +1839,20 @@
         }
     });
 
+    /*  internal utility function: split "[path:]name"
+        specification into a component object and a spool name  */
+    _cs.spool_spec_parse = function (comp, spec) {
+        var info = {};
+        info.comp = comp;
+        info.name = spec;
+        var m = info.name.match(/^([^:]+):(.+)$/);
+        if (m !== null) {
+            info.comp = $cs(comp, m[1]);
+            info.name = m[2];
+        }
+        return info;
+    };
+
     /*  generic pattern: tree property  */
     $cs.pattern.property = $cs.trait({
         mixin: [
@@ -1825,11 +1864,11 @@
             property: function () {
                 /*  determine parameters  */
                 var params = $cs.params("property", arguments, {
-                    name:        { pos: 0, def: null,     req: true },
-                    value:       { pos: 1, def: undefined           },
-                    bubbling:    {         def: true                },
-                    targeting:   {         def: true                },
-                    returnowner: {         def: false               }
+                    name:        { pos: 0, req: true      },
+                    value:       { pos: 1, def: undefined },
+                    bubbling:    {         def: true      },
+                    targeting:   {         def: true      },
+                    returnowner: {         def: false     }
                 });
 
                 /*  sanity check usage  */
@@ -1842,21 +1881,26 @@
                 /*  get old configuration value
                     (on current node or on any parent node)  */
                 var v;
-                for (var scope = null, node = this;
+                for (var scope = [], node = this;
                      node !== null;
-                     scope = node.name(), node = node.parent()) {
+                     scope.unshift(node.name()), node = node.parent()) {
 
                     /*  optionally skip the target component
                         (usually if a property on the parent components
                         should be resolved only, but the scoping for the
                         target component should be still taken into account
                         on the parent) */
-                    if (scope === null && !params.targeting)
+                    if (scope.length === 0 && !params.targeting)
                         continue;
 
                     /*  first try: child-scoped property  */
-                    if (scope !== null) {
-                        v = node.cfg("ComponentJS:property:" + params.name + "@" + scope);
+                    if (scope.length > 0) {
+                        for (var i = scope.length - 1; i >= 0; i--) {
+                            var probePath = scope.slice(0, i + 1).join("/");
+                            v = node.cfg("ComponentJS:property:" + params.name + "@" + probePath);
+                            if (typeof v !== "undefined")
+                                break;
+                        }
                         if (typeof v !== "undefined") {
                             result = (params.returnowner ? node : v);
                             break;
@@ -1976,11 +2020,11 @@
             listen: function () {
                 /*  determine parameters  */
                 var params = $cs.params("listen", arguments, {
-                    name:    { pos: 0,     def: null,    req: true },
-                    ctx:     { pos: 1,     def: this               },
-                    func:    { pos: 2,     def: $cs.nop, req: true },
-                    args:    { pos: "...", def: []                 },
-                    spec:    {             def: null               } /* customized matching */
+                    name:    { pos: 0,     req: true },
+                    ctx:     { pos: 1,     def: this },
+                    func:    { pos: 2,     req: true },
+                    args:    { pos: "...", def: []   },
+                    spec:    {             def: null } /* customized matching */
                 });
 
                 /*  attach listener information  */
@@ -1993,7 +2037,7 @@
             listening: function () {
                 /*  determine parameters  */
                 var params = $cs.params("listening", arguments, {
-                    id: { pos: 0, def: null, req: true }
+                    id: { pos: 0, req: true }
                 });
 
                 /*  check whether listener is attached  */
@@ -2004,7 +2048,7 @@
             unlisten: function () {
                 /*  determine parameters  */
                 var params = $cs.params("unlisten", arguments, {
-                    id: { pos: 0, def: null, req: true }
+                    id: { pos: 0, req: true }
                 });
 
                 /*  detach parameters from component  */
@@ -2019,7 +2063,7 @@
             notify: function () {
                 /*  determine parameters  */
                 var params = $cs.params("notify", arguments, {
-                    name:    { pos: 0,     def: null, req: true                               },
+                    name:    { pos: 0,     req: true                                          },
                     args:    { pos: "...", def: []                                            },
                     matches: {             def: function (p, l) { return p.name === l.name; } } /* customized matching */
                 });
@@ -2060,16 +2104,16 @@
     $cs.event = function () {
         /*  determine parameters  */
         var params = $cs.params("event", arguments, {
-            name:        { pos: 0,     def: null, req: true  },
-            spec:        {             def: {}               },
-            target:      { pos: 1,     def: null, req: true  },
-            propagation: { pos: 2,     def: true             },
-            processing:  { pos: 3,     def: true             },
-            dispatched:  { pos: 4,     def: false            },
-            decline:     { pos: 5,     def: false            },
-            state:       { pos: 6,     def: "targeting"      },
-            result:      { pos: 7,     def: undefined        },
-            async:       { pos: 8,     def: false            }
+            name:        { pos: 0,     req: true        },
+            spec:        {             def: {}          },
+            target:      { pos: 1,     req: true        },
+            propagation: { pos: 2,     def: true        },
+            processing:  { pos: 3,     def: true        },
+            dispatched:  { pos: 4,     def: false       },
+            decline:     { pos: 5,     def: false       },
+            state:       { pos: 6,     def: "targeting" },
+            result:      { pos: 7,     def: undefined   },
+            async:       { pos: 8,     def: false       }
         });
 
         /*  create new event  */
@@ -2100,17 +2144,17 @@
             subscribe: function () {
                 /*  determine parameters  */
                 var params = $cs.params("subscribe", arguments, {
-                    name:      { pos: 0,     def: null,    req: true },
-                    spec:      {             def: {}                 },
-                    ctx:       {             def: this               },
-                    func:      { pos: 1,     def: $cs.nop, req: true },
-                    args:      { pos: "...", def: []                 },
-                    capturing: {             def: false              },
-                    spreading: {             def: false              },
-                    bubbling:  {             def: true               },
-                    noevent:   {             def: false              },
-                    exclusive: {             def: false              },
-                    spool:     {             def: null               }
+                    name:      { pos: 0,     req: true  },
+                    spec:      {             def: {}    },
+                    ctx:       {             def: this  },
+                    func:      { pos: 1,     req: true  },
+                    args:      { pos: "...", def: []    },
+                    capturing: {             def: false },
+                    spreading: {             def: false },
+                    bubbling:  {             def: true  },
+                    noevent:   {             def: false },
+                    exclusive: {             def: false },
+                    spool:     {             def: null  }
                 });
 
                 /*  honor exclusive request  */
@@ -2125,8 +2169,10 @@
                 this.__subscription[id] = params;
 
                 /*  optionally spool reverse operation  */
-                if (params.spool !== null)
-                    this.spool(params.spool, this, "unsubscribe", id);
+                if (params.spool !== null) {
+                    var info = _cs.spool_spec_parse(this, params.spool);
+                    info.comp.spool(info.name, this, "unsubscribe", id);
+                }
 
                 return id;
             },
@@ -2160,14 +2206,15 @@
             _subscriptions: function () {
                 /*  determine parameters  */
                 var params = $cs.params("subscriptions", arguments, {
-                    name:  { pos: 0, def: null, req: true },
-                    spec:  { pos: 1, def: {}              }
+                    name:  { pos: 0, req: true },
+                    spec:  { pos: 1, def: {}   }
                 });
 
                 /*  make an event for matching only  */
                 var ev = $cs.event({
-                    name: params.name,
-                    spec: params.spec
+                    name:   params.name,
+                    spec:   params.spec,
+                    target: $cs.nop
                 });
 
                 /*  find and return all matching subscriptions  */
@@ -2189,7 +2236,7 @@
 
                 /*  determine parameters  */
                 var params = $cs.params("publish", arguments, {
-                    name:         { pos: 0,     def: null, req: true },
+                    name:         { pos: 0,     req: true            },
                     spec:         {             def: {}              },
                     async:        {             def: false           },
                     capturing:    {             def: true            },
@@ -2268,18 +2315,28 @@
                                    (state === "spreading" && s.spreading) ||
                                    (state === "bubbling"  && s.bubbling )) &&
                                ev.matches(s.name, s.spec)                 ) {
+
+                            /*  verbosity  */
                             if (!params.silent)
                                 $cs.debug(1, "event: " + comp.path("/") + ": dispatch on " + state);
+
+                            /*  further annotate event object  */
                             ev.state(state);
                             ev.decline(false);
+
+                            /*  call subscription method  */
                             var args = _cs.concat(
                                 s.noevent ? [] : [ ev ],
                                 s.args,
                                 params.args
                             );
                             var result = s.func.apply(s.ctx, args);
+
+                            /*  process return value  */
                             if (s.noevent && _cs.isdefined(result))
                                 ev.result(params.resultstep(ev.result(), result));
+
+                            /*  control the further dispatching  */
                             if (!ev.decline()) {
                                 ev.dispatched(true);
                                 if (params.firstonly)
@@ -2357,8 +2414,10 @@
                 /*  perform event publishing,
                     either asynchronous or synchronous  */
                 if (ev.async())
-                    /*global setTimeout:false */
-                    setTimeout(function () { event_dispatch_all(ev, self, params); }, 0);
+                    /* global setTimeout:false */
+                    setTimeout(_cs.hook("ComponentJS:settimeout:func", "pass", function () {
+                        event_dispatch_all(ev, self, params);
+                    }), 0);
                 else
                     event_dispatch_all(ev, self, params);
 
@@ -2414,12 +2473,12 @@
     $cs.command = function () {
         /*  determine parameters  */
         var params = $cs.params("command", arguments, {
-            ctx:      {             def: null             },
-            func:     { pos: 0,     def: null, req: true  },
-            args:     { pos: "...", def: []               },
-            async:    {             def: false            },
-            enabled:  {             def: true             },
-            wrap:     {             def: false            }
+            ctx:      {             def: null  },
+            func:     { pos: 0,     req: true  },
+            args:     { pos: "...", def: []    },
+            async:    {             def: false },
+            enabled:  {             def: true  },
+            wrap:     {             def: false }
         });
 
         /*  create new command  */
@@ -2515,8 +2574,8 @@
 
     /*  spawn all progression runs (asynchronously)  */
     _cs.state_progression = function () {
-        /*global setTimeout:false */
-        setTimeout(function () {
+        /* global setTimeout:false */
+        setTimeout(_cs.hook("ComponentJS:settimeout:func", "pass", function () {
             /*  try to process the transition requests  */
             var remove = [];
             for (var cid in _cs.state_requests) {
@@ -2534,14 +2593,14 @@
 
             /*  give plugins a chance to react  */
             _cs.hook("ComponentJS:state-change", "none");
-        }, 0);
+        }), 0);
     };
 
     /*  execute single progression run  */
     _cs.state_progression_single = function (req) {
         var done = false;
         _cs.state_progression_run(req.comp, req.state);
-        if (req.comp.state() === req.state) {
+        if (_cs.states[req.comp.__state].state === req.state) {
             if (typeof req.callback === "function")
                 req.callback.call(req.comp, req.state);
             done = true;
@@ -2574,7 +2633,7 @@
                 /*  mandatory transition parent component to higher state first  */
                 if (comp.parent() !== null) {
                     if (comp.parent().state_compare(state) < 0) {
-                        _cs.state_progression_run(comp.parent(), state, "upward");
+                        _cs.state_progression_run(comp.parent(), state, "upward"); /*  RECURSION  */
                         if (comp.parent().state_compare(state) < 0) {
                             $cs.debug(1,
                                 "state: " + comp.path("/") + ": transition (increase) " +
@@ -2641,7 +2700,7 @@
                         if (children[i].state_compare(state) < 0) {
                             if (   children[i].state_auto_increase() ||
                                    children[i].property("ComponentJS:state-auto-increase") === true) {
-                                _cs.state_progression_run(children[i], state, "downward");
+                                _cs.state_progression_run(children[i], state, "downward"); /*  RECURSION  */
                                 if (children[i].state_compare(state) < 0) {
                                     /*  enqueue state transition for child  */
                                     _cs.state_requests[children[i].id()] =
@@ -2667,7 +2726,7 @@
                 children = comp.children();
                 for (i = 0; i < children.length; i++) {
                     if (children[i].state_compare(state_lower) > 0) {
-                        _cs.state_progression_run(children[i], state_lower, "downward");
+                        _cs.state_progression_run(children[i], state_lower, "downward"); /*  RECURSION  */
                         if (children[i].state_compare(state_lower) > 0) {
                             $cs.debug(1,
                                 "state: " + comp.path("/") + ": transition (decrease) " +
@@ -2733,7 +2792,7 @@
                         if (comp.parent().state_compare(state_lower) > 0) {
                             if (   comp.parent().state_auto_decrease() ||
                                    comp.parent().property("ComponentJS:state-auto-decrease") === true) {
-                                _cs.state_progression_run(comp.parent(), state_lower, "upward");
+                                _cs.state_progression_run(comp.parent(), state_lower, "upward"); /*  RECURSION  */
                                 if (comp.parent().state_compare(state_lower) > 0) {
                                     /*  enqueue state transition for parent  */
                                     _cs.state_requests[comp.parent().id()] =
@@ -2889,15 +2948,15 @@
             register: function () {
                 /*  determine parameters  */
                 var params = $cs.params("register", arguments, {
-                    name:      { pos: 0,     def: null,    req: true },
-                    ctx:       {             def: this               },
-                    func:      { pos: 1,     def: $cs.nop, req: true },
-                    args:      { pos: "...", def: []                 },
-                    async:     {             def: false              },
-                    spool:     {             def: null               },
-                    capturing: {             def: false              },
-                    spreading: {             def: false              },
-                    bubbling:  {             def: true               }
+                    name:      { pos: 0,     req: true  },
+                    ctx:       {             def: this  },
+                    func:      { pos: 1,     req: true  },
+                    args:      { pos: "...", def: []    },
+                    async:     {             def: false },
+                    spool:     {             def: null  },
+                    capturing: {             def: false },
+                    spreading: {             def: false },
+                    bubbling:  {             def: true  }
                 });
 
                 /*  create command object to wrap service  */
@@ -2939,8 +2998,10 @@
                 });
 
                 /*  optionally spool reverse operation  */
-                if (params.spool !== null)
-                    this.spool(params.spool, this, "unregister", id);
+                if (params.spool !== null) {
+                    var info = _cs.spool_spec_parse(this, params.spool);
+                    info.comp.spool(info.name, this, "unregister", id);
+                }
 
                 return id;
             },
@@ -2972,8 +3033,8 @@
             callable: function () {
                 /*  determine parameters  */
                 var params = $cs.params("callable", arguments, {
-                    name:  { pos: 0, def: null,      req: true },
-                    value: { pos: 1, def: undefined            }
+                    name:  { pos: 0, req: true      },
+                    value: { pos: 1, def: undefined }
                 });
 
                 /*  find service command  */
@@ -2990,11 +3051,11 @@
             call: function () {
                 /*  determine parameters  */
                 var params = $cs.params("call", arguments, {
-                    name:      { pos: 0,     def: null,  req: true },
-                    args:      { pos: "...", def: []               },
-                    capturing: {             def: false            },
-                    spreading: {             def: false            },
-                    bubbling:  {             def: true             }
+                    name:      { pos: 0,     req: true   },
+                    args:      { pos: "...", def: []     },
+                    capturing: {             def: false  },
+                    spreading: {             def: false  },
+                    bubbling:  {             def: true   }
                 });
 
                 /*  dispatch service event onto target component  */
@@ -3093,6 +3154,7 @@
             $cs.pattern.property
         ],
         dynamics: {
+            __sockets: {},
             __plugs: {}
         },
         protos: {
@@ -3100,11 +3162,12 @@
             socket: function () {
                 /*  determine parameters  */
                 var params = $cs.params("socket", arguments, {
-                    name:   {         def: "default"       },
-                    scope:  {         def: null            },
-                    ctx:    { pos: 0, def: null, req: true },
-                    plug:   { pos: 1, def: null, req: true },
-                    unplug: { pos: 2, def: null, req: true }
+                    name:   {         def: "default" },
+                    scope:  {         def: null      },
+                    ctx:    { pos: 0, req: true      },
+                    plug:   { pos: 1, req: true      },
+                    unplug: { pos: 2, req: true      },
+                    spool:  {         def: null      }
                 });
 
                 /*  sanity check parameters  */
@@ -3126,6 +3189,38 @@
                 if (params.scope !== null)
                     name += "@" + params.scope;
                 $cs(this).property(name, params);
+
+                /*  remember socket under an id  */
+                var id = _cs.cid();
+                this.__sockets[id] = name;
+
+                /*  optionally spool reverse operation  */
+                if (params.spool !== null) {
+                    var info = _cs.spool_spec_parse(this, params.spool);
+                    info.comp.spool(info.name, this, "unsocket", id);
+                }
+
+                return id;
+            },
+
+            /*  destroy a socket  */
+            unsocket: function () {
+                /*  determine parameters  */
+                var params = $cs.params("unsocket", arguments, {
+                    id: { pos: 0, req: true }
+                });
+
+                /*  remove  parameters from component  */
+                if (typeof this.__sockets[params.id] === "undefined")
+                    throw _cs.exception("unsocket", "socket not found");
+
+                /*  remove corresponding property  */
+                var name = this.__sockets[params.id];
+                $cs(this).property(name, null);
+
+                /*  remove socket information  */
+                delete this.__sockets[params.id];
+                return;
             },
 
             /*  create a linking/pass-through socket  */
@@ -3135,14 +3230,16 @@
                     name:   {         def: "default" },
                     scope:  {         def: null      },
                     target: { pos: 0, req: true      },
-                    socket: { pos: 1, req: true      }
+                    socket: { pos: 1, req: true      },
+                    spool:  {         def: null      }
                 });
 
                 /*  create a socket and pass-through the
                     plug/unplug operations to the target  */
-                this.socket({
+                return this.socket({
                     name:   params.name,
                     scope:  params.scope,
+                    spool:  params.spool,
                     ctx:    {},
                     plug:   function (obj) {
                         var id = _cs.annotation(obj, "link");
@@ -3164,13 +3261,23 @@
                 });
             },
 
+            /*  destroy a link  */
+            unlink: function () {
+                /*  determine parameters  */
+                var params = $cs.params("unlink", arguments, {
+                    id: { pos: 0, req: true }
+                });
+
+                return this.unsocket(params.id);
+            },
+
             /*  plug into a defined socket  */
             plug: function () {
                 /*  determine parameters  */
                 var params = $cs.params("plug", arguments, {
-                    name:     {         def: "default"           },
-                    object:   { pos: 0,                req: true },
-                    spool:    {         def: null                }
+                    name:     {         def: "default" },
+                    object:   { pos: 0, req: true      },
+                    spool:    {         def: null      }
                 });
 
                 /*  remember plug operation  */
@@ -3181,8 +3288,10 @@
                 _cs.plugger("plug", this, params.name, params.object);
 
                 /*  optionally spool reverse operation  */
-                if (params.spool !== null)
-                    this.spool(params.spool, this, "unplug", id);
+                if (params.spool !== null) {
+                    var info = _cs.spool_spec_parse(this, params.spool);
+                    info.comp.spool(info.name, this, "unplug", id);
+                }
 
                 return id;
             },
@@ -3249,11 +3358,11 @@
             latch: function () {
                 /*  determine parameters  */
                 var params = $cs.params("latch", arguments, {
-                    name:    { pos: 0,     def: null,    req: true },
-                    ctx:     {             def: this               },
-                    func:    { pos: 1,     def: $cs.nop, req: true },
-                    args:    { pos: "...", def: []                 },
-                    spool:   {             def: null               }
+                    name:    { pos: 0,     req: true },
+                    ctx:     {             def: this },
+                    func:    { pos: 1,     req: true },
+                    args:    { pos: "...", def: []   },
+                    spool:   {             def: null }
                 });
 
                 /*  subscribe to hook event  */
@@ -3266,8 +3375,10 @@
                 });
 
                 /*  optionally spool reverse operation  */
-                if (params.spool !== null)
-                    this.spool(params.spool, this, "unlatch", id);
+                if (params.spool !== null) {
+                    var info = _cs.spool_spec_parse(this, params.spool);
+                    info.comp.spool(info.name, this, "unlatch", id);
+                }
 
                 return id;
             },
@@ -3287,11 +3398,11 @@
             hook: function () {
                 /*  determine parameters  */
                 var params = $cs.params("hook", arguments, {
-                    name:   { pos: 0,     def: null,    req: true },
-                    proc:   { pos: 1,     def: "none",
+                    name:   { pos: 0, req: true },
+                    proc:   { pos: 1, def: "none",
                               valid: function (x) {
                                   return _cs.isdefined(_cs.hook_proc[x]); } },
-                    args:   { pos: "...", def: []                 }
+                    args:   { pos: "...", def: [] }
                 });
 
                 /*  dispatch hook event onto target component  */
@@ -3421,10 +3532,19 @@
     $cs.pattern.model = $cs.trait({
         protos: {
             /*  define model  */
-            model: function (model) {
-                var name;
+            model: function () {
+                /*  determine parameters  */
+                var params = $cs.params("model", arguments, {
+                    model: { pos: 0, def: null }
+                });
+
+                /*  simplify further processing  */
+                var model = params.model;
+                if (model === null)
+                    model = undefined;
 
                 /*  sanity check model  */
+                var name;
                 if (_cs.isdefined(model)) {
                     for (name in model) {
                         if (typeof model[name].value === "undefined")
@@ -3450,10 +3570,12 @@
                 /*  try to load stored model values  */
                 var store = this.store("model");
                 if (store !== null) {
-                    for (name in model) {
-                        if (model[name].store) {
-                            if (_cs.isdefined(store[name]))
-                                model[name].value = store[name];
+                    if (_cs.isdefined(model)) {
+                        for (name in model) {
+                            if (model[name].store) {
+                                if (_cs.isdefined(store[name]))
+                                    model[name].value = store[name];
+                            }
                         }
                     }
                 }
@@ -3497,10 +3619,10 @@
             value: function () {
                 /*  determine parameters  */
                 var params = $cs.params("value", arguments, {
-                    name:        { pos: 0, def: null,     req: true },
-                    value:       { pos: 1, def: undefined           },
-                    force:       { pos: 2, def: false               },
-                    returnowner: {         def: false               }
+                    name:        { pos: 0, req: true      },
+                    value:       { pos: 1, def: undefined },
+                    force:       { pos: 2, def: false     },
+                    returnowner: {         def: false     }
                 });
 
                 /*  determine component owning model with requested value  */
@@ -3601,7 +3723,7 @@
                                 capturing: false,
                                 spreading: false,
                                 bubbling:  false,
-                                async:     false
+                                async:     true
                             });
                         }
                     }
@@ -3668,8 +3790,10 @@
                 owner.property("ComponentJS:model:subscribers:" + params.operation, true);
 
                 /*  optionally spool reverse operation  */
-                if (params.spool !== null)
-                    this.spool(params.spool, this, "unobserve", id);
+                if (params.spool !== null) {
+                    var info = _cs.spool_spec_parse(this, params.spool);
+                    info.comp.spool(info.name, this, "unobserve", id);
+                }
 
                 /*  if requested, touch the model value once (for an initial observer run)  */
                 if (params.touch)
@@ -3979,7 +4103,7 @@
         /*  sanity check environment  */
         if (!_cs.bootstrapped) {
             /*  give warning but still be backward compatible  */
-            /*global alert:false */
+            /* global alert:false */
             alert("WARNING: ComponentJS still not bootstrapped " +
                 "(please call \"bootstrap\" method before first \"create\" method call!)");
             $cs.bootstrap();
@@ -4205,11 +4329,11 @@
 
         /*  determine parameters  */
         var params = $cs.params("transition", arguments, {
-            target: { pos: 0, def: null, req: true },
-            enter:  { pos: 1, def: null, req: true },
-            leave:  { pos: 2, def: null, req: true },
-            color:  { pos: 3, def: null, req: true },
-            source: {         def: null            }
+            target: { pos: 0, req: true      },
+            enter:  { pos: 1, req: true      },
+            leave:  { pos: 2, req: true      },
+            color:  { pos: 3, def: "#000000" },
+            source: {         def: null      }
         });
 
         /*  add new state  */
@@ -4291,10 +4415,10 @@
 
 
 })(
-    /*global window:false */
-    /*global global:false */
-    /*global exports:false */
-    /*global define:false */
+    /* global window:false */
+    /* global global:false */
+    /* global exports:false */
+    /* global define:false */
     ( typeof window   !== "undefined" ?
           window :
           ( typeof global !== "undefined" ?

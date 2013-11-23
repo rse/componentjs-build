@@ -15,7 +15,7 @@
  *  stay in a separate optional plugin, of course.
  */
 
-/*global ComponentJS:false */
+/* global ComponentJS:false */
 
 ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
     /*
@@ -43,7 +43,7 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
             for (var i = 0; i < this.length; i++) {
                 (function (i) {
                     var el = this[i];
-                    /*global setTimeout:false */
+                    /* global setTimeout:false */
                     setTimeout(function () {
                         callback.call(el);
                     }, 250);
@@ -607,7 +607,7 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
 
     /*  try to determine whether Internet Explorer is used  */
     _cs.isIE = function () {
-        /*global navigator:false */
+        /* global navigator:false */
         return (
             typeof navigator !== "undefined" &&
             navigator.appName === "Microsoft Internet Explorer" &&
@@ -658,8 +658,8 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
                 }
 
                 /*  initialize the window content (deferred to avoid problems)  */
-                /*global setTimeout:false */
-                setTimeout(function () {
+                /* global setTimeout:false */
+                setTimeout(_cs.hook("ComponentJS:plugin:debugger:settimeout:func", "pass", function () {
                     _cs.jq(_cs.dbg.document).ready(function () {
                         /*  optionally automatically close debugger window with application window  */
                         if (params.autoclose) {
@@ -807,7 +807,7 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
                             }
                         });
                     });
-                }, 500);
+                }), 500);
             }
             $cs.debug(3, "debugger enabled");
         }
@@ -867,7 +867,7 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
             .height(_cs.dbg_canvas_info.h).attr("height", _cs.dbg_canvas_info.h)
             .width (_cs.dbg_canvas_info.w).attr("width",  _cs.dbg_canvas_info.w);
         _cs.dbg_reposition();
-     
+
         /*  trigger an initial update  */
         _cs.dbg_update();
     };
@@ -893,11 +893,11 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
         if (_cs.dbg === null)
             return;
         if (_cs.dbg_timer === null) {
-            /*global setTimeout:false */
-            _cs.dbg_timer = setTimeout(function () {
+            /* global setTimeout:false */
+            _cs.dbg_timer = setTimeout(_cs.hook("ComponentJS:plugin:debugger:settimeout:func", "pass", function () {
                 _cs.dbg_update_once();
                 _cs.dbg_timer = null;
-            }, 250);
+            }), 250);
         }
     };
 

@@ -1,6 +1,6 @@
 ComponentJS
 Application Programming Interface (API)
-0.9.8
+0.9.9
 ComponentJS
 
 API Management
@@ -230,11 +230,14 @@ state transitioned, communicated on and be destroyed.
     from left-to-right in the tree specification you have to give either a to
     be instanciated class constructor (Function) or an already instanciated
     object (Object).
+    The create method returns the last created component, i.e., the right-most
+    component in the tree specification.
     cs.create("/{sv,ui/{one,two}}", my.sv, {}, my.ui.one, my.ui.two); cs.create
     (this, "model/view", model, view); cs(this).create("model/view", model,
     view);
 
-  * ComponentJS.destroy(abs-path: String): Void component.destroy(): Void 
+  * ComponentJS.destroy(abs-path: String): Void
+    component.destroy(): Void
     component.destroy(): Void
     Destroy the component uniquely identified by abs-path or the component on
     which this method is called upon.
@@ -463,7 +466,11 @@ application itself.
   * component.spool({ name: String, [ctx: Object = this,] func: Function [args:
     Array(Object) = new Array()] }): Void
     component.spool(name: String, func: Function): Void
-    Remember action "ctx.func(args)" on spool named name.
+    Remember action "ctx.func(args)" on spool named name. The name parameter
+    can be either just a plain spool-name "name" or a combination of (relative)
+    component-path and spool-name "path:name". This allows one to spool on a
+    component different from component (usually a relative path back to the
+    component of the caller of the spool operation).
     cs(this).spool({ name: "foo", ctx: this, func: function (num, str) { ... },
     args: [ 42, "foo" ] });
 
@@ -514,9 +521,9 @@ component). This way properties feel like inherited and overrideable values
 which can be used for both storing component-local information and to
 communicate information to foreign components.
 
-  * component.property({ name: String, [value: Object = "undefined",] [bubbling
-    : Boolean = true,] [targeting: Boolean = true,] [returnowner: Boolean = 
-    false] }): Object
+  * component.property({ name: String, [value: Object = undefined,] [bubbling: 
+    Boolean = true,] [targeting: Boolean = true,] [returnowner: Boolean = false
+    ] }): Object
     component.property(name: String, value: Object): Object
     component.property(name: String): Object
     Get or set property with name name and value value on component component.
@@ -525,13 +532,19 @@ communicate information to foreign components.
     is set to false a property get operation does not resolve on the target
     component component (resolving starts on parent component). If returnowner
     is set to true instead of the property value, the owning component is
-    returned. Finally, properties can be scoped with a child component name: on
-    each attempt to resolve the property, first the scoped variant is tried.
-    This means, if a property was set with name "bar@prop" on component /foo,
-    if you resolve the property with cs("/foo/bar/baz", "prop") you the value,
-    but if you resolve the property with cs("/foo/quux", "prop") you do not get
-    the value. This allows you to set the same property with different values
-    for different child components.
+    returned. Finally, properties can be scoped with a child component name or
+    even a descendant component name path: on each attempt to resolve the
+    property, first the scoped variants are tried. This means, if a property
+    was set with name "quux@bar" on component /foo, if you resolve the property
+    with cs("/foo/bar", "quux") you get the value, but if you resolve the
+    property with cs("/foo/baz", "quux") you do not get the value. This allows
+    you to set the same property with different values for different child
+    components. Additionally the scope can be a partial component path, too. If
+    a property was set with name "quux@bar/baz" on component /foo, if you
+    resolve the property with cs("/foo/bar/baz", "quux") you get the value, but
+    if you resolve the property with cs("/foo/bar/baz2", "quux") you do not get
+    the value. This allows you for instance to skip so-called intermediate
+    namespace-only components. Setting value to "null" removes the property.
     cs(this).property("foo")
 
 Sockets
@@ -542,20 +555,30 @@ the View of a parent/ancestor component. In contrast to regular Properties,
 Sockets are never resolved directly on the target component. Instead they
 always start to resolve on the parent component because the sockets on the
 target component are intended for its child/ancestor components and not for the
-target component itself.
+target component itself. So, please remember to never plug a socket directly
+onto the target component!
 
   * component.socket({ [name: String = "default",] [scope: Object = null,] ctx:
-    Object, plug: Function, unplug: Function })
-    component.socket(ctx: Object, plug: Function, unplug: Function)
+    Object, plug: Function, unplug: Function [, spool: String] }): Number
+    component.socket(ctx: Object, plug: Function, unplug: Function): Number
     Create a socket on component, named name and optionally scoped for the
     child component named scope, where plug() and unplug() calls on child/
     ancestor components execute the supplied plug/unplug functions with ctx
-    supplied as this.
+    supplied as this. The socket method returns an id which uniquely identifies
+    the socket. Instead of having to manually release the socket later via 
+    unsocket() you can use the spool mechanism and spool the corresponding 
+    unsocket() operation via option spool.
     var ui = $(...); cs(this).socket({ ctx: ui, plug: function (el) { $
     (this).append(el); }, unplug: function (el) { $(el).remove(); } })
 
+  * component.unsocket({ id: Number }): Void
+    component.unsocket(id: Number): Void
+    Destroy the socket identified by id, previously created by a call to socket
+    (). This is usually done implicitly through the spooling mechanism.
+    cs(this).unsocket(id)
+
   * component.link({ [name: String = "default",] [scope: Object = null,] target
-    : Object, socket: String })
+    : Object, socket: String [, spool: String] })
     component.link(target: Object, socket: String)
     Create a socket on component, named name and optionally scoped for the
     child component named scope, and pass-through the plug/unplug() calls to
@@ -563,20 +586,29 @@ target component itself.
     Controller components to link their default socket (for the View below
     itself) to a particular socket of a parent component (because a View should
     be reusable and hence is not allowed to know the particular socket intended
-    for it).
+    for it). The link method returns an id which uniquely identifies the linked
+    socket. Instead of having to manually release the socket later via unlink()
+    you can use the spool mechanism and spool the corresponding unlink()
+    operation via option spool.
     cs(this).link({ name: "default", target: this, socket: "menu1" })
 
+  * component.unlink({ id: Number }): Void
+    component.unlink(id: Number): Void
+    Destroy the linked socket identified by id, previously created by a call to
+    link(). This is usually done implicitly through the spooling mechanism.
+    cs(this).unlink(id)
+
   * component.plug({ [name: String = "default",] object: Object, [spool: String
-    ] }): String
-    component.plug(object: Object): String
+    ] }): Number
+    component.plug(object: Object): Number
     Plugs object into the socket named name provided by any parent/ancestor
     component of component. Optionally spool the corresponding unplug()
     operation on spool spool attached to component. Returns an identifier for
     use with the corresponding unplug() operation.
     cs(this).plug({ object: ui, spool: "materialized" })
 
-  * component.unplug({ id: String }): Void
-    component.unplug(id: String): Void
+  * component.unplug({ id: Number }): Void
+    component.unplug(id: Number): Void
     Unplugs the object previously plugged under id. This is usually performed
     indirectly through the Spool mechanism.
     cs(this).unplug(id)
@@ -620,23 +652,31 @@ Model information and storing events into it.
     element to its current value triggers observers.
     var val = cs(this).value("foo") cs(this).value("foo", "bar")
 
+  * component.touch({ name: String, })
+    component.touch(name: String)
+    Touches the value of component's model element named name, without changing
+    the value but with triggering all its "get" observers (its "changed"
+    observers are not triggered). This can be useful for firing "set" observers
+    manually.
+    cs(this).touch("foo")
+
   * component.observe({ name: String, func: Function, [touch: Boolean = false,]
-    [operation: String = "set",] [spool: String = null] }): String
-    component.observe(name: String, func: Function): String
+    [operation: String = "set",] [spool: String = null] }): Number
+    component.observe(name: String, func: Function): Number
     Observe the value of component's model element named name for operation
-    operations (by default set/change operations). For "get" operations, the
+    operations (by default "set" operations). For "get" operations, the
     callback function func has to be of signature func(ev: Event, value: Object
-    ): Void. For "set" operations, the callback function func has to be of
-    signature func(ev: Event, value-new: Object, value-old: Object): Void. Both
-    types of callbacks can override the value by using ev.result(value). The 
-    observe method returns an id which uniquely identifies the observation.
-    Instead of having to manually release the observation later via unobserve()
-    you can use the spool mechanism and spool the corresponding unobserve()
-    operation via spool.
+    ): Void. For "set" and "changed" operations, the callback function func has
+    to be of signature func(ev: Event, value-new: Object, value-old: Object): 
+    Void. Both types of callbacks can override the value by using ev.result(
+    value). The observe method returns an id which uniquely identifies the
+    observation. Instead of having to manually release the observation later
+    via unobserve() you can use the spool mechanism and spool the corresponding
+    unobserve() operation via spool.
     id = cs(this).observe("state:username", function (ev, username) { ... })
 
-  * component.unobserve({ id: String }): Void
-    component.unobserve(id: String): Void
+  * component.unobserve({ id: Number }): Void
+    component.unobserve(id: Number): Void
     Release the observation identified by id, previously acquired by a call to 
     observe(). This is usually done implicitly through the spooling mechanism.
     cs(this).unobserve(id)
@@ -670,39 +710,38 @@ async (Boolean): whether event is dispatched asynchronously.
     false], [spreading: Boolean = false], [bubbling: Boolean = true], [noevent:
     Boolean = false], [exclusive: Boolean = false], [spool: String = null] }): 
     Number
-    component.subscribe(name: String, func: Function, [arg: Object, ...]): 
+    component.subscribe(name: String, func: Function, [args: Object, ...]): 
     Number
     Subscribe to event name (optionally sub-specifified via spec) on component 
-    component and execute callback func as func(ev: Event , args: Object, ...,
+    component and execute callback func as func(ev: Event , args: Object, ..., 
     sargs: Object, ...) once the event is dispatched to component after it was
-    published. Option ctx allows you to give this a particular value for the
+    published. Option ctx allows you to give "this" a particular value for the
     callback func. Option args allows you to pass additional parameters to func
     (before those passed by publish()). Option noevent does not pass the ev: 
     Event parameter to func. By default an event is dispatched in the
     (mandatory) targeting and (optional) bubbling phases. Setting option 
-    bubbling to false indicates that the event should not be dispatched in the
-    bubbling phase, too. Setting option capture to true indicates that the
-    event should be dispatched in the capturing phase, too. Setting option 
-    spreading to true indicates that the event should be dispatched in the
-    spreading phase, too. Option exclusive can be set to true for an exclusive
-    subscription, i.e., a subscription which prevents any subsequent
-    subscriptions. Option spool can be set to true to pass the origin component
-    as the first argument to func. The subscribe method returns an id which
-    uniquely identifies the subscription. Instead of having to manually release
-    the subscription later via unsubscribe() you can use the spool mechanism
-    and spool the corresponding unsubscribe() operation via option spool.
-    cs(self).subscribe({ name: "data-loaded", func: function (ev, data) { ... }
-    })
+    bubbling to "false" indicates that the event should not be dispatched in
+    the bubbling phase, too. Setting option capture to "true" indicates that
+    the event should be dispatched in the capturing phase, too. Setting option 
+    spreading to "true" indicates that the event should be dispatched in the
+    spreading phase, too. Option exclusive can be set to "true" for an
+    exclusive subscription, i.e., a subscription which prevents any subsequent
+    subscriptions. The subscribe method returns an id which uniquely identifies
+    the subscription. Instead of having to manually release the subscription
+    later via unsubscribe() you can use the spool mechanism and spool the
+    corresponding unsubscribe() operation via option spool.
+    cs(self).subscribe({ name: "data-loaded", spool: "prepared", func: function
+    (ev, data) { ... } })
 
-  * component.unsubscribe({ id: String }): Void
-    component.unsubscribe(id: String): Void
+  * component.unsubscribe({ id: Number }): Void
+    component.unsubscribe(id: Number): Void
     Release the subscription identified by id, previously acquired by a call to
     subscribe(). This is usually done implicitly through the spooling
     mechanism.
     cs(this).unsubscribe(id)
 
-  * component.subscription({ id: String }): Boolean
-    component.subscription(id: String): Boolean
+  * component.subscription({ id: Number }): Boolean
+    component.subscription(id: Number): Boolean
     Checks whether the subscription identified by id exists on component.
     cs(this).subscription(id)
 
@@ -730,14 +769,14 @@ service.
     FIXME
     FIXME
 
-  * component.unregister({ id: String }): Void
-    component.unregister(id: String): Void
+  * component.unregister({ id: Number }): Void
+    component.unregister(id: Number): Void
     Release the registration identified by id, previously acquired by a call to
     register(). This is usually done implicitly through the spooling mechanism.
     cs(this).unregister(id)
 
-  * component.registration({ id: String }): Boolean
-    component.registration(id: String): Boolean
+  * component.registration({ id: Number }): Boolean
+    component.registration(id: Number): Boolean
     Checks whether the registration identified by id exists on component.
     cs(this).registration(id)
 
@@ -782,8 +821,8 @@ beforehand.
     var id = cs("/foo/bar").latch("access-allowed", function (entity) { return
     (entity.type() === "Person"); });
 
-  * component.unlatch({ id: String }): Void
-    component.unlatch(id: String): Void
+  * component.unlatch({ id: Number }): Void
+    component.unlatch(id: Number): Void
     Unlatch from the hook identified by id, previously acquired by a call to 
     latch(). This is usually done implicitly through the spooling mechanism.
     cs("/foo/bar").unlatch(id);
@@ -870,7 +909,9 @@ Properties
 Sockets
 
   * socket
+  * unsocket
   * link
+  * unlink
   * plug
   * unplug
 
@@ -878,6 +919,7 @@ Models
 
   * model
   * value
+  * touch
   * observe
   * unobserve
 

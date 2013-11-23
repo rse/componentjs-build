@@ -13,8 +13,8 @@
  *  core framework.
  */
 
-/*global ComponentJS:false */
-/*jshint unused:false */
+/* global ComponentJS:false */
+/* jshint unused:false */
 
 ComponentJS.plugin("extjs", function (_cs, $cs, GLOBAL) {
     /*
@@ -27,12 +27,13 @@ ComponentJS.plugin("extjs", function (_cs, $cs, GLOBAL) {
             socket: function () {
                 /*  determine parameters  */
                 var params = $cs.params("socket", arguments, {
-                    name:   {         def: "default"       },
-                    scope:  {         def: null            },
-                    ctx:    { pos: 0, def: null, req: true },
-                    plug:   { pos: 1, def: null            }, /*  removed "req: true"  */
-                    unplug: { pos: 2, def: null            }, /*  removed "req: true"  */
-                    type:   {         def: "standard"      }  /*  added  */
+                    name:   {         def: "default"  },
+                    scope:  {         def: null       },
+                    ctx:    { pos: 0, req: true       },
+                    plug:   { pos: 1, def: null       }, /*  removed "req: true"  */
+                    unplug: { pos: 2, def: null       }, /*  removed "req: true"  */
+                    spool:  {         def: null       },
+                    type:   {         def: "standard" }  /*  added  */
                 });
 
                 /*  create pass-through information  */

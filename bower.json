@@ -1,6 +1,6 @@
 {
     "name": "componentjs",
-    "version": "0.9.3",
+    "version": "0.9.4",
     "description": "Powerful run-time Component System for structuring HTML5-based Rich Clients",
     "main": "component.js",
     "homepage": "http://componentjs.com/",

@@ -7,21 +7,19 @@
 **  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-(function (GLOBAL, DOCUMENT, EXPORTS, DEFINE) {
+(function (GLOBAL, EXPORTS, DEFINE) {
 
     /*
     **  GLOBAL LIBRARY NAMESPACING
     */
 
     /*  internal API  */
-    var _cs = function () {
-        return;
-    };
+    var _cs = function () {};
 
     /*  external API  */
     var $cs = function () {
         /*  under run-time just pass through to lookup functionality  */
-        return _cs.lookup.apply(DOCUMENT, arguments);
+        return _cs.hook("ComponentJS:lookup", "pass", _cs.lookup.apply(GLOBAL, arguments));
     };
 
     /*  pattern sub-namespace  */
@@ -94,8 +92,8 @@
     $cs.version = {
         major: 0,
         minor: 9,
-        micro: 2,
-        date:  20130208
+        micro: 4,
+        date:  20130210
     };
 
 
@@ -842,16 +840,17 @@
 
     /*  internal hook processing  */
     _cs.hook_proc = {
-        "none":   { init: undefined, step: function (a, b) { return b;                } },
-        "or":     { init: false,     step: function (a, b) { return a || b;           } },
-        "and":    { init: true,      step: function (a, b) { return a && b;           } },
-        "mult":   { init: 1,         step: function (a, b) { return a * b;            } },
-        "add":    { init: 0,         step: function (a, b) { return a + b;            } },
-        "append": { init: "",        step: function (a, b) { return a + b;            } },
-        "push":   { init: [],        step: function (a, b) { a.push(b); return a;     } },
-        "concat": { init: [],        step: function (a, b) { return _cs.concat(a, b); } },
-        "insert": { init: {},        step: function (a, b) { a[b] = true; return a;   } },
-        "extend": { init: {},        step: function (a, b) { return _cs.extend(a, b); } }
+        "none":   { init: undefined,                     step: function (    ) {                          } },
+        "pass":   { init: function (a) { return a[0]; }, step: function (a, b) { return b;                } },
+        "or":     { init: false,                         step: function (a, b) { return a || b;           } },
+        "and":    { init: true,                          step: function (a, b) { return a && b;           } },
+        "mult":   { init: 1,                             step: function (a, b) { return a * b;            } },
+        "add":    { init: 0,                             step: function (a, b) { return a + b;            } },
+        "append": { init: "",                            step: function (a, b) { return a + b;            } },
+        "push":   { init: [],                            step: function (a, b) { a.push(b); return a;     } },
+        "concat": { init: [],                            step: function (a, b) { return _cs.concat(a, b); } },
+        "insert": { init: {},                            step: function (a, b) { a[b] = true; return a;   } },
+        "extend": { init: {},                            step: function (a, b) { return _cs.extend(a, b); } }
     };
 
     /*  latch into internal ComponentJS hook  */
@@ -905,14 +904,20 @@
 
         /*  start result with the initial value  */
         var result = _cs.hook_proc[proc].init;
+        var args = null;
+        if (typeof result === "function") {
+            args = _cs.slice(arguments, 2);
+            result = result.call(null, args);
+        }
 
         /*  give all registered callbacks a chance to
             execute and modify the current result  */
         if (typeof _cs.hooks[name] !== "undefined") {
-            var args = _cs.slice(arguments, 2);
+            if (args === null)
+                args = _cs.slice(arguments, 2);
             _cs.foreach(_cs.hooks[name], function (s) {
                 var r = s.cb.apply({ args: s.args, _cs: _cs, $cs: $cs }, args);
-                result = _cs.hook_proc[proc].step(result, r);
+                result = _cs.hook_proc[proc].step.call(null, result, r);
             });
         }
 
@@ -2084,6 +2089,7 @@
     /*  determine state index via state name  */
     _cs.state_name2idx = function (name) {
         var idx = -1;
+        var i;
         for (i = 0; i < _cs.states.length; i++) {
             if (_cs.states[i].state === name) {
                 idx = i;
@@ -2091,6 +2097,18 @@
             }
         }
         return idx;
+    };
+
+    /*  perform a state enter/leave method call  */
+    _cs.state_method_call = function (type, comp, method) {
+        var result = true;
+        var obj = comp.obj();
+        if (obj !== null && typeof obj[method] === "function") {
+            var info = { type: type, comp: comp, method: method, ctx: obj, func: obj[method] };
+            _cs.hook("ComponentJS:state-method-call", "none", info);
+            result = info.func.call(info.ctx);
+        }
+        return result;
     };
 
     /*  set of current state transition requests
@@ -2135,7 +2153,7 @@
 
     /*  perform a single synchronous progression run for a particular component  */
     _cs.state_progression_run = function (comp, arg, _direction) {
-        var i, children, obj;
+        var i, children;
         var name, state, enter, leave;
 
         /*  handle optional argument (USED INTERNALLY ONLY)  */
@@ -2195,19 +2213,15 @@
                     comp.unspool(name);
 
                 /*  execute enter method  */
-                obj = comp.obj();
-                if (   obj !== null &&
-                       typeof obj[enter] === "function") {
-                    if (obj[enter]() === false) {
-                        /*  FULL STOP: state enter method rejected state transition  */
-                        $cs.debug(1,
-                            "state: " + comp.path("/") + ": transition (increase) REJECTED BY ENTER METHOD: " +
-                            "@" + _cs.states[comp.__state - 1].state + " --(" + enter + ")--> " +
-                            "@" + _cs.states[comp.__state].state + ": SUSPENDING CURRENT TRANSITION RUN"
-                        );
-                        comp.__state--;
-                        return;
-                    }
+                if (_cs.state_method_call("enter", comp, enter) === false) {
+                    /*  FULL STOP: state enter method rejected state transition  */
+                    $cs.debug(1,
+                        "state: " + comp.path("/") + ": transition (increase) REJECTED BY ENTER METHOD: " +
+                        "@" + _cs.states[comp.__state - 1].state + " --(" + enter + ")--> " +
+                        "@" + _cs.states[comp.__state].state + ": SUSPENDING CURRENT TRANSITION RUN"
+                    );
+                    comp.__state--;
+                    return;
                 }
 
                 /*  notify subscribers about new state  */
@@ -2292,19 +2306,15 @@
                     comp.unspool(name);
 
                 /*  execute leave method  */
-                obj = comp.obj();
-                if (   obj !== null &&
-                       typeof obj[leave] === "function") {
-                    if (obj[leave]() === false) {
-                        /*  FULL STOP: state leave method rejected state transition  */
-                        $cs.debug(1,
-                            "state: " + comp.path("/") + ": transition (decrease) REJECTED BY LEAVE METHOD: " +
-                            "@" + _cs.states[comp.__state].state + " <--(" + leave + ")-- " +
-                            "@" + _cs.states[comp.__state + 1].state + ": SUSPENDING CURRENT TRANSITION RUN"
-                        );
-                        comp.__state++;
-                        return;
-                    }
+                if (_cs.state_method_call("leave", comp, leave) === false) {
+                    /*  FULL STOP: state leave method rejected state transition  */
+                    $cs.debug(1,
+                        "state: " + comp.path("/") + ": transition (decrease) REJECTED BY LEAVE METHOD: " +
+                        "@" + _cs.states[comp.__state].state + " <--(" + leave + ")-- " +
+                        "@" + _cs.states[comp.__state + 1].state + ": SUSPENDING CURRENT TRANSITION RUN"
+                    );
+                    comp.__state++;
+                    return;
                 }
 
                 /*  notify subscribers about new state  */
@@ -2425,6 +2435,7 @@
 
                 /*  sanity check enter/leave method name  */
                 var valid = false;
+                var i;
                 for (i = 0; i < _cs.states.length; i++) {
                     if (   _cs.states[i].enter === params.method ||
                            _cs.states[i].leave === params.method) {
@@ -2941,10 +2952,10 @@
     /*  determine unique store id  */
     _cs.store_id = function (comp) {
         var id = "ComponentJS:store:";
-        if (   typeof DOCUMENT !== "undefined" &&
-               typeof DOCUMENT.location !== "undefined" &&
-               typeof DOCUMENT.location.pathname === "string")
-            id += DOCUMENT.location.pathname;
+        if (   typeof GLOBAL.document !== "undefined" &&
+               typeof GLOBAL.document.location !== "undefined" &&
+               typeof GLOBAL.document.location.pathname === "string")
+            id += GLOBAL.document.location.pathname;
         else
             id += "unknown-path";
         id += ":" + comp.path("/");
@@ -3059,6 +3070,10 @@
                                 throw _cs.exception("model", "invalid specification key \"" +
                                     key + "\" in specification of model field \"" + name + "\"");
                         }
+                        if (!_cs.validate(model[name].value, model[name].valid))
+                            throw _cs.exception("model", "model field \"" + name + "\" has " +
+                                "default value \"" + model[name].value + "\", which does not validate " +
+                                "against validation \"" + model[name].valid + "\"");
                     }
                 }
 
@@ -3412,11 +3427,11 @@
             ATTENTION: method "exists" intentionally is missing here,
                        because it is required to be called on _cs.none, of course!  */
         var methods = [
-            "create", "destroy", "guard", "hook", "invoke",
-            "latch", "link", "listen", "listening", "model", "notify", "observe",
-            "plug", "property", "publish", "register", "service_enabled", "socket",
-            "spool", "spooled", "state", "state_compare", "store", "subscribe",
-            "subscribers", "touch", "unlatch", "unlisten", "unobserve", "unplug",
+            "call", "create", "destroy", "guard", "hook", "invoke",
+            "latch", "link", "model", "observe", "plug", "property",
+            "publish", "register", "service_enabled", "socket", "spool",
+            "spooled", "state", "state_compare", "store", "subscribe",
+            "subscribers", "touch", "unlatch", "unobserve", "unplug",
             "unregister", "unspool", "unsubscribe", "value", "values"
         ];
         _cs.foreach(methods, function (method) {
@@ -3866,26 +3881,7 @@
         });
     else {
         /*  ...to regular global environment  */
-        var name = "ComponentJS";
-
-        /*  (with optionally configured symbol name via
-            HTML tag <script data-symbol="<name>" [...]>)  */
-        var s = DOCUMENT.getElementsByTagName("script");
-        var regex = new RegExp("^(?:.*/)?component(?:-[0-9]+(?:\\.[0-9]+)*)?(?:-min)?\\.js$");
-        for (var i = 0; i < s.length; i++) {
-            var src = s[i].getAttribute("src");
-            if (src !== null) {
-                if (regex.exec(src)) {
-                    var data = s[i].getAttribute("data-symbol");
-                    if (data !== null) {
-                        name = data;
-                        break;
-                    }
-                }
-            }
-        }
-
-        $cs.symbol(name);
+        $cs.symbol("ComponentJS");
     }
 
     /*  internal plugin registry  */
@@ -3915,7 +3911,7 @@
                 throw _cs.exception("plugin", "invalid plugin name parameter");
             if (typeof _cs.plugins[name] !== "undefined")
                 throw _cs.exception("plugin", "plugin named \"" + name + "\" already registered");
-            callback.call(this, _cs, $cs, GLOBAL, DOCUMENT);
+            callback.call(this, _cs, $cs, GLOBAL);
             _cs.plugins[name] = true;
         }
         else
@@ -3926,7 +3922,6 @@
 })(
     /*global window:false */
     /*global global:false */
-    /*global document:false */
     /*global exports:false */
     /*global define:false */
     ( typeof window   !== "undefined" ?
@@ -3936,11 +3931,6 @@
               ( typeof this !== "undefined" ?
                   this :
                   {} ))),
-    ( typeof document !== "undefined" ?
-          document :
-          ( typeof this !== "undefined" ?
-              this  :
-              {} )),
     ( typeof exports === "object" ?
           exports :
           undefined ),

@@ -371,7 +371,7 @@
             <div id="head1" class="head1">ComponentJS</div>
             <div id="head2" class="head2">Application Programming Interface (API)</div>
         </div>
-        <div id="the_version" class="the_version">0.9.2</div>
+        <div id="the_version" class="the_version">0.9.4</div>
         <div class="spec">
             <img class="logo" src="http://componentjs.com/ComponentJS-logo.svg" alt="ComponentJS"/>
             <h2><a name="api_management">API Management</a></h2>
@@ -423,16 +423,14 @@ some of its internals only once all plugins were loaded and executed.
  a new plugin under name <span class="P">name</span> with callback function <span class="P">callback</span>.
  The callback function <span class="P">callback</span> should have the signature
  "<span class="P">callback</span>(<span class="P">_cs</span>: <span class="T">ComponentJS_API_internal</span>, <span class="P">$cs</span>:
- <span class="T">ComponentJS_API_external</span>, <span class="P">GLOBAL</span>: <span class="T">Environment</span>,
- <span class="P">DOCUMENT</span>: <span class="T">Document</span>): <span class="T">Void</span>" where <span class="P">_cs</span> is the internal ComponentJS
+ <span class="T">ComponentJS_API_external</span>, <span class="P">GLOBAL</span>: <span class="T">Environment</span>): <span class="T">Void</span>" where <span class="P">_cs</span> is the internal ComponentJS
  API (you have to check the source code of ComponentJS to know
  what you can do with it), <span class="P">$cs</span> is the external ComponentJS API
- (the one described in this document), <span class="P">GLOBAL</span> is the global
+ (the one described in this document) and <span class="P">GLOBAL</span> is the global
  environment object (usually <code>window</code> in a browser, <code>global</code> in
- Node.js, etc) and <span class="P">DOCUMENT</span> is the global document (usually
- <code>document</code> in a browser and none in Node.js, etc).
+ Node.js, etc).
 </div><div class="example">/*  add a "foo()" method to all components  */
-ComponentJS.plugin("foo", function (_cs, $cs, GLOBAL, DOCUMENT) {
+ComponentJS.plugin("foo", function (_cs, $cs, GLOBAL) {
     var trait = $cs.trait({
         protos: {
             foo: function () {

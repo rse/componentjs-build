@@ -1,6 +1,6 @@
 ComponentJS
 Application Programming Interface (API)
-0.9.2
+0.9.4
 ComponentJS
 
 API Management
@@ -48,18 +48,15 @@ internals only once all plugins were loaded and executed.
     particular plugin with name name or register a new plugin under name name
     with callback function callback. The callback function callback should have
     the signature "callback(_cs: ComponentJS_API_internal, $cs: 
-    ComponentJS_API_external, GLOBAL: Environment, DOCUMENT: Document): Void"
-    where _cs is the internal ComponentJS API (you have to check the source
-    code of ComponentJS to know what you can do with it), $cs is the external
-    ComponentJS API (the one described in this document), GLOBAL is the global
-    environment object (usually window in a browser, global in Node.js, etc)
-    and DOCUMENT is the global document (usually document in a browser and none
-    in Node.js, etc).
+    ComponentJS_API_external, GLOBAL: Environment): Void" where _cs is the
+    internal ComponentJS API (you have to check the source code of ComponentJS
+    to know what you can do with it), $cs is the external ComponentJS API (the
+    one described in this document) and GLOBAL is the global environment object
+    (usually window in a browser, global in Node.js, etc).
     /* add a "foo()" method to all components */ ComponentJS.plugin("foo",
-    function (_cs, $cs, GLOBAL, DOCUMENT) { var trait = $cs.trait({ protos: {
-    foo: function () { ... } } }); _cs.latch
-    ("ComponentJS:bootstrap:comp:mixin", function (mixins) { mixins.push
-    (trait); }); });
+    function (_cs, $cs, GLOBAL) { var trait = $cs.trait({ protos: { foo:
+    function () { ... } } }); _cs.latch("ComponentJS:bootstrap:comp:mixin",
+    function (mixins) { mixins.push(trait); }); });
 
 Debugging
 

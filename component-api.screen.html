@@ -377,7 +377,7 @@
             <div id="head1" class="head1">ComponentJS</div>
             <div id="head2" class="head2">Application Programming Interface (API)</div>
         </div>
-        <div id="the_version" class="the_version">0.9.6</div>
+        <div id="the_version" class="the_version">0.9.7</div>
         <div class="spec">
             <img class="logo" src="http://componentjs.com/ComponentJS-logo.svg" alt="ComponentJS"/>
             <h2><a name="api_management">API Management</a></h2>
@@ -957,11 +957,12 @@ cs.transition("visible",      "show",    "hide",     "#669933");
  a positive number to activate the guard. Then it should be set to
  a negative number to (potentially) deactivate the guard. A usage with
  an initial call of <code>+1</code> and then followed by a <code>-1</code> is a boolean guard.
- An initial call of <code>+N</code> and then followed by N times a <code>-1</code> call is a semaphore-like
+ An initial call of <code>+N</code> and then followed by N times a <code>-1</code> call is a Semaphore-like
  guard which ensures that only after the Nth <code>-1</code> call the guard is finally deactivated
- again. This is useful if activate the guard in order to await N asynchronous operations.
+ again. This is useful if you activate the guard in order to await N asynchronous operations.
  Then the guard should be deactivated once the last asynchronous operation is finished
- (independent which one of the N operations this is).
+ (independent which one of the N operations this is). A guard <span class="P">level</span> of <code>0</code> 
+ resets the guard, independent what its current level is.
 
 </div><div class="example">var self = this;
 cs(self).guard("render", +2)

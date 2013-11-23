@@ -1,0 +1,19 @@
+{
+    "name": "componentjs",
+    "version": "0.9.3",
+    "description": "Powerful run-time Component System for structuring HTML5-based Rich Clients",
+    "main": "component.js",
+    "homepage": "http://componentjs.com/",
+    "license": "MPL",
+    "authors": [
+        "Ralf S. Engelschall <rse@engelschall.com>"
+    ],
+    "keywords": [
+        "component system", "rich client", "html5", "single page app",
+        "model", "view", "controller", "event", "service", "socket"
+    ],
+    "ignore": [
+        "**/.*",
+        "bower_components"
+    ]
+}

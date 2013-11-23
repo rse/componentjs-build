@@ -1,6 +1,6 @@
 ComponentJS
 Application Programming Interface (API)
-0.9.9
+1.0.0
 ComponentJS
 
 API Management
@@ -31,9 +31,9 @@ ComponentJS can be extended through plugins, so it can initialize some of its
 internals only once all plugins were loaded and executed.
 
   * ComponentJS.bootstrap(): Void
-    Bootstrap the ComponentJS library by Initializing its internals. This has
+    Bootstrap the ComponentJS library by initializing its internals. This has
     to be called at least before any calls to create(), but can be called after
-    any calls to symbol, debug or ns.
+    any calls to symbol(), debug() or ns().
     cs.bootstrap()
 
   * ComponentJS.shutdown(): Void
@@ -122,18 +122,17 @@ that component shadow objects are defined by cs.clazz!
     specification spec. The specification has to follow the following grammar
     (which is a mixture of JSON-like structure and RegExp-like quantifiers):
 
-    spec     ::= bool-not | bool-or | group | hash | array | primary | class |
-                 special
-    bool-not ::= "!" spec
-    bool-or  ::= spec "|" spec
-    group    ::= "(" spec ")"
-    hash     ::= "{" (key arity? ":" spec ("," key arity? ":" spec)*)? "}"
-    array    ::= "[" (spec arity? ("," spec arity?)*)? "]"
-    arity    ::= "?" | "*" | "+"
-    key      ::= /^[_a-zA-Z$][_a-zA-Z$0-9]*$/
-    primary  ::= /^(?:undefined|boolean|number|string|function|object)$/
-    class    ::= /^[A-Z][_a-zA-Z$0-9]*$/
-    special  ::= /^(?:class|trait|component)$/
+    spec    ::= not | alt | hash | array | any | primary | class | special
+    not     ::= "!" spec
+    alt     ::= "(" spec ("|" spec)* ")"
+    hash    ::= "{" (key arity? ":" spec ("," key arity? ":" spec)*)? "}"
+    array   ::= "[" (spec arity? ("," spec arity?)*)? "]"
+    arity   ::= "?" | "*" | "+"
+    key     ::= /^[_a-zA-Z$][_a-zA-Z$0-9]*$/
+    any     ::= "any"
+    primary ::= /^(?:null|undefined|boolean|number|string|function|object)$/
+    class   ::= /^[A-Z][_a-zA-Z$0-9]*$/
+    special ::= /^(?:class|trait|component)$/
 
     cs.validate({ foo: "Foo", bar: "Bar", baz: [ 42, 7, "Quux" ] }, "{ foo:
     string, bar: any, baz: [ number+, string* ], quux?: any }")
@@ -171,7 +170,7 @@ that component shadow objects are defined by cs.clazz!
 
   * ComponentJS.clazz({ [name: String,] [extend: Clazz,] [mixin: Array(Trait),]
     [cons: Function,] [dynamics: Object,] [protos: Object,] [statics: Object]
-    })
+    }): Clazz
     Define a JavaScript Class, optionally stored under the absolute
     dot-separated object path name, optionally extending the base/super/parent
     Class extend and optionally mixing in the functionality of one or more
@@ -188,9 +187,9 @@ that component shadow objects are defined by cs.clazz!
     (value_new) { var value_old = this._bar; if (typeof value_new !===
     "undefined") this._bar = value_new; return value_old; } [...] } })
 
-  * ComponentJS.trait({ [name: String,] [mixin: Array(trait),] [cons: Function,
+  * ComponentJS.trait({ [name: String,] [mixin: Array(Trait),] [cons: Function,
     ] [setup: Function,] [dynamics: Object,] [protos: Object,] [statics: Object
-    ] })
+    ] }): Trait
     Define a JavaScript Trait (a Class which can be mixed in), optionally
     stored under the absolute dot-separated object path name and optionally
     mixing in the functionality of one or more other Traits via mixin. The
@@ -230,8 +229,8 @@ state transitioned, communicated on and be destroyed.
     from left-to-right in the tree specification you have to give either a to
     be instanciated class constructor (Function) or an already instanciated
     object (Object).
-    The create method returns the last created component, i.e., the right-most
-    component in the tree specification.
+    The create() method returns the last created component, i.e., the
+    right-most component in the tree specification.
     cs.create("/{sv,ui/{one,two}}", my.sv, {}, my.ui.one, my.ui.two); cs.create
     (this, "model/view", model, view); cs(this).create("model/view", model,
     view);
@@ -254,7 +253,7 @@ following getter/setter-style methods.
     the old id. Setting the id of a component should be not done by the
     application as it is done by ComponentJS internally on component creation
     time.
-    cs(this).id()
+    cs(this).id() ? "0000000000000000000000000000001"
 
   * component.name(): String
     component.name(name: String): String
@@ -343,6 +342,23 @@ you to traverse this tree.
   * component.children(): Array(Component)
     Return the array of child components of component.
     cs(this).children()
+
+  * component.attach(parent: Component): Void
+    Attach component as a child to the parent component. In case it is already
+    attached to an old parent component, it automatically calls detach() before
+    attaching to the new parent component. Internally used by ComponentJS on 
+    create(), but can be also used by application when moving a sub-tree within
+    the component tree.
+    /* migrate all children from our view1 onto our view2 */ var view1 = cs
+    (this, "model/view1") var view2 = cs(this, "model/view2") view1.children
+    ().forEach(function (child) { var state = child.state({ state: "created",
+    sync: true }) child.detach() child.attach(view2) child.state(state) })
+
+  * component.detach(): Void
+    Detach component as a child from its parent component. Internally used by
+    ComponentJS on destroy(), but can be also used by application when moving
+    components within the component tree.
+    cs(this).detach()
 
   * component.walk_up(callback: Function, ctx: Object): Object
     Walk the component tree upwards from the current component (inclusive) to
@@ -452,16 +468,16 @@ transitions, enter and leave methods are called accordingly.
 Spools
 
 In ComponentJS there are at least 4 resource allocating operations which have
-corresponding deallocation operations: Model observe/unobserve, Socket plug/
-unplug, Event subscribe/unsubscribe, Service register/unregister and Hook latch
-/unlatch. For correct run-time operation it is required that each allocation
-operation, performed in a state enter method, is properly reversed with the
-corresponding deallocation operation in the state leave method. As this is
-extremely cumbersome (especially because you have to store the identifiers
-returned by the allocation operations as you need them for the deallocation
-operation), ComponentJS provides a convenient spool mechanism which all of the
-above allocation operations support and which also can be used by the
-application itself.
+corresponding deallocation operations: Model observe()/unobserve(), Socket plug
+()/unplug(), Event subscribe()/unsubscribe(), Service register()/unregister()
+and Hook latch()/unlatch(). For correct run-time operation it is required that
+each allocation operation, performed in a state enter method, is properly
+reversed with the corresponding deallocation operation in the state leave
+method. As this is extremely cumbersome (especially because you have to store
+the identifiers returned by the allocation operations as you need them for the
+deallocation operation), ComponentJS provides
+convenient spool mechanism which all of the above allocation operations support
+and which also can be used by the application itself.
 
   * component.spool({ name: String, [ctx: Object = this,] func: Function [args:
     Array(Object) = new Array()] }): Void
@@ -470,15 +486,15 @@ application itself.
     can be either just a plain spool-name "name" or a combination of (relative)
     component-path and spool-name "path:name". This allows one to spool on a
     component different from component (usually a relative path back to the
-    component of the caller of the spool operation).
+    component of the caller of the spool() operation).
     cs(this).spool({ name: "foo", ctx: this, func: function (num, str) { ... },
     args: [ 42, "foo" ] });
 
-  * component.spooled({ name: String }): Boolean
-    component.spooled(name: String): Boolean
-    Check whether any actions are spooled under spool named name. Usually done
-    before calling unspool() as it would throw an exception if there are no
-    spooled actions at all.
+  * component.spooled({ name: String }): Number
+    component.spooled(name: String): Number
+    Return the number of actions which are spooled under spool named name.
+    Usually done before calling unspool() as it would throw an exception if
+    there are no spooled actions at all.
     if (cs(this).spooled("foo")) cs(this).unspool("foo")
 
   * component.unspool({ name: String }): Void
@@ -491,8 +507,8 @@ Markers
 
 An object can be "marked" with a set of names. ComponentJS internally does not
 use those markers at all, but the ComponentJS Debugger plugin at least uses
-markers named "service", "model", "view" and "controller" on a components'
-shadow object to render those components in different colors.
+markers named "service", "model", "view" and "controller" on
+components' shadow object to render those components in different colors.
 
   * ComponentJS.mark(obj: Object, name: String): Void
     component.mark(name: String): Void
@@ -521,9 +537,9 @@ component). This way properties feel like inherited and overrideable values
 which can be used for both storing component-local information and to
 communicate information to foreign components.
 
-  * component.property({ name: String, [value: Object = undefined,] [bubbling: 
-    Boolean = true,] [targeting: Boolean = true,] [returnowner: Boolean = false
-    ] }): Object
+  * component.property({ name: String, [value: Object = undefined,] [scope: 
+    String = undefined,] [bubbling: Boolean = true,] [targeting: Boolean = 
+    true,] [returnowner: Boolean = false] }): Object
     component.property(name: String, value: Object): Object
     component.property(name: String): Object
     Get or set property with name name and value value on component component.
@@ -535,16 +551,17 @@ communicate information to foreign components.
     returned. Finally, properties can be scoped with a child component name or
     even a descendant component name path: on each attempt to resolve the
     property, first the scoped variants are tried. This means, if a property
-    was set with name "quux@bar" on component /foo, if you resolve the property
-    with cs("/foo/bar", "quux") you get the value, but if you resolve the
-    property with cs("/foo/baz", "quux") you do not get the value. This allows
-    you to set the same property with different values for different child
-    components. Additionally the scope can be a partial component path, too. If
-    a property was set with name "quux@bar/baz" on component /foo, if you
-    resolve the property with cs("/foo/bar/baz", "quux") you get the value, but
-    if you resolve the property with cs("/foo/bar/baz2", "quux") you do not get
-    the value. This allows you for instance to skip so-called intermediate
-    namespace-only components. Setting value to "null" removes the property.
+    was set with name "quux@bar" (or with name "quux" and an explicitly scope
+    set to "bar") on component /foo, if you resolve the property with cs("/foo/
+    bar", "quux") you get the value, but if you resolve the property with cs("/
+    foo/baz", "quux") you do not get the value. This allows you to set the same
+    property with different values for different child components. Additionally
+    the scope can be a partial component path, too. If a property was set with
+    name "quux@bar/baz" on component /foo, if you resolve the property with cs
+    ("/foo/bar/baz", "quux") you get the value, but if you resolve the property
+    with cs("/foo/bar/baz2", "quux") you do not get the value. This allows you
+    for instance to skip so-called intermediate namespace-only components.
+    Setting value to "null" removes the property.
     cs(this).property("foo")
 
 Sockets
@@ -564,10 +581,11 @@ onto the target component!
     Create a socket on component, named name and optionally scoped for the
     child component named scope, where plug() and unplug() calls on child/
     ancestor components execute the supplied plug/unplug functions with ctx
-    supplied as this. The socket method returns an id which uniquely identifies
-    the socket. Instead of having to manually release the socket later via 
-    unsocket() you can use the spool mechanism and spool the corresponding 
-    unsocket() operation via option spool.
+    supplied as this, the object parameter of plug()/unplug() as first argument
+    and component as the second argument. The socket() method returns an id
+    which uniquely identifies the socket. Instead of having to manually release
+    the socket later via unsocket() you can use the spool mechanism and spool
+    the corresponding unsocket() operation via option spool.
     var ui = $(...); cs(this).socket({ ctx: ui, plug: function (el) { $
     (this).append(el); }, unplug: function (el) { $(el).remove(); } })
 
@@ -581,15 +599,15 @@ onto the target component!
     : Object, socket: String [, spool: String] })
     component.link(target: Object, socket: String)
     Create a socket on component, named name and optionally scoped for the
-    child component named scope, and pass-through the plug/unplug() calls to
+    child component named scope, and pass-through the plug()/unplug() calls to
     the target component target and its socket named socket. Usually used by
     Controller components to link their default socket (for the View below
     itself) to a particular socket of a parent component (because a View should
     be reusable and hence is not allowed to know the particular socket intended
-    for it). The link method returns an id which uniquely identifies the linked
-    socket. Instead of having to manually release the socket later via unlink()
-    you can use the spool mechanism and spool the corresponding unlink()
-    operation via option spool.
+    for it). The link() method returns an id which uniquely identifies the
+    linked socket. Instead of having to manually release the socket later via 
+    unlink() you can use the spool mechanism and spool the corresponding unlink
+    () operation via option spool.
     cs(this).link({ name: "default", target: this, socket: "menu1" })
 
   * component.unlink({ id: Number }): Void
@@ -599,18 +617,23 @@ onto the target component!
     cs(this).unlink(id)
 
   * component.plug({ [name: String = "default",] object: Object, [spool: String
-    ] }): Number
+    ,] [targeting: Boolean] }): Number
     component.plug(object: Object): Number
     Plugs object into the socket named name provided by any parent/ancestor
     component of component. Optionally spool the corresponding unplug()
-    operation on spool spool attached to component. Returns an identifier for
-    use with the corresponding unplug() operation.
+    operation on spool spool attached to component. Optionally (in case of 
+    targeting set to true) start the operation on component instead of its
+    parent component. Returns an identifier for use with the corresponding 
+    unplug() operation.
     cs(this).plug({ object: ui, spool: "materialized" })
 
-  * component.unplug({ id: Number }): Void
+  * component.unplug({ id: Number[, targeting: Boolean] }): Void
     component.unplug(id: Number): Void
-    Unplugs the object previously plugged under id. This is usually performed
-    indirectly through the Spool mechanism.
+    Unplugs the object previously plugged under id from the socket providing
+    parent/ancestor component of component. Optionally (in case of targeting
+    set to true) start the operation on component instead of its parent
+    component. This is usually performed indirectly through the Spool
+    mechanism.
     cs(this).unplug(id)
 
 Models
@@ -626,12 +649,13 @@ Model information and storing events into it.
     Define a model through the specification in spec. Each key is the name of a
     model element and the value has to be an Object with the following possible
     fields: value (Object) for the default value, valid (String/RegExp) for
-    validating the values, autoreset (Boolean) for indicating that on each
-    value write, the value should be automatically reset to the initial value,
-    and store (Boolean) for indicating that the value should be persistently
-    stored in the browser's localStorage. Multiple calls to the model method on
-    the same component incrementally add model elements.
-    cs(this).model({ "param:realms": { value: [], valid: "array(string)" },
+    validating the values (based on the underlying validation language of the 
+    validate() method), autoreset (Boolean) for indicating that on each value
+    write, the value should be automatically reset to the initial value, and 
+    store (Boolean) for indicating that the value should be persistently stored
+    in the browser's localStorage. Multiple calls to the model() method on the
+    same component incrementally add model elements.
+    cs(this).model({ "param:realms": { value: [], valid: "[string*]" },
     "data:realm": { value: "", valid: "string", store: true }, "data:username":
     { value: "", valid: "string", store: true }, "data:password": { value: "",
     valid: "string" }, "state:username": { value: "empty", valid: "string" },
@@ -669,7 +693,7 @@ Model information and storing events into it.
     ): Void. For "set" and "changed" operations, the callback function func has
     to be of signature func(ev: Event, value-new: Object, value-old: Object): 
     Void. Both types of callbacks can override the value by using ev.result(
-    value). The observe method returns an id which uniquely identifies the
+    value). The observe() method returns an id which uniquely identifies the
     observation. Instead of having to manually release the observation later
     via unobserve() you can use the spool mechanism and spool the corresponding
     unobserve() operation via spool.
@@ -685,264 +709,270 @@ Events
 
 The Event mechanism is a central one in ComponentJS. Both Models, Services and
 Hooks are all internally based on the Events mechanism. An Event is an object
-published towards a target component. It is delivered in 4 phases: in phase 1
-(the "capturing" phase) the Event is delivered to all components on the path
-from the root component (inclusive) towards the target component (exclusive);
-in phase 2 (the "targeting" phase) the Event is delivered to the target
-component; in phase 3 (the "spreading" phase) the Event is delivered to all
-descendant components of the target component in a depth-first traversal order
-and in phase 4 (the "bubbling" phase) the Event is delivered (again) to all
-components on the path from the target component (exclusive) to the root
-component (inclusive).
+published towards a target component. It is delivered in 4 phases:
+
+  * In phase 1 (the "capturing" phase) the Event is delivered to all components
+    on the path from the root component (inclusive) towards the target
+    component (exclusive).
+  * In phase 2 (the "targeting" phase) the Event is delivered to the target
+    component.
+  * In phase 3 (the "spreading" phase) the Event is delivered to all descendant
+    components of the target component in a depth-first traversal order.
+  * In phase 4 (the "bubbling" phase) the Event is delivered (again) to all
+    components on the path from the target component (exclusive) to the root
+    component (inclusive).
 
 Event objects are implicitly created by the publish() operation and they
-provide various getter/setter methods: target (Component): target component the
-event is send to; propagation (Boolean): whether event propagation should
-continue; processing (Boolean): whether final default event processing should
-be performed; dispatched (Boolean): whether event was dispatched at least once
-to a subscriber; decline (Boolean): whether event was declined by subscriber; 
-state (Boolean): state of dispatching: capturing, targeting, spreading or
-bubbling; result (Object): optional result value event subscribers can provide;
-async (Boolean): whether event is dispatched asynchronously.
+provide various getter/setter methods:
 
-  * component.subscribe({ name: String, [spec: Object = {}], [ctx: Object = 
-    component,] func: Function, [args: Object[] = []], [capturing: Boolean = 
-    false], [spreading: Boolean = false], [bubbling: Boolean = true], [noevent:
-    Boolean = false], [exclusive: Boolean = false], [spool: String = null] }): 
-    Number
-    component.subscribe(name: String, func: Function, [args: Object, ...]): 
-    Number
-    Subscribe to event name (optionally sub-specifified via spec) on component 
-    component and execute callback func as func(ev: Event , args: Object, ..., 
-    sargs: Object, ...) once the event is dispatched to component after it was
-    published. Option ctx allows you to give "this" a particular value for the
-    callback func. Option args allows you to pass additional parameters to func
-    (before those passed by publish()). Option noevent does not pass the ev: 
-    Event parameter to func. By default an event is dispatched in the
-    (mandatory) targeting and (optional) bubbling phases. Setting option 
-    bubbling to "false" indicates that the event should not be dispatched in
-    the bubbling phase, too. Setting option capture to "true" indicates that
-    the event should be dispatched in the capturing phase, too. Setting option 
-    spreading to "true" indicates that the event should be dispatched in the
-    spreading phase, too. Option exclusive can be set to "true" for an
-    exclusive subscription, i.e., a subscription which prevents any subsequent
-    subscriptions. The subscribe method returns an id which uniquely identifies
-    the subscription. Instead of having to manually release the subscription
-    later via unsubscribe() you can use the spool mechanism and spool the
-    corresponding unsubscribe() operation via option spool.
-    cs(self).subscribe({ name: "data-loaded", spool: "prepared", func: function
-    (ev, data) { ... } })
+  * target() (Component): target component the event is send to
+  * propagation() (Boolean): whether event propagation should continue
+  * processing() (Boolean): whether final default event processing should be
+    performed
+  * dispatched() (Boolean): whether event was dispatched at least once to a
+    subscriber
+  * decline() (Boolean): whether event was declined by subscriber
+  * state() (Boolean): state of dispatching: capturing, targeting, spreading or
+    bubbling
+  * result() (Object): optional result value event subscribers can provide
+  * async() (Boolean): whether event is dispatched asynchronously
+      + component.subscribe({ name: String, [spec: Object = {}], [ctx: Object =
+        component,] func: Function, [args: Object[] = []], [capturing: Boolean
+        = false], [spreading: Boolean = false], [bubbling: Boolean = true], [
+        noevent: Boolean = false], [exclusive: Boolean = false], [spool: String
+        = null] }): Number
+        component.subscribe(name: String, func: Function, [args: Object, ...]):
+        Number
+        Subscribe to event name (optionally sub-specifified via spec) on
+        component component and execute callback func as func(ev: Event , args:
+        Object, ..., sargs: Object, ...) once the event is dispatched to 
+        component after it was published. By default an event is dispatched in
+        the (mandatory) targeting and (optional) bubbling phases.
+          o Option ctx allows you to give "this" a particular value for the
+            callback func. Option args allows you to pass additional parameters
+            to func (before those passed by publish().
+          o Option noevent does not pass the ev: Event parameter to func.
+          o Setting option capturing to "true" indicates that the event should
+            be also dispatched in the capturing phase.
+          o Setting option spreading to "true" indicates that the event should
+            be also dispatched in the spreading phase.
+          o Setting option bubbling to "false" indicates that the event should
+            not be dispatched in the bubbling phase.
+          o Option exclusive can be set to "true" for an exclusive
+            subscription, i.e., a subscription which prevents any subsequent
+            subscriptions.
+        The subscribe() method returns an id which uniquely identifies the
+        subscription. Instead of having to manually release the subscription
+        later via unsubscribe() you can use the spool mechanism and spool the
+        corresponding unsubscribe() operation via option spool.
+        cs(self).subscribe({ name: "data-loaded", spool: "prepared", func:
+        function (ev, data, info) { ... } })
+      + component.unsubscribe({ id: Number }): Void
+        component.unsubscribe(id: Number): Void
+        Release the subscription identified by id, previously acquired by a
+        call to subscribe(). This is usually done implicitly through the
+        spooling mechanism.
+        cs(this).unsubscribe(id)
+      + component.subscription({ id: Number }): Boolean
+        component.subscription(id: Number): Boolean
+        Checks whether the subscription identified by id exists on component.
+        cs(this).subscription(id)
+      + component.publish({ name: String, [spec: Object = {},] [async: Boolean
+        = false,] [capturing: Boolean = true,] [spreading: Boolean = false,] [
+        bubbling: Boolean = true,] [completed: Function,] [resultinit: Object =
+        undefined,] [resultstep: Function,] [directresult: Boolean = false,] [
+        noresult: Boolean = false,] [firstonly: Boolean = false,] [silent: 
+        Boolean = false,] [args: Object[] = []] }): Object
+        component.publish(name: String, args...: Object): Object
+        Publishes an Event to component component named name and with optional
+        arguments args. By default the event is intended to be dispatched in
+        the (mandatory) targeting and (optional) capturing and bubbling phases.
+        The following options allow you to fruther control the event publishing
+        process:
+          o Option spec allows you to sub-specify/parameterize the event with
+            arbitrary key/value pairs in case the name is too generic.
+          o Option async allows the event processing to occur asynchronously.
+          o Setting option capturing to "false" indicates that the event should
+            not be intended to be dispatched in the capturing phase.
+          o Setting option spreading to "true" indicates that the event should
+            also be intended to be dispatched in the spreading phase.
+          o Setting option bubbling to "false" indicates that the event should
+            not be intended to be dispatched in the bubbling phase.
+          o Option completed executes the specified callback function once the
+            event was dispatched to subscribers in all possible phases. This
+            allows you to react at the end of async=true events.
+          o Option resultinit and resultstep
+        cs(this).publish("data-loaded", data, info)
 
-  * component.unsubscribe({ id: Number }): Void
-    component.unsubscribe(id: Number): Void
-    Release the subscription identified by id, previously acquired by a call to
-    subscribe(). This is usually done implicitly through the spooling
-    mechanism.
-    cs(this).unsubscribe(id)
+    Services
 
-  * component.subscription({ id: Number }): Boolean
-    component.subscription(id: Number): Boolean
-    Checks whether the subscription identified by id exists on component.
-    cs(this).subscription(id)
+    Services are loosly coupled method calls across components. The
+    functionality provider does register() the service and the functionality
+    consumer does call() the service.
+      + component.register({ name: String, [ctx: Object = component,] func: 
+        Function, [args: Object[] = [],] [spool: String,] [capturing: Boolean =
+        false,] [spreading: Boolean = false,] [bubbling: Boolean = true] }): 
+        Number
+        component.register(name: String, func: Function): Number
+        Register a service name on component with the implementing callback
+        function func. The function returns an identifier for unregister(). The
+        following options can be used to control the later service calls:
+          o Option ctx can be used to set the this pointer for func.
+          o Option args can be used to pass additional parameters to func
+            (before the args of call()!).
+          o Option spool can be used to spool the corresponding unregister()
+            call.
+          o Option capturing can be set to true to provide the service also in
+            the "capturing" phase.
+          o Option spreading can be set to true to provide the service also in
+            the "spreading" phase.
+          o Option bubbling can be set to false to not provide the service in
+            the "bubbling" phase.
+        var id = cs(this).register({ name: "load-entity", args: [ em ], func:
+        function (em, clazz, id) { return em.findById(clazz, id); } })
+      + component.unregister({ id: Number }): Void
+        component.unregister(id: Number): Void
+        Release the registration identified by id, previously acquired by a
+        call to register(). This is usually done implicitly through the
+        spooling mechanism.
+        cs(this).unregister(id)
+      + component.registration({ id: Number }): Boolean
+        component.registration(id: Number): Boolean
+        Checks whether the registration identified by id exists on component.
+        cs(this).registration(id)
+      + component.callable({ name: String[, value: Boolean] }): Boolean
+        component.callable(name: String[, value: Boolean]): Boolean
+        Checks whether a registered service is callable/enabled or enable/
+        disable a registered service. On every change to the "callable" status
+        of a service, an internal event named "ComponentJS:service:name
+        :callable" is published with two arguments: the new and old boolean
+        value.
+        cs(this).subscribe("ComponentJS:service:load-person:callable", function
+        (old, new) { if (new) { /* react on now callable service */ } }) cs
+        (this).callable("load-person", false) cs(this).callable("load-person",
+        true)
+      + component.call({ name: String, [args: Object[] = [],] capturing: 
+        Boolean = false,] spreading: Boolean = false,] bubbling: Boolean = true
+        ] }): Object
+        component.call(name: String [, args...: Object]): Object
+        Call service named name on component component, optionally passing it
+        the arguments args (after the optional args of register()!). The
+        following options can be used to control the service call:
+          o Option capturing can be set to true to deliver the underlying
+            service event also in the "capturing" phase.
+          o Option spreading can be set to true to deliver the underlying
+            service event also in the "spreading" phase.
+          o Option bubbling can be set to false to not deliver the underlying
+            service event in the "bubbling" phase.
+        var person = cs("/sv").call("load-entity", "Person", 42)
 
-  * component.publish({ name: String, [spec: Object = {},] [async: Boolean = 
-    false,] [capturing: Boolean = true,] [spreading: Boolean = true,] [bubbling
-    : Boolean = true,] [completed: Function,] [resultinit: Object = undefined,]
-    [resultstep: Function,] [directresult: Boolean = false,] [noresult: Boolean
-    = false,] [firstonly: Boolean = false,] [silent: Boolean = false,] args: 
-    Object[] = []] }): Object
-    component.publish(name: String, args...: Object): Object
-    FIXME
-    FIXME
+    API Management
 
-Services
+      + symbol
+      + version
 
-Services are loosly coupled method calls across components. The functionality
-provider registers the service and the functionality consumer calls the
-service.
+    Library Management
 
-  * component.register({ name: String, [ctx: Object = this,] func: Function, [
-    args: Object[] = [],] [async: Boolean = false,] [spool: String,] [capturing
-    : Boolean = false,] [spreading: Boolean = false,] [bubbling: Boolean = true
-    ] }): Number
-    component.register(name: String, func: Function): Number
-    FIXME
-    FIXME
+      + bootstrap
+      + shutdown
+      + plugin
 
-  * component.unregister({ id: Number }): Void
-    component.unregister(id: Number): Void
-    Release the registration identified by id, previously acquired by a call to
-    register(). This is usually done implicitly through the spooling mechanism.
-    cs(this).unregister(id)
+    Debugging
 
-  * component.registration({ id: Number }): Boolean
-    component.registration(id: Number): Boolean
-    Checks whether the registration identified by id exists on component.
-    cs(this).registration(id)
+      + debug
+      + debug_instrumented
+      + debug_window
 
-  * component.callable({ name: String[, value: Boolean] }): Boolean
-    component.callable(name: String[, value: Boolean]): Boolean
-    Checks whether a registered service is callable/enabled or enable/disable a
-    registered service. On every change to the "callable" status of a service,
-    an internal event named "ComponentJS:service:name:callable" is published
-    with two arguments: the new and old boolean value.
-    cs(this).subscribe("ComponentJS:service:load-person:callable", function
-    (old, new) { if (new) { /* react on now callable service */ } }) cs
-    (this).callable("load-person", false) cs(this).callable("load-person",
-    true)
+    Code Structuring
 
-  * component.call({ name: String, [args: Object[] = [],] capturing: Boolean = 
-    false,] spreading: Boolean = false,] bubbling: Boolean = true] }): Object
-    component.call(name: String [, args...: Object]): Object
-    Call service named name on component component, optionally passing it the
-    arguments args. Option capturing can be set to true to deliver the
-    underlying service event also in the "capturing" phase. Option spreading
-    can be set to true to deliver the underlying service event also in the
-    "spreading" phase. Option bubbling can be set to false to not deliver the
-    underlying service event in the "bubbling" phase.
-    var person = cs("/sv").call("load-person", "http://example.com/rest/person/
-    1234")
+      + ns
+      + validate
+      + params
+      + attribute
+      + clazz
+      + trait
 
-Hooks
+    Component Creation
 
-Hooks are functionality extension points. The single provider performs a hook
-under run-time while the multiple consumers have latched into this hook
-beforehand.
+      + create
+      + destroy
 
-  * component.latch({ name: String, [ctx: Object,] func: Function,] [args: 
-    Object[],] [spool: String] }): Number
-    component.latch(name: String, func: Function, args...: Object): Number
-    Latch into the hook identified by name name on component component and
-    execute the callback function func on every hook execution. The callback
-    function is executed as func(args: Object, ...,sargs: Object, ...). Option 
-    ctx allows you to give this a particular value for the callback func.
-    Option args allows you to pass additional parameters to func (before those
-    passed by hook()).
-    var id = cs("/foo/bar").latch("access-allowed", function (entity) { return
-    (entity.type() === "Person"); });
+    Component Information
 
-  * component.unlatch({ id: Number }): Void
-    component.unlatch(id: Number): Void
-    Unlatch from the hook identified by id, previously acquired by a call to 
-    latch(). This is usually done implicitly through the spooling mechanism.
-    cs("/foo/bar").unlatch(id);
+      + id
+      + name
+      + obj
+      + cfg
 
-  * component.hook({ name: String, [proc: String,] [args: Object[]] }): Number
-    component.hook(name: String, [proc: String,] [args...: Object]): Number
-    FIXME
+    Component Lookup
 
-API Management
+      + ComponentJS
+      + exists
 
-  * symbol
-  * version
+    Component Tree
 
-Library Management
+      + path
+      + parent
+      + children
+      + attach
+      + detach
+      + walk_up
+      + walk_down
 
-  * bootstrap
-  * shutdown
-  * plugin
+    States
 
-Debugging
+      + transition
+      + state
+      + state_compare
+      + state_auto_increase
+      + state_auto_decrease
+      + guard
 
-  * debug
-  * debug_instrumented
-  * debug_window
+    Spools
 
-Code Structuring
+      + spool
+      + spooled
+      + unspool
 
-  * ns
-  * validate
-  * params
-  * attribute
-  * clazz
-  * trait
+    Markers
 
-Component Creation
+      + mark
+      + marked
 
-  * create
-  * destroy
+    Properties
 
-Component Information
+      + property
 
-  * id
-  * name
-  * obj
-  * cfg
+    Sockets
 
-Component Lookup
+      + socket
+      + unsocket
+      + link
+      + unlink
+      + plug
+      + unplug
 
-  * ComponentJS
-  * exists
+    Models
 
-Component Tree
+      + model
+      + value
+      + touch
+      + observe
+      + unobserve
 
-  * path
-  * parent
-  * children
-  * walk_up
-  * walk_down
+    Events
 
-States
+      + subscribe
+      + unsubscribe
+      + subscription
+      + publish
 
-  * transition
-  * state
-  * state_compare
-  * state_auto_increase
-  * state_auto_decrease
-  * guard
+    Services
 
-Spools
-
-  * spool
-  * spooled
-  * unspool
-
-Markers
-
-  * mark
-  * marked
-
-Properties
-
-  * property
-
-Sockets
-
-  * socket
-  * unsocket
-  * link
-  * unlink
-  * plug
-  * unplug
-
-Models
-
-  * model
-  * value
-  * touch
-  * observe
-  * unobserve
-
-Events
-
-  * subscribe
-  * unsubscribe
-  * subscription
-  * publish
-
-Services
-
-  * register
-  * unregister
-  * registration
-  * callable
-  * call
-
-Hooks
-
-  * latch
-  * unlatch
-  * hook
-
-ComponentJS
-Application Programming Interface (API)
+      + register
+      + unregister
+      + registration
+      + callable
+      + call
+    ComponentJS
+    Application Programming Interface (API)

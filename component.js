@@ -87,10 +87,10 @@
 
     /*  API version  */
     $cs.version = {
-        major: 0,
-        minor: 9,
-        micro: 9,
-        date:  20130510
+        major: 1,
+        minor: 0,
+        micro: 0,
+        date:  20130929
     };
 
 
@@ -264,14 +264,15 @@
             );
         };
         var encode = function (value, seen) {
-            if (typeof seen[value] !== "undefined")
-                return "null /* [...] */";
-            else
-                seen[value] = true;
+            if (typeof value !== "boolean" && typeof value !== "number" && typeof value !== "string") {
+                if (typeof seen[value] !== "undefined")
+                    return "null /* CYCLE! */";
+                else
+                    seen[value] = true;
+            }
             switch (typeof value) {
-                case "null":     value = "null"; break;
                 case "boolean":  value = String(value); break;
-                case "number":   value = (isFinite(value) ? String(value) : "null"); break;
+                case "number":   value = (isFinite(value) ? String(value) : "NaN"); break;
                 case "string":   value = quote(value); break;
                 case "function":
                     if (_cs.annotation(value, "type") !== null)
@@ -281,7 +282,7 @@
                     break;
                 case "object":
                     var a = [];
-                    if (!value)
+                    if (value === null)
                         value = "null";
                     else if (_cs.annotation(value, "type") !== null)
                         value = "<" + _cs.annotation(value, "type") + ">";
@@ -371,7 +372,7 @@
             else if (Object.prototype.toString.call(source) === "[object Array]") {
                 /*  special case: array object  */
                 var len = source.length;
-                target = new Array(len);
+                target = [];
                 for (var i = 0; i < len; i++)
                     target.push(myself(source[i], continue_recursion)); /* RECURSION */
             }
@@ -663,7 +664,7 @@
                 ast = this.parse_hash(token);
             else if (symbol === "[")
                 ast = this.parse_array(token);
-            else if (symbol.match(/^(?:undefined|boolean|number|string|function|object)$/))
+            else if (symbol.match(/^(?:null|undefined|boolean|number|string|function|object)$/))
                 ast = this.parse_primary(token);
             else if (symbol.match(/^(?:clazz|trait|component)$/))
                 ast = this.parse_special(token);
@@ -738,7 +739,7 @@
         /*  parse primary type specification  */
         parse_primary: function (token) {
             var primary = token.peek();
-            if (!primary.match(/^(?:undefined|boolean|number|string|function|object)$/))
+            if (!primary.match(/^(?:null|undefined|boolean|number|string|function|object)$/))
                 throw new Error("parse error: invalid primary type \"" + primary + "\"");
             token.skip();
             return { type: "primary", name: primary };
@@ -873,7 +874,9 @@
                 /*  pass 2: ensure that no unknown fields exist
                     and that all existing fields are valid  */
                 for (var field in value) {
-                    if (!Object.hasOwnProperty.call(value, field))
+                    if (   !Object.hasOwnProperty.call(value, field) ||
+                           !Object.propertyIsEnumerable.call(value, field) ||
+                           (field === "constructor" || field === "prototype"))
                         continue;
                     if (   typeof fields[field] === "undefined" ||
                            !this.exec_spec(value[field], fields[field])) {  /*  RECURSION  */
@@ -913,7 +916,7 @@
 
         /*  validate standard JavaScript type  */
         exec_primary: function (value, node) {
-            return (typeof value === node.name);
+            return (node.name === "null" && value === null) || (typeof value === node.name);
         },
 
         /*  validate custom JavaScript type  */
@@ -1336,7 +1339,7 @@
                     hooks:  _cs.hooks[name].length, /*  total number of hooks latched  */
                     _cs:    _cs,                    /*  internal ComponentJS API  */
                     $cs:    $cs                     /*  external ComponentJS API  */
-                },  args);                          /*  hook arguments  */
+                }, args);                           /*  hook arguments  */
 
                 /*  process/merge results  */
                 result = _cs.hook_proc[proc].step.call(null, result, r);
@@ -1672,7 +1675,7 @@
             },
 
             /*  method: attach node to tree  */
-            _attach: function (theparent) {
+            attach: function (theparent) {
                 if (this.parent() !== null)
                     this.detach();
                 var children = theparent.children();
@@ -1682,7 +1685,7 @@
             },
 
             /*  method: detach node from tree  */
-            _detach: function () {
+            detach: function () {
                 if (this.parent() !== null) {
                     var self = this;
                     this.parent().children(_cs.filter(this.parent().children(), function (x) {
@@ -1783,17 +1786,17 @@
                 /*  determine parameters  */
                 var params = $cs.params("spool", arguments, {
                     name:  { pos: 0,     req: true },
-                    ctx:   { pos: 1,     def: this },
+                    ctx:   { pos: 1,     req: true },
                     func:  { pos: 2,     req: true },
                     args:  { pos: "...", def: []   }
                 });
 
                 /*  sanity check parameters  */
                 if (!_cs.istypeof(params.func).match(/^(string|function)$/))
-                    throw _cs.exception("cleaner", "invalid function (either function object or method name required)");
+                    throw _cs.exception("spool", "invalid function parameter (neither function object nor method name)");
                 if (_cs.istypeof(params.func) === "string") {
                     if (_cs.istypeof(params.ctx[params.func]) !== "function")
-                        throw _cs.exception("cleaner", "invalid method name: \"" + params.func + "\"");
+                        throw _cs.exception("spool", "invalid method name: \"" + params.func + "\"");
                     params.func = params.ctx[params.func];
                 }
 
@@ -1804,17 +1807,17 @@
                 return;
             },
 
-            /*  check whether actions are spooled  */
+            /*  return number of actions which are spooled  */
             spooled: function () {
                 /*  determine parameters  */
                 var params = $cs.params("spooled", arguments, {
                     name: { pos: 0, req: true }
                 });
 
-                /*  return whether actions are spooled  */
+                /*  return number of actions which are spooled  */
                 return (
-                       _cs.isdefined(this.__spool[params.name]) &&
-                       this.__spool[params.name].length > 0
+                    _cs.isdefined(this.__spool[params.name]) ?
+                    this.__spool[params.name].length : 0
                 );
             },
 
@@ -1866,6 +1869,7 @@
                 var params = $cs.params("property", arguments, {
                     name:        { pos: 0, req: true      },
                     value:       { pos: 1, def: undefined },
+                    scope:       {         def: undefined },
                     bubbling:    {         def: true      },
                     targeting:   {         def: true      },
                     returnowner: {         def: false     }
@@ -1922,7 +1926,10 @@
                 /*  optionally set new configuration value
                     (on current node only)  */
                 if (typeof params.value !== "undefined")
-                    this.cfg("ComponentJS:property:" + params.name, params.value);
+                    if (typeof params.scope !== "undefined")
+                        this.cfg("ComponentJS:property:" + params.name + "@" + params.scope, params.value);
+                    else
+                        this.cfg("ComponentJS:property:" + params.name, params.value);
 
                 /*  return result (either the old configuration
                     value or the owning component)  */
@@ -2021,8 +2028,8 @@
                 /*  determine parameters  */
                 var params = $cs.params("listen", arguments, {
                     name:    { pos: 0,     req: true },
-                    ctx:     { pos: 1,     def: this },
-                    func:    { pos: 2,     req: true },
+                    ctx:     {             def: this },
+                    func:    { pos: 1,     req: true },
                     args:    { pos: "...", def: []   },
                     spec:    {             def: null } /* customized matching */
                 });
@@ -2240,7 +2247,7 @@
                     spec:         {             def: {}              },
                     async:        {             def: false           },
                     capturing:    {             def: true            },
-                    spreading:    {             def: true            },
+                    spreading:    {             def: false           },
                     bubbling:     {             def: true            },
                     completed:    {             def: $cs.nop         },
                     resultinit:   {             def: undefined       },
@@ -2496,7 +2503,10 @@
         if (params.wrap) {
             result = function () {
                 var args = _cs.concat(arguments);
-                return arguments.callee.command.execute.call(arguments.callee.command, args);
+                var cb = null;
+                if (arguments.callee.command.async())
+                    cb = args.pop();
+                return arguments.callee.command.execute.call(arguments.callee.command, args, cb);
             };
             result.command = cmd;
         }
@@ -2611,7 +2621,7 @@
     /*  perform a single synchronous progression run for a particular component  */
     _cs.state_progression_run = function (comp, arg, _direction) {
         var i, children;
-        var name, state, enter, leave;
+        var state, enter, leave, spooled;
 
         /*  handle optional argument (USED INTERNALLY ONLY)  */
         if (typeof _direction === "undefined")
@@ -2663,11 +2673,6 @@
                 );
                 _cs.hook("ComponentJS:state-invalidate", "none", "states");
                 _cs.hook("ComponentJS:state-change", "none");
-
-                /*  execute pending spooled actions  */
-                name = "ComponentJS:state:" + _cs.states[comp.__state].state + ":enter";
-                if (comp.spooled(name))
-                    comp.unspool(name);
 
                 /*  execute enter method  */
                 if (_cs.state_method_call("enter", comp, enter) === false) {
@@ -2757,11 +2762,6 @@
                 _cs.hook("ComponentJS:state-invalidate", "none", "states");
                 _cs.hook("ComponentJS:state-change", "none");
 
-                /*  execute pending spooled actions  */
-                name = "ComponentJS:state:" + _cs.states[comp.__state + 1].state + ":leave";
-                if (comp.spooled(name))
-                    comp.unspool(name);
-
                 /*  execute leave method  */
                 if (_cs.state_method_call("leave", comp, leave) === false) {
                     /*  FULL STOP: state leave method rejected state transition  */
@@ -2772,6 +2772,16 @@
                     );
                     comp.__state++;
                     return;
+                }
+                else {
+                    /*  in case leave method successful or not present
+                        automatically unspool still pending actions
+                        on spool named exactly like the left state  */
+                    spooled = comp.spooled(state);
+                    if (spooled > 0) {
+                        $cs.debug(1, "state: " + comp.path("/") + ": auto-unspooling " + spooled + " operation(s)");
+                        comp.unspool(state);
+                    }
                 }
 
                 /*  notify subscribers about new state  */
@@ -2952,7 +2962,6 @@
                     ctx:       {             def: this  },
                     func:      { pos: 1,     req: true  },
                     args:      { pos: "...", def: []    },
-                    async:     {             def: false },
                     spool:     {             def: null  },
                     capturing: {             def: false },
                     spreading: {             def: false },
@@ -2964,7 +2973,6 @@
                     ctx:   params.ctx,
                     func:  params.func,
                     args:  params.args,
-                    async: params.async,
                     wrap:  true
                 });
 
@@ -3246,8 +3254,9 @@
                         if (id !== null)
                             throw _cs.exception("link:plug: cannot plug, you have to unplug first");
                         id = $cs(params.target).plug({
-                            name:   params.socket,
-                            object: obj
+                            name:      params.socket,
+                            object:    obj,
+                            targeting: true
                         });
                         _cs.annotation(obj, "link", id);
                     },
@@ -3255,7 +3264,10 @@
                         var id = _cs.annotation(obj, "link");
                         if (id === null)
                             throw _cs.exception("link:unplug: cannot unplug, you have to plug first");
-                        $cs(params.target).unplug(id);
+                        $cs(params.target).unplug({
+                            id: id,
+                            targeting: true
+                        });
                         _cs.annotation(obj, "link", null);
                     }
                 });
@@ -3275,9 +3287,10 @@
             plug: function () {
                 /*  determine parameters  */
                 var params = $cs.params("plug", arguments, {
-                    name:     {         def: "default" },
-                    object:   { pos: 0, req: true      },
-                    spool:    {         def: null      }
+                    name:      {         def: "default" },
+                    object:    { pos: 0, req: true      },
+                    spool:     {         def: null      },
+                    targeting: {         def: false     }
                 });
 
                 /*  remember plug operation  */
@@ -3285,7 +3298,7 @@
                 this.__plugs[id] = params;
 
                 /*  pass-though operation to common helper function  */
-                _cs.plugger("plug", this, params.name, params.object);
+                _cs.plugger("plug", this, params.name, params.object, params.targeting);
 
                 /*  optionally spool reverse operation  */
                 if (params.spool !== null) {
@@ -3300,7 +3313,8 @@
             unplug: function () {
                 /*  determine parameters  */
                 var params = $cs.params("unplug", arguments, {
-                    id: { pos: 0, req: true }
+                    id:        { pos: 0, req: true  },
+                    targeting: {         def: false }
                 });
 
                 /*  determine plugging information  */
@@ -3310,7 +3324,7 @@
                 var object = this.__plugs[params.id].object;
 
                 /*  pass-though operation to common helper function  */
-                _cs.plugger("unplug", this, name, object);
+                _cs.plugger("unplug", this, name, object, params.targeting);
 
                 /*  remove plugging  */
                 delete this.__plugs[params.id];
@@ -3320,7 +3334,7 @@
     });
 
     /*  internal "plug/unplug to socket" helper functionality  */
-    _cs.plugger = function (op, origin, name, object) {
+    _cs.plugger = function (op, origin, name, object, targeting) {
         /*  resolve the socket property on the parents components
             NOTICE 1: we explicitly skip the origin component here as
                       resolving the socket property also on the origin
@@ -3330,96 +3344,23 @@
                       resolve on the parent component as we want to take
                       scoped sockets (on the parent component) into account!  */
         var property = "ComponentJS:socket:" + name;
-        var socket = origin.property({ name: property, targeting: false });
+        var socket = origin.property({ name: property, targeting: targeting });
         if (!_cs.isdefined(socket))
             throw _cs.exception(op, "no socket found on parent component(s)");
 
         /*  determine the actual component owning the socket (for logging purposes only)  */
-        var owner = origin.property({ name: property, targeting: false, returnowner: true });
+        var owner = origin.property({ name: property, targeting: targeting, returnowner: true });
         $cs.debug(1, "socket: " + owner.path("/") + ": " + name +
             " <--(" + op + ")-- " + origin.path("/"));
 
         /*  perform plug/unplug operation  */
         if (_cs.istypeof(socket[op]) === "string")
-            socket.ctx[socket[op]].call(socket.ctx, object);
+            socket.ctx[socket[op]].call(socket.ctx, object, origin);
         else if (_cs.istypeof(socket[op]) === "function")
-            socket[op].call(socket.ctx, object);
+            socket[op].call(socket.ctx, object, origin);
         else
             throw _cs.exception(op, "failed to perform \"" + op + "\" operation");
     };
-
-    /*  generic pattern: hook  */
-    $cs.pattern.hook = $cs.trait({
-        mixin: [
-            $cs.pattern.eventing
-        ],
-        protos: {
-            /*  latch into a hook  */
-            latch: function () {
-                /*  determine parameters  */
-                var params = $cs.params("latch", arguments, {
-                    name:    { pos: 0,     req: true },
-                    ctx:     {             def: this },
-                    func:    { pos: 1,     req: true },
-                    args:    { pos: "...", def: []   },
-                    spool:   {             def: null }
-                });
-
-                /*  subscribe to hook event  */
-                var id = this.subscribe({
-                    name:    "ComponentJS:hook:" + params.name,
-                    ctx:     params.ctx,
-                    func:    params.func,
-                    args:    params.args,
-                    noevent: true
-                });
-
-                /*  optionally spool reverse operation  */
-                if (params.spool !== null) {
-                    var info = _cs.spool_spec_parse(this, params.spool);
-                    info.comp.spool(info.name, this, "unlatch", id);
-                }
-
-                return id;
-            },
-
-            /*  unlatch from a hook  */
-            unlatch: function () {
-                /*  determine parameters  */
-                var params = $cs.params("unlatch", arguments, {
-                    id: { pos: 0, req: true }
-                });
-
-                /*  unsubscribe from hook event  */
-                this.unsubscribe(params.id);
-            },
-
-            /*  perform the hook  */
-            hook: function () {
-                /*  determine parameters  */
-                var params = $cs.params("hook", arguments, {
-                    name:   { pos: 0, req: true },
-                    proc:   { pos: 1, def: "none",
-                              valid: function (x) {
-                                  return _cs.isdefined(_cs.hook_proc[x]); } },
-                    args:   { pos: "...", def: [] }
-                });
-
-                /*  dispatch hook event onto target component  */
-                return this.publish({
-                    name:         "ComponentJS:hook:" + params.name,
-                    args:         params.args,
-                    capturing:    false,
-                    spreading:    false,
-                    bubbling:     false,
-                    async:        false,
-                    resultinit:   _cs.hook_proc[params.proc].init,
-                    resultstep:   _cs.hook_proc[params.proc].step,
-                    directresult: true
-                });
-            }
-        }
-    });
 
     /*  utility function: mark a component  */
     $cs.mark = function (obj, name) {
@@ -3562,7 +3503,7 @@
                         }
                         if (!$cs.validate(model[name].value, model[name].valid))
                             throw _cs.exception("model", "model field \"" + name + "\" has " +
-                                "default value \"" + model[name].value + "\", which does not validate " +
+                                "default value " + _cs.json(model[name].value) + ", which does not validate " +
                                 "against validation \"" + model[name].valid + "\"");
                     }
                 }
@@ -3679,8 +3620,9 @@
 
                     /*  check validity of new value  */
                     if (!$cs.validate(value_new, model[params.name].valid))
-                        throw _cs.exception("value", "invalid value \"" + value_new +
-                            "\" for model field \"" + params.name + "\"");
+                        throw _cs.exception("value", "model field \"" + params.name + "\" receives " +
+                            "new value " + _cs.json(value_new) + ", which does not validate " +
+                            "against validation \"" + model[params.name].valid + "\"");
 
                     /*  send event to observers for value set operation and allow observers
                         to reject value set operation and/or change new value to set  */
@@ -3958,7 +3900,7 @@
         _cs.none = null;
 
         /*  destroy singleton "<root>" component
-            (its "destroy" method will destroy while component tree!)  */
+            (its "destroy" method will destroy whole component tree!)  */
         _cs.root.destroy();
         _cs.root = null;
 
@@ -4103,9 +4045,14 @@
         /*  sanity check environment  */
         if (!_cs.bootstrapped) {
             /*  give warning but still be backward compatible  */
+            var msg = "ComponentJS: WARNING: component system still not bootstrapped " +
+                "(please call \"bootstrap\" method before first \"create\" method call!)";
             /* global alert:false */
-            alert("WARNING: ComponentJS still not bootstrapped " +
-                "(please call \"bootstrap\" method before first \"create\" method call!)");
+            if (typeof alert === "function")
+                alert(msg);
+            /* global console:false */
+            else if (typeof console !== "undefined" && typeof console.log === "function")
+                console.log(msg);
             $cs.bootstrap();
         }
 
@@ -4263,7 +4210,7 @@
         comp.id(id);
 
         /*  attach to tree  */
-        comp._attach(comp_parent);
+        comp.attach(comp_parent);
 
         /*  remember bi-directional relationship between component and object  */
         comp.obj(obj);
@@ -4271,12 +4218,15 @@
         /*  debug hint  */
         $cs.debug(1, "component: " + comp.path("/") + ": created component [" + comp.id() + "]");
 
+        /*  give plugins a chance to react (before creation of a component)  */
+        _cs.hook("ComponentJS:comp-created", "none", comp);
+
         /*  switch state from "dead" to "created"
             (here synchronously as one expects that after a creation of a
             component, the state is really already "created", of course)  */
         comp.state({ state: "created", sync: true });
 
-        /*  give plugins a chance to react  */
+        /*  give plugins a chance to react (after creation of a component)  */
         _cs.hook("ComponentJS:state-invalidate", "none", "components");
         _cs.hook("ComponentJS:state-change", "none");
 
@@ -4302,8 +4252,11 @@
             component, the state is really already "dead", of course)  */
         comp.state({ state: "dead", sync: true });
 
+        /*  give plugins a chance to react (before final destruction of a component)  */
+        _cs.hook("ComponentJS:comp-destroyed", "none", comp);
+
         /*  detach component from component tree  */
-        comp._detach();
+        comp.detach();
 
         /*  remove bi-directional relationship between component and object  */
         comp.obj(null);
@@ -4311,7 +4264,7 @@
         /*  debug hint  */
         $cs.debug(1, "component: " + comp.path("/") + ": destroyed component [" + comp.id() + "]");
 
-        /*  give plugins a chance to react  */
+        /*  give plugins a chance to react (after final destruction of a component)  */
         _cs.hook("ComponentJS:state-invalidate", "none", "components");
         _cs.hook("ComponentJS:state-change", "none");
 

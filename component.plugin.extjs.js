@@ -33,7 +33,7 @@ ComponentJS.plugin("extjs", function (_cs, $cs, GLOBAL) {
                     plug:   { pos: 1, def: null       }, /*  removed "req: true"  */
                     unplug: { pos: 2, def: null       }, /*  removed "req: true"  */
                     spool:  {         def: null       },
-                    type:   {         def: "standard" }  /*  added  */
+                    type:   {         def: "default"  }  /*  added  */
                 });
 
                 /*  create pass-through information  */
@@ -43,8 +43,8 @@ ComponentJS.plugin("extjs", function (_cs, $cs, GLOBAL) {
                 /*  optionally change behaviour  */
                 if (params.type === "extjs") {
                     /*  provide specialized ExtJS socket functionality  */
-                    arg.plug   = function (el) { this.add(el);    };
-                    arg.unplug = function (el) { this.remove(el); };
+                    arg.plug   = function (el, comp) { this.add(el);    };
+                    arg.unplug = function (el, comp) { this.remove(el); };
                 }
 
                 /*  pass-through execution to original/base method  */

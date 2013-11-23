@@ -30,7 +30,8 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
         else {
             if (typeof el === "undefined")
                 el = GLOBAL.document;
-            result = el.querySelectorAll(sel);
+            try       { result = el.querySelectorAll(sel); }
+            catch (e) { result = GLOBAL.document;          }
             result = _cs.concat([], result);
         }
         _cs.extend(result, _cs.jq_methods);
@@ -87,6 +88,23 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
                 }
                 else {
                     this[i].style.height = value;
+                }
+            }
+            return result;
+        },
+        css: function (name, value) {
+            var result = (typeof value !== "undefined" ? this : undefined);
+            var field = name.replace(/-([a-z])/g, function (a0, a1) {
+                return a1.toUpperCase();
+            });
+            for (var i = 0; i < this.length; i++) {
+                if (typeof value === "undefined")
+                    result = this[i].style[field];
+                else {
+                    if (_cs.isIE())
+                        this[i].style.cssText = name + ":" + value + ";";
+                    else
+                        this[i].style[field] = value;
                 }
             }
             return result;
@@ -202,7 +220,7 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
             typeof GLOBAL !== "undefined" &&
             GLOBAL.console &&
             (GLOBAL.console.firebug ||                        /* precision: Firefox Firebug  */
-             (GLOBAL.outerHeight - GLOBAL.innerHeight) > 120) /* guessing:  Chrome Inspector, IE Debugger  */
+             (GLOBAL.outerHeight - GLOBAL.innerHeight) > 120) /* guessing:  Chrome/Safari Inspector, IE Debugger  */
         );
     };
 
@@ -291,7 +309,14 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
                                 ".dbg .header {" +
                                     "width: 100%;" +
                                     "height: 30px;" +
-                                    "background-color: #000000;" +
+                                    "background: #666666;" +
+                                    "background: -moz-linear-gradient(top,  #666666 0%, #333333 49%, #222222 51%, #000000 100%);" +
+                                    "background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#666666), color-stop(49%,#333333), color-stop(51%,#222222), color-stop(100%,#000000));" +
+                                    "background: -webkit-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                                    "background: -o-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                                    "background: -ms-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                                    "background: linear-gradient(to bottom,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                                    "filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#666666', endColorstr='#000000',GradientType=0 );" +
                                     "text-align: center;" +
                                     "position: relative;" +
                                 "}" +
@@ -305,7 +330,14 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
                                 ".dbg .viewer {" +
                                     "width: 100%;" +
                                     "height: 50%;" +
-                                    "background-color: #d0d0d0;" +
+                                    "background: #d0d0d0;" +
+                                    "background: -moz-linear-gradient(top,  #d0d0d0 0%, #e8e8e8 50%, #d0d0d0 100%);" +
+                                    "background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#d0d0d0), color-stop(50%,#e8e8e8), color-stop(100%,#d0d0d0));" +
+                                    "background: -webkit-linear-gradient(top,  #d0d0d0 0%,#e8e8e8 50%,#d0d0d0 100%);" +
+                                    "background: -o-linear-gradient(top,  #d0d0d0 0%,#e8e8e8 50%,#d0d0d0 100%);" +
+                                    "background: -ms-linear-gradient(top,  #d0d0d0 0%,#e8e8e8 50%,#d0d0d0 100%);" +
+                                    "background: linear-gradient(to bottom,  #d0d0d0 0%,#e8e8e8 50%,#d0d0d0 100%);" +
+                                    "filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d0d0d0', endColorstr='#d0d0d0',GradientType=0 );" +
                                     "overflow: hidden;" +
                                 "}" +
                                 ".dbg .viewer canvas {" +
@@ -318,7 +350,14 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
                                 ".dbg .status {" +
                                     "width: 100%;" +
                                     "height: 20px;" +
-                                    "background-color: #000000;" +
+                                    "background: #666666;" +
+                                    "background: -moz-linear-gradient(top,  #666666 0%, #333333 49%, #222222 51%, #000000 100%);" +
+                                    "background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#666666), color-stop(49%,#333333), color-stop(51%,#222222), color-stop(100%,#000000));" +
+                                    "background: -webkit-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                                    "background: -o-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                                    "background: -ms-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                                    "background: linear-gradient(to bottom,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                                    "filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#666666', endColorstr='#000000',GradientType=0 );" +
                                     "color: #f0f0f0;" +
                                     "text-align: center;" +
                                 "}" +
@@ -343,7 +382,7 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
                                 ".dbg .console .text .line {" +
                                     "border-collapse: collapse;" +
                                     "width: 100%;" +
-                                    "border-bottom: 1px solid #d0d0d0;" +
+                                    "border-bottom: 1px solid #e0e0e0;" +
                                     "font-size: 9pt;" +
                                 "}" +
                                 ".dbg .console .text .num {" +
@@ -372,17 +411,96 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
                                 ".dbg .console .text .msg .method {" +
                                     "font-family: monospace;" +
                                 "}" +
+                                ".dbg .grabber {" +
+                                    "position: absolute; " +
+                                    "cursor: move; " +
+                                    "width: 100%;" +
+                                    "height: 20px;" +
+                                    "background-color: transparent;" +
+                                    "opacity: 0.5;" +
+                                    "z-index: 100;" +
+                                "}" +
+                                ".dbg .exporter {" +
+                                    "position: absolute; " +
+                                    "top: 4px; " +
+                                    "right: 20px; " +
+                                    "padding: 2px 8px 2px 8px; " +
+                                    "border-top: 1px solid #777777;" +
+                                    "border-left: 1px solid #777777;" +
+                                    "border-right: 1px solid #555555;" +
+                                    "border-bottom: 1px solid #555555;" +
+                                    "background: #666666;" +
+                                    "background: -moz-linear-gradient(top,  #666666 0%, #333333 49%, #222222 51%, #000000 100%);" +
+                                    "background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#666666), color-stop(49%,#333333), color-stop(51%,#222222), color-stop(100%,#000000));" +
+                                    "background: -webkit-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                                    "background: -o-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                                    "background: -ms-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                                    "background: linear-gradient(to bottom,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                                    "filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#666666', endColorstr='#000000',GradientType=0 );" +
+                                    "color: #c0c0c0;" +
+                                    "z-index: 100;" +
+                                "}" +
                             "</style>" +
                             "<div class=\"dbg\">" +
                                 "<div class=\"header\"><div class=\"text\">" + title + "</div></div>" +
                                 "<div class=\"viewer\"><canvas></canvas></div>" +
+                                "<div class=\"grabber\"></div>" +
+                                "<div class=\"exporter\">Export</div>" +
                                 "<div class=\"status\"><div class=\"text\"></div></div>" +
                                 "<div class=\"console\"><div class=\"text\"></div></div>" +
                             "</div>"
                         );
+
+                        /*  window-based resize support  */
                         _cs.dbg_refresh();
                         _cs.jq(_cs.dbg).bind("resize", function () {
                             _cs.dbg_refresh();
+                        });
+
+                        /*  avoid text selections (which confuse the grabbing) [non cross-browser event!]  */
+                        _cs.jq(".dbg", _cs.dbg.document).bind("selectstart", function (ev) {
+                            ev.preventDefault();
+                            return false;
+                        });
+
+                        /*  grabbing-based resize support  */
+                        var grabbing = false;
+                        _cs.jq(".dbg .grabber", _cs.dbg.document).bind("mousedown", function (ev) {
+                            grabbing = true;
+                            _cs.jq(".dbg .grabber", _cs.dbg.document).css("background-color", "red");
+                            ev.preventDefault();
+                        });
+                        _cs.jq(".dbg", _cs.dbg.document).bind("mousemove", function (ev) {
+                            if (grabbing) {
+                                var offset = ev.pageY;
+                                if (offset < 300)
+                                    offset = 300;
+                                var vh = _cs.jq(_cs.dbg).height();
+                                if (offset > vh - 100)
+                                   offset = vh - 100;
+                                _cs.jq(".dbg .grabber", _cs.dbg.document).css("top", offset);
+                                _cs.dbg_grabber_offset = offset;
+                                ev.preventDefault();
+                            }
+                        });
+                        _cs.jq(".dbg", _cs.dbg.document).bind("mouseup", function (ev) {
+                            if (grabbing) {
+                                _cs.jq(".dbg .grabber", _cs.dbg.document).css("background-color", "transparent");
+                                _cs.dbg_refresh();
+                                grabbing = false;
+                                ev.preventDefault();
+                            }
+                        });
+
+                        /*  canvas export functionality  */
+                        _cs.jq(".dbg .exporter", _cs.dbg.document).bind("click", function (ev) {
+                            var ctx = _cs.jq(".dbg .viewer canvas", _cs.dbg.document).get(0);
+                            if (typeof ctx !== "undefined") {
+                                var dataurl = ctx.toDataURL("image/png");
+                                GLOBAL.open(dataurl);
+                            }
+                            ev.preventDefault();
+                            return false;
                         });
                     });
                 }, 500);
@@ -399,6 +517,9 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
         }
     };
 
+    /*  the grabber offset  */
+    _cs.dbg_grabber_offset = -1;
+
     /*  refresh the browser rendering  */
     _cs.dbg_refresh = function () {
         /*  expand to viewport width/height  */
@@ -406,15 +527,20 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
         var vh = _cs.jq(_cs.dbg).height();
         _cs.jq(".dbg", _cs.dbg.document).width(vw).height(vh);
 
-        /*  expand viewer and console to half of the viewport height  */
-        var h = vh - (
-            _cs.jq(".dbg .header", _cs.dbg.document).height() +
-            _cs.jq(".dbg .status", _cs.dbg.document).height()
-        );
-        var h1 = Math.ceil(h / 2);
-        var h2 = Math.floor(h / 2);
+        /*  initially determine reasonable grabber offset  */
+        _cs.jq(".dbg .grabber", _cs.dbg.document).height(
+            _cs.jq(".dbg .status", _cs.dbg.document).height());
+        if (_cs.dbg_grabber_offset === -1) {
+            var h = vh - _cs.jq(".dbg .header", _cs.dbg.document).height();
+            _cs.dbg_grabber_offset = Math.floor(h / 2) + _cs.jq(".dbg .header", _cs.dbg.document).height();
+        }
+
+        /*  calculate viewer and console sizes based on grabber offset  */
+        var h1 =      _cs.dbg_grabber_offset - _cs.jq(".dbg .header", _cs.dbg.document).height();
+        var h2 = vh - _cs.dbg_grabber_offset + _cs.jq(".dbg .status", _cs.dbg.document).height();
         _cs.jq(".dbg .viewer",  _cs.dbg.document).height(h1);
         _cs.jq(".dbg .console", _cs.dbg.document).height(h2);
+        _cs.jq(".dbg .grabber", _cs.dbg.document).css("top", _cs.dbg_grabber_offset);
 
         /*  explicitly set the canvas size of the viewer  */
         _cs.jq(".dbg .viewer canvas", _cs.dbg.document)
@@ -521,7 +647,7 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
                 var gw = Math.floor(cw / W);
                 var gh = Math.floor(ch / (D + 1));
                 var ow = Math.floor(gw / 8);
-                var oh = Math.floor(gh / 3);
+                var oh = Math.floor(gh / 4);
 
                 /*  clear the canvas as we redraw everything  */
                 ctx.clearRect(0, 0, cw, ch);
@@ -625,6 +751,34 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
                         ctx.closePath();
                         ctx.fill();
                         ctx.restore();
+
+                        /*  draw optional state guard indicator bulp  */
+                        var guarded = false;
+                        for (var method in comp.__state_guards) {
+                            if (typeof comp.__state_guards[method] === "number" &&
+                                comp.__state_guards[method] !== 0                 ) {
+                                guarded = true;
+                                break;
+                            }
+                        }
+                        if (guarded) {
+                            ctx.save();
+                            ctx.fillStyle = "#ff0000";
+                            ctx.shadowColor = "#000000";
+                            ctx.shadowBlur = 2;
+                            ctx.shadowOffsetX = 0;
+                            ctx.shadowOffsetY = 0;
+                            ctx.beginPath();
+                            ctx.arc(
+                                my_x + my_w - 2 * (my_h / 4) - 1,
+                                my_y + 3 * (my_h / 4),
+                                (my_h / 4) - 3,
+                                0, 2 * Math.PI, true
+                            );
+                            ctx.closePath();
+                            ctx.fill();
+                            ctx.restore();
+                        }
 
                         /*  common text rendering  */
                         var renderText = function (text, color, x, y, width) {

@@ -25,9 +25,6 @@
     /*  pattern sub-namespace  */
     $cs.pattern = {};
 
-    /*  marker sub-namespace  */
-    $cs.marker = {};
-
     /*  top-level API method: change symbol of external API  */
     $cs.symbol = (function () {
         /*  internal state  */
@@ -92,8 +89,8 @@
     $cs.version = {
         major: 0,
         minor: 9,
-        micro: 5,
-        date:  20130223
+        micro: 6,
+        date:  20130225
     };
 
 
@@ -1956,7 +1953,7 @@
                         case "string":
                             if (!(   (   typeof value === "string" &&
                                          spec[key] === value) ||
-                                     (    typeof value === "object" &&
+                                     (   typeof value === "object" &&
                                          value instanceof RegExp &&
                                          !(spec[key].match(value)))))
                                 return false;
@@ -2113,16 +2110,15 @@
                     bubbling:  {             def: true               },
                     noevent:   {             def: false              },
                     exclusive: {             def: false              },
-                    origin:    {             def: false              },
                     spool:     {             def: null               }
                 });
 
                 /*  honor exclusive request  */
-                if (params.exclusive) {
-                    var subscribers = this.subscribers(params.name, params.spec);
-                    if (subscribers.length > 0)
-                        throw _cs.exception("subscribe", "multiple exclusive subscribers not allowed");
-                }
+                var subscriptions = this._subscriptions(params.name, params.spec);
+                if (subscriptions.length === 1 && subscriptions[0].exclusive)
+                    throw _cs.exception("subscribe", "existing exclusive subscription prevents additional one");
+                if (params.exclusive && subscriptions.length > 0)
+                    throw _cs.exception("subscribe", "non-exclusive subscription(s) prevent exclusive one");
 
                 /*  attach parameters to component  */
                 var id = _cs.cid();
@@ -2160,10 +2156,10 @@
                 return (typeof this.__subscription[params.id] !== "undefined");
             },
 
-            /*  determine subscribers  */
-            subscribers: function () {
+            /*  determine subscriptions (internal)  */
+            _subscriptions: function () {
                 /*  determine parameters  */
-                var params = $cs.params("subscribers", arguments, {
+                var params = $cs.params("subscriptions", arguments, {
                     name:  { pos: 0, def: null, req: true },
                     spec:  { pos: 1, def: {}              }
                 });
@@ -2174,16 +2170,16 @@
                     spec: params.spec
                 });
 
-                /*  find and return all matching subscribers  */
-                var subscribers = [];
+                /*  find and return all matching subscriptions  */
+                var subscriptions = [];
                 for (var id in this.__subscription) {
                     if (!_cs.isown(this.__subscription, id))
                         continue;
                     var s = this.__subscription[id];
                     if (ev.matches(s.name, s.spec))
-                        subscribers.push(s);
+                        subscriptions.push(s);
                 }
-                return subscribers;
+                return subscriptions;
             },
 
             /*  publish an event */
@@ -2262,7 +2258,7 @@
                 }
 
                 /*  helper function for dispatching event to single component  */
-                var event_dispatch_single = function (ev, origin, comp, params, state) {
+                var event_dispatch_single = function (ev, comp, params, state) {
                     for (var id in comp.__subscription) {
                         if (!_cs.isown(comp.__subscription, id))
                             continue;
@@ -2277,7 +2273,6 @@
                             ev.state(state);
                             ev.decline(false);
                             var args = _cs.concat(
-                                s.origin  ? [ origin ] : [],
                                 s.noevent ? [] : [ ev ],
                                 s.args,
                                 params.args
@@ -2306,7 +2301,7 @@
                         towards target component for capturing subscribers  */
                     if (params.capturing) {
                         for (i = comp_path.length - 1; i >= 1; i--) {
-                            event_dispatch_single(ev, comp, comp_path[i], params, "capturing");
+                            event_dispatch_single(ev, comp_path[i], params, "capturing");
                             if (!ev.propagation())
                                 break;
                         }
@@ -2315,16 +2310,16 @@
                     /*  phase 2: TARGETING
                         dispatch event to target component  */
                     if (ev.propagation())
-                        event_dispatch_single(ev, comp, comp, params, "targeting");
+                        event_dispatch_single(ev, comp, params, "targeting");
 
                     /*  phase 3: SPREADING
                         dispatch event to all descendant components  */
                     if (params.spreading && ev.propagation()) {
-                        var visit = function (origin, comp, isTarget) {
+                        var visit = function (comp, isTarget) {
                             var cont = true;
                             if (!isTarget) {
                                 /*  dispatch on non-target component  */
-                                event_dispatch_single(ev, origin, comp, params, "spreading");
+                                event_dispatch_single(ev, comp, params, "spreading");
                                 if (!ev.propagation()) {
                                     /*  if propagation should stop, reset the flag again
                                         as in the spreading phase propagation stops only(!)
@@ -2338,10 +2333,10 @@
                                 /*  dispatch onto all direct child components  */
                                 var children = comp.children();
                                 for (var i = 0; i < children.length; i++)
-                                    visit(origin, children[i], false);
+                                    visit(children[i], false);
                             }
                         };
-                        visit(comp, comp, true);
+                        visit(comp, true);
                     }
 
                     /*  phase 4: BUBBLING
@@ -2349,7 +2344,7 @@
                         root component for bubbling (regular) subscribers  */
                     if (params.bubbling && ev.propagation()) {
                         for (i = 1; i < comp_path.length; i++) {
-                            event_dispatch_single(ev, comp, comp_path[i], params, "bubbling");
+                            event_dispatch_single(ev, comp_path[i], params, "bubbling");
                             if (!ev.propagation())
                                 break;
                         }
@@ -2899,7 +2894,6 @@
                     func:      { pos: 1,     def: $cs.nop, req: true },
                     args:      { pos: "...", def: []                 },
                     async:     {             def: false              },
-                    origin:    {             def: false              },
                     spool:     {             def: null               },
                     capturing: {             def: false              },
                     spreading: {             def: false              },
@@ -2915,13 +2909,13 @@
                     wrap:  true
                 });
 
-                /*  publish changes to command's "enabled" attribute  */
+                /*  publish changes to command's callable status  */
                 cmd.command.listen({
                     name: "attribute:set:enabled",
                     args: [ this, params.name ],
                     func: function (comp, name, value_new, value_old) {
                         comp.publish({
-                            name:      "ComponentJS:service:" + name + ":enabled",
+                            name:      "ComponentJS:service:" + name + ":callable",
                             args:      [ value_new, value_old ],
                             capturing: false,
                             spreading: false,
@@ -2938,7 +2932,6 @@
                     ctx:       params.ctx,
                     func:      cmd,
                     noevent:   true,
-                    origin:    params.origin,
                     capturing: params.capturing,
                     spreading: params.spreading,
                     bubbling:  params.bubbling,
@@ -2950,6 +2943,17 @@
                     this.spool(params.spool, this, "unregister", id);
 
                 return id;
+            },
+
+            /*  determine registration existence  */
+            registration: function () {
+                /*  determine parameters  */
+                var params = $cs.params("registration", arguments, {
+                    id: { pos: 0, req: true }
+                });
+
+                /*  determine whether registration exists  */
+                return this.subscription(params.id);
             },
 
             /*  unregister a service  */
@@ -2964,19 +2968,19 @@
                 return;
             },
 
-            /*  enable/disable a service  */
-            service_enabled: function () {
+            /*  make a service callable (enable/disable it)  */
+            callable: function () {
                 /*  determine parameters  */
-                var params = $cs.params("service_enabled", arguments, {
+                var params = $cs.params("callable", arguments, {
                     name:  { pos: 0, def: null,      req: true },
                     value: { pos: 1, def: undefined            }
                 });
 
                 /*  find service command  */
-                var subscribers = this.subscribers(params.name);
-                if (subscribers.length !== 1)
+                var subscriptions = this._subscriptions(params.name);
+                if (subscriptions.length !== 1)
                     return undefined;
-                var cmd = subscribers[0].func().command;
+                var cmd = subscriptions[0].func().command;
 
                 /*  get or set "enabled" attribute  */
                 return cmd.enabled(params.value);
@@ -2988,7 +2992,6 @@
                 var params = $cs.params("call", arguments, {
                     name:      { pos: 0,     def: null,  req: true },
                     args:      { pos: "...", def: []               },
-                    result:    {             def: null             },
                     capturing: {             def: false            },
                     spreading: {             def: false            },
                     bubbling:  {             def: true             }
@@ -3324,33 +3327,25 @@
         return (marker[name] === true);
     };
 
-    /*  marker trait: service-style component */
-    $cs.marker.service = $cs.trait({
-        cons: function () {
-            $cs.mark(this, "service");
+    /*  generic pattern for marking components  */
+    $cs.pattern.marker = $cs.trait({
+        protos: {
+            mark: function (name) {
+                $cs.mark(this.obj(), name);
+            },
+            marked: function (name) {
+                return $cs.marked(this.obj(), name);
+            }
         }
     });
 
-    /*  marker trait: controller-style component */
-    $cs.marker.controller = $cs.trait({
-        cons: function () {
-            $cs.mark(this, "controller");
-        }
-    });
-
-    /*  marker trait: model-style component */
-    $cs.marker.model = $cs.trait({
-        cons: function () {
-            $cs.mark(this, "model");
-        }
-    });
-
-    /*  marker trait: view-style component */
-    $cs.marker.view = $cs.trait({
-        cons: function () {
-            $cs.mark(this, "view");
-        }
-    });
+    /*  convenient marker traits  */
+    $cs.marker = {
+        service:    $cs.trait({ cons: function () { $cs.mark(this, "service");    } }),
+        controller: $cs.trait({ cons: function () { $cs.mark(this, "controller"); } }),
+        model:      $cs.trait({ cons: function () { $cs.mark(this, "model");      } }),
+        view:       $cs.trait({ cons: function () { $cs.mark(this, "view");       } })
+    };
 
     /*  determine unique store id  */
     _cs.store_id = function (comp) {
@@ -3765,7 +3760,8 @@
         $cs.pattern.shadow,
         $cs.pattern.socket,
         $cs.pattern.model,
-        $cs.pattern.store
+        $cs.pattern.store,
+        $cs.pattern.marker
     ];
 
     /*  component constructor  */
@@ -3830,12 +3826,12 @@
             ATTENTION: method "exists" intentionally is missing here,
                        because it is required to be called on _cs.none, of course!  */
         var methods = [
-            "call", "create", "destroy", "guard", "hook", "invoke",
+            "call", "callable", "create", "destroy", "guard", "hook", "invoke",
             "latch", "link", "model", "observe", "plug", "property",
-            "publish", "register", "service_enabled", "socket", "spool",
+            "publish", "register", "registration", "socket", "spool",
             "spooled", "state", "state_compare", "store", "subscribe",
-            "subscribers", "touch", "unlatch", "unobserve", "unplug",
-            "unregister", "unspool", "unsubscribe", "value", "values"
+            "subscription", "touch", "unlatch", "unobserve", "unplug",
+            "unregister", "unspool", "unsubscribe", "value"
         ];
         _cs.foreach(methods, function (method) {
             _cs.none[method] = function () {

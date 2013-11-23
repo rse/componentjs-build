@@ -18,7 +18,6 @@
 /*global ComponentJS:false */
 
 ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
-
     /*
      *  minimum emulation of jQuery
      */
@@ -155,23 +154,238 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
         }
     };
 
-
-    /*
-     *  ComponentJS debugger window
-     */
-
-    /*  debugger window  */
-    _cs.dbg = null;
-
-    /*  debugger update state  */
-    _cs.dbg_state_invalid = {
-        components: false,
-        states:     false,
-        requests:   false,
-        console:    false
-    };
-    _cs.dbg_state_invalidate = function (name) {
-        _cs.dbg_state_invalid[name] = true;
+    /*  create debugger view mask (markup and style)  */
+    _cs.dbg_view_mask = function (title) {
+        _cs.jq("html head", _cs.dbg.document).html(
+            "<title>" + title + "</title>"
+        );
+        _cs.jq("html body", _cs.dbg.document).html(
+            "<style type=\"text/css\">" +
+                "html, body {" +
+                    "margin: 0px;" +
+                    "padding: 0px;" +
+                "}" +
+                ".dbg {" +
+                    "width: 100%;" +
+                    "height: 100%;" +
+                    "font-family: Helvetica, Arial, sans-serif;" +
+                    "background-color: #e0e0e0;" +
+                    "overflow: hidden;" +
+                    "font-size: 9pt;" +
+                "}" +
+                ".dbg .header {" +
+                    "width: 100%;" +
+                    "height: 30px;" +
+                    "background: #666666;" +
+                    "background: -moz-linear-gradient(top,  #666666 0%, #333333 49%, #222222 51%, #000000 100%);" +
+                    "background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#666666), color-stop(49%,#333333), color-stop(51%,#222222), color-stop(100%,#000000));" +
+                    "background: -webkit-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                    "background: -o-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                    "background: -ms-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                    "background: linear-gradient(to bottom,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                    "filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#666666', endColorstr='#000000',GradientType=0 );" +
+                    "text-align: center;" +
+                    "position: relative;" +
+                "}" +
+                ".dbg .header .text {" +
+                    "position: relative;" +
+                    "top: 6px;" +
+                    "color: #ffffff;" +
+                    "font-size: 12pt;" +
+                    "font-weight: bold;" +
+                "}" +
+                ".dbg .viewer {" +
+                    "position: relative;" +
+                    "width: 100%;" +
+                    "height: 50%;" +
+                    "background: #d0d0d0;" +
+                    "background: -moz-linear-gradient(top,  #d0d0d0 0%, #e8e8e8 50%, #d0d0d0 100%);" +
+                    "background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#d0d0d0), color-stop(50%,#e8e8e8), color-stop(100%,#d0d0d0));" +
+                    "background: -webkit-linear-gradient(top,  #d0d0d0 0%,#e8e8e8 50%,#d0d0d0 100%);" +
+                    "background: -o-linear-gradient(top,  #d0d0d0 0%,#e8e8e8 50%,#d0d0d0 100%);" +
+                    "background: -ms-linear-gradient(top,  #d0d0d0 0%,#e8e8e8 50%,#d0d0d0 100%);" +
+                    "background: linear-gradient(to bottom,  #d0d0d0 0%,#e8e8e8 50%,#d0d0d0 100%);" +
+                    "filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d0d0d0', endColorstr='#d0d0d0',GradientType=0 );" +
+                    "overflow: hidden;" +
+                "}" +
+                ".dbg .viewer canvas {" +
+                    "position: absolute;" +
+                    "top: 0px;" +
+                    "left: 0px;" +
+                "}" +
+                ".dbg .status {" +
+                    "width: 100%;" +
+                    "height: 20px;" +
+                    "background: #666666;" +
+                    "background: -moz-linear-gradient(top,  #666666 0%, #333333 49%, #222222 51%, #000000 100%);" +
+                    "background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#666666), color-stop(49%,#333333), color-stop(51%,#222222), color-stop(100%,#000000));" +
+                    "background: -webkit-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                    "background: -o-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                    "background: -ms-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                    "background: linear-gradient(to bottom,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                    "filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#666666', endColorstr='#000000',GradientType=0 );" +
+                    "color: #f0f0f0;" +
+                    "text-align: center;" +
+                "}" +
+                ".dbg .status .text {" +
+                    "position: relative;" +
+                    "top: 3px;" +
+                    "color: #ffffff;" +
+                    "font-size: 9pt;" +
+                "}" +
+                ".dbg .console {" +
+                    "width: 100%;" +
+                    "height: 50%;" +
+                    "background-color: #ffffff;" +
+                    "color: #000000;" +
+                    "overflow: scroll;" +
+                    "font-size: 9pt;" +
+                "}" +
+                ".dbg .console .text {" +
+                    "width: 100%;" +
+                    "height: auto;" +
+                "}" +
+                ".dbg .console .text .line {" +
+                    "border-collapse: collapse;" +
+                    "width: 100%;" +
+                    "border-bottom: 1px solid #e0e0e0;" +
+                    "font-size: 9pt;" +
+                "}" +
+                ".dbg .console .text .num {" +
+                    "width: 40px;" +
+                    "background-color: #f0f0f0;" +
+                    "text-align: right;" +
+                "}" +
+                ".dbg .console .text .msg {" +
+                    "padding-left: 10px;" +
+                "}" +
+                ".dbg .console .text .msg .prefix {" +
+                    "color: #999999;" +
+                "}" +
+                ".dbg .console .text .msg .context {" +
+                    "font-weight: bold;" +
+                "}" +
+                ".dbg .console .text .msg .path {" +
+                    "color: #003399;" +
+                "}" +
+                ".dbg .console .text .msg .state {" +
+                    "font-style: italic;" +
+                "}" +
+                ".dbg .console .text .msg .arrow {" +
+                    "color: #999999;" +
+                "}" +
+                ".dbg .console .text .msg .method {" +
+                    "font-family: monospace;" +
+                "}" +
+                ".dbg .grabber {" +
+                    "position: absolute; " +
+                    "cursor: move; " +
+                    "width: 100%;" +
+                    "height: 20px;" +
+                    "background-color: transparent;" +
+                    "opacity: 0.5;" +
+                    "z-index: 100;" +
+                "}" +
+                ".dbg .infobox {" +
+                    "position: absolute;" +
+                    "top: 0px;" +
+                    "left: 0px;" +
+                    "width: 100%;" +
+                    "background-color: #ffffff;" +
+                    "color: #000000;" +
+                    "z-index: 200;" +
+                    "display: none;" +
+                "}" +
+                ".dbg .infobox table {" +
+                    "border-collapse: collapse;" +
+                    "width: 100%;" +
+                "}" +
+                ".dbg .infobox table tr td {" +
+                    "border-bottom: 1px solid #e0e0e0;" +
+                "}" +
+                ".dbg .infobox table tr td {" +
+                    "font-size: 11pt;" +
+                "}" +
+                ".dbg .infobox table tr td.label {" +
+                    "padding-left: 10px;" +
+                    "background-color: #f0f0f0;" +
+                    "color: #909090;" +
+                    "vertical-align: top;" +
+                    "width: 160px;" +
+                "}" +
+                ".dbg .infobox table tr td.value {" +
+                    "padding-left: 10px;" +
+                    "vertical-align: top;" +
+                "}" +
+                ".dbg .infobox table tr td.value span.none {" +
+                    "color: #909090;" +
+                    "font-style: italic;" +
+                "}" +
+                ".dbg .plus, .dbg .reset, .dbg .minus {" +
+                    "position: absolute; " +
+                    "top: 4px; " +
+                    "width: 10px; " +
+                    "text-align: center; " +
+                    "font-weight: bold; " +
+                    "padding: 2px 8px 2px 8px; " +
+                    "border-top: 1px solid #777777;" +
+                    "border-left: 1px solid #777777;" +
+                    "border-right: 1px solid #555555;" +
+                    "border-bottom: 1px solid #555555;" +
+                    "background: #666666;" +
+                    "background: -moz-linear-gradient(top,  #666666 0%, #333333 49%, #222222 51%, #000000 100%);" +
+                    "background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#666666), color-stop(49%,#333333), color-stop(51%,#222222), color-stop(100%,#000000));" +
+                    "background: -webkit-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                    "background: -o-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                    "background: -ms-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                    "background: linear-gradient(to bottom,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                    "filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#666666', endColorstr='#000000',GradientType=0 );" +
+                    "color: #c0c0c0;" +
+                    "z-index: 100;" +
+                "}" +
+                ".dbg .plus {" +
+                    "right: 80px; " +
+                "}" +
+                ".dbg .reset {" +
+                    "right: 110px; " +
+                "}" +
+                ".dbg .minus {" +
+                    "right: 140px; " +
+                "}" +
+                ".dbg .exporter {" +
+                    "position: absolute; " +
+                    "top: 4px; " +
+                    "right: 20px; " +
+                    "padding: 2px 8px 2px 8px; " +
+                    "border-top: 1px solid #777777;" +
+                    "border-left: 1px solid #777777;" +
+                    "border-right: 1px solid #555555;" +
+                    "border-bottom: 1px solid #555555;" +
+                    "background: #666666;" +
+                    "background: -moz-linear-gradient(top,  #666666 0%, #333333 49%, #222222 51%, #000000 100%);" +
+                    "background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#666666), color-stop(49%,#333333), color-stop(51%,#222222), color-stop(100%,#000000));" +
+                    "background: -webkit-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                    "background: -o-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                    "background: -ms-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                    "background: linear-gradient(to bottom,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
+                    "filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#666666', endColorstr='#000000',GradientType=0 );" +
+                    "color: #c0c0c0;" +
+                    "z-index: 100;" +
+                "}" +
+            "</style>" +
+            "<div class=\"dbg\">" +
+                "<div class=\"header\"><div class=\"text\">" + title + "</div></div>" +
+                "<div class=\"viewer\"><canvas></canvas></div>" +
+                "<div class=\"grabber\"></div>" +
+                "<div class=\"plus\">+</div>" +
+                "<div class=\"reset\">0</div>" +
+                "<div class=\"minus\">-</div>" +
+                "<div class=\"exporter\">Export</div>" +
+                "<div class=\"status\"><div class=\"text\"></div></div>" +
+                "<div class=\"console\"><div class=\"text\"></div></div>" +
+                "<div class=\"infobox\"></div>" +
+            "</div>"
+        );
     };
 
     /*  debugger console log  */
@@ -208,6 +422,173 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
             "</table>";
         _cs.dbg_state_invalidate("console");
         _cs.dbg_update();
+    };
+
+    /*  determine component information for infobox  */
+    _cs.dbg_infobox_content = function (comp) {
+        var name, method, id;
+        var html = "";
+
+        /*  name and path  */
+        name = comp.name().replace(/</, "&lt;").replace(/>/, "&gt;");
+        html += "<tr>" +
+            "<td class=\"label\">Name:</td>" +
+            "<td class=\"value\"><b>" + name + "</b></td>" +
+            "</tr>";
+        html += "<tr>" +
+            "<td class=\"label\">Path:</td>" +
+            "<td class=\"value\"><code>" + comp.path("/") + "</code></td>" +
+            "</tr>";
+
+        /*  role markers  */
+        var markers = "";
+        if ($cs.marked(comp.obj(), "view"))       markers += "view, ";
+        if ($cs.marked(comp.obj(), "model"))      markers += "model, ";
+        if ($cs.marked(comp.obj(), "controller")) markers += "controller, ";
+        if ($cs.marked(comp.obj(), "service"))    markers += "service, ";
+        markers = markers.replace(/, $/, "");
+        if (markers === "")
+            markers = "<span class=\"none\">none</span>";
+        html += "<tr>" +
+            "<td class=\"label\">Markers:</td>" +
+            "<td class=\"value\">" + markers + "</td>" +
+            "</tr>";
+
+        /*  state and guards  */
+        html += "<tr>" +
+            "<td class=\"label\">State:</td>" +
+            "<td class=\"value\"><code>" + comp.state() + "</code></td>" +
+            "</tr>";
+        var guards = "";
+        for (method in comp.__state_guards)
+            if (_cs.isown(comp.__state_guards, method))
+                if (typeof comp.__state_guards[method] === "number" &&
+                    comp.__state_guards[method] !== 0                 )
+                    guards += "<code>" + method + "</code> (" + comp.__state_guards[method] + "), ";
+        guards = guards.replace(/, $/, "");
+        if (guards === "")
+            guards = "<span class=\"none\">none</span>";
+        html += "<tr>" +
+            "<td class=\"label\">Guards:</td>" +
+            "<td class=\"value\">" + guards + "</td>" +
+            "</tr>";
+
+        /*  spools  */
+        var spools = "";
+        for (name in comp.__spool)
+            if (_cs.isown(comp.__spool, name))
+                if (typeof comp.__spool[name] !== "undefined" &&
+                    comp.__spool[name].length > 0            )
+                    spools += "<code>" + name + "</code> (" + comp.__spool[name].length + "), ";
+        spools = spools.replace(/, $/, "");
+        if (spools === "")
+            spools = "<span class=\"none\">none</span>";
+        html += "<tr>" +
+            "<td class=\"label\">Spools:</td>" +
+            "<td class=\"value\">" + spools + "</td>" +
+            "</tr>";
+
+        /*  model values  */
+        var values = "";
+        for (id in comp.__config)
+            if (_cs.isown(comp.__config, id))
+                if (id.match(/^ComponentJS:property:ComponentJS:model/))
+                    if (typeof comp.__config[id] === "object")
+                        for (name in comp.__config[id])
+                            if (_cs.isown(comp.__config[id], name))
+                                values += "<code>" + name + "</code>, ";
+        values = values.replace(/, $/, "");
+        if (values === "")
+            values = "<span class=\"none\">none</span>";
+        html += "<tr>" +
+            "<td class=\"label\">Model Values:</td>" +
+            "<td class=\"value\">" + values + "</td>" +
+            "</tr>";
+
+        /*  sockets  */
+        var sockets = "";
+        for (id in comp.__config)
+            if (_cs.isown(comp.__config, id))
+                if (id.match(/^ComponentJS:property:ComponentJS:socket:/))
+                    if (typeof comp.__config[id] === "object")
+                        sockets += "<code>" + id
+                            .replace(/^ComponentJS:property:ComponentJS:socket:/, "") + "</code>, ";
+        sockets = sockets.replace(/, $/, "");
+        if (sockets === "")
+            sockets = "<span class=\"none\">none</span>";
+        html += "<tr>" +
+            "<td class=\"label\">Sockets:</td>" +
+            "<td class=\"value\">" + sockets + "</td>" +
+            "</tr>";
+
+        /*  event subscriptions  */
+        var subscriptions = "";
+        for (id in comp.__subscription)
+            if (_cs.isown(comp.__subscription, id))
+                if (typeof comp.__subscription[id] === "object")
+                    if (!comp.__subscription[id].name.match(/^ComponentJS:/))
+                        subscriptions += "<code>" + comp.__subscription[id].name + "</code>, ";
+        subscriptions = subscriptions.replace(/, $/, "");
+        if (subscriptions === "")
+            subscriptions = "<span class=\"none\">none</span>";
+        html += "<tr>" +
+            "<td class=\"label\">Event Subscriptions:</td>" +
+            "<td class=\"value\">" + subscriptions + "</td>" +
+            "</tr>";
+
+        /*  service registrations  */
+        var registrations = "";
+        for (id in comp.__subscription)
+            if (_cs.isown(comp.__subscription, id))
+                if (typeof comp.__subscription[id] === "object")
+                    if (comp.__subscription[id].name.match(/^ComponentJS:service:/))
+                        registrations += "<code>" + comp.__subscription[id].name
+                            .replace(/^ComponentJS:service:/, "") + "</code>, ";
+        registrations = registrations.replace(/, $/, "");
+        if (registrations === "")
+            registrations = "<span class=\"none\">none</span>";
+        html += "<tr>" +
+            "<td class=\"label\">Service Registrations:</td>" +
+            "<td class=\"value\">" + registrations + "</td>" +
+            "</tr>";
+
+        /*  hooks  */
+        var hooks = "";
+        for (id in comp.__subscription)
+            if (_cs.isown(comp.__subscription, id))
+                if (typeof comp.__subscription[id] === "object")
+                    if (comp.__subscription[id].name.match(/^ComponentJS:hook:/))
+                        hooks += "<code>" + comp.__subscription[id].name
+                            .replace(/^ComponentJS:hook:/, "") + "</code>, ";
+        hooks = hooks.replace(/, $/, "");
+        if (hooks === "")
+            hooks = "<span class=\"none\">none</span>";
+        html += "<tr>" +
+            "<td class=\"label\">Hook Points:</td>" +
+            "<td class=\"value\">" + hooks + "</td>" +
+            "</tr>";
+
+        /*  finish and return table  */
+        html = "<table>" + html + "</table>";
+        return html;
+    };
+
+    /*
+     *  ComponentJS debugger window
+     */
+
+    /*  debugger window  */
+    _cs.dbg = null;
+
+    /*  debugger update state  */
+    _cs.dbg_state_invalid = {
+        components: false,
+        states:     false,
+        requests:   false,
+        console:    false
+    };
+    _cs.dbg_state_invalidate = function (name) {
+        _cs.dbg_state_invalid[name] = true;
     };
 
     /*  debugger canvas: natural tree direction flag  */
@@ -288,168 +669,8 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
                             });
                         }
 
-                        /*  create markup  */
-                        _cs.jq("html head", _cs.dbg.document).html(
-                            "<title>" + title + "</title>"
-                        );
-                        _cs.jq("html body", _cs.dbg.document).html(
-                            "<style type=\"text/css\">" +
-                                "html, body {" +
-                                    "margin: 0px;" +
-                                    "padding: 0px;" +
-                                "}" +
-                                ".dbg {" +
-                                    "width: 100%;" +
-                                    "height: 100%;" +
-                                    "font-family: Helvetica, Arial, sans-serif;" +
-                                    "background-color: #e0e0e0;" +
-                                    "overflow: hidden;" +
-                                    "font-size: 9pt;" +
-                                "}" +
-                                ".dbg .header {" +
-                                    "width: 100%;" +
-                                    "height: 30px;" +
-                                    "background: #666666;" +
-                                    "background: -moz-linear-gradient(top,  #666666 0%, #333333 49%, #222222 51%, #000000 100%);" +
-                                    "background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#666666), color-stop(49%,#333333), color-stop(51%,#222222), color-stop(100%,#000000));" +
-                                    "background: -webkit-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
-                                    "background: -o-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
-                                    "background: -ms-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
-                                    "background: linear-gradient(to bottom,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
-                                    "filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#666666', endColorstr='#000000',GradientType=0 );" +
-                                    "text-align: center;" +
-                                    "position: relative;" +
-                                "}" +
-                                ".dbg .header .text {" +
-                                    "position: relative;" +
-                                    "top: 6px;" +
-                                    "color: #ffffff;" +
-                                    "font-size: 12pt;" +
-                                    "font-weight: bold;" +
-                                "}" +
-                                ".dbg .viewer {" +
-                                    "width: 100%;" +
-                                    "height: 50%;" +
-                                    "background: #d0d0d0;" +
-                                    "background: -moz-linear-gradient(top,  #d0d0d0 0%, #e8e8e8 50%, #d0d0d0 100%);" +
-                                    "background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#d0d0d0), color-stop(50%,#e8e8e8), color-stop(100%,#d0d0d0));" +
-                                    "background: -webkit-linear-gradient(top,  #d0d0d0 0%,#e8e8e8 50%,#d0d0d0 100%);" +
-                                    "background: -o-linear-gradient(top,  #d0d0d0 0%,#e8e8e8 50%,#d0d0d0 100%);" +
-                                    "background: -ms-linear-gradient(top,  #d0d0d0 0%,#e8e8e8 50%,#d0d0d0 100%);" +
-                                    "background: linear-gradient(to bottom,  #d0d0d0 0%,#e8e8e8 50%,#d0d0d0 100%);" +
-                                    "filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d0d0d0', endColorstr='#d0d0d0',GradientType=0 );" +
-                                    "overflow: hidden;" +
-                                "}" +
-                                ".dbg .viewer canvas {" +
-                                    "position: relative;" +
-                                    "top: 10px;" +
-                                    "left: 10px;" +
-                                    "width: 100%;" +
-                                    "height: 100%;" +
-                                "}" +
-                                ".dbg .status {" +
-                                    "width: 100%;" +
-                                    "height: 20px;" +
-                                    "background: #666666;" +
-                                    "background: -moz-linear-gradient(top,  #666666 0%, #333333 49%, #222222 51%, #000000 100%);" +
-                                    "background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#666666), color-stop(49%,#333333), color-stop(51%,#222222), color-stop(100%,#000000));" +
-                                    "background: -webkit-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
-                                    "background: -o-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
-                                    "background: -ms-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
-                                    "background: linear-gradient(to bottom,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
-                                    "filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#666666', endColorstr='#000000',GradientType=0 );" +
-                                    "color: #f0f0f0;" +
-                                    "text-align: center;" +
-                                "}" +
-                                ".dbg .status .text {" +
-                                    "position: relative;" +
-                                    "top: 3px;" +
-                                    "color: #ffffff;" +
-                                    "font-size: 9pt;" +
-                                "}" +
-                                ".dbg .console {" +
-                                    "width: 100%;" +
-                                    "height: 50%;" +
-                                    "background-color: #ffffff;" +
-                                    "color: #000000;" +
-                                    "overflow: scroll;" +
-                                    "font-size: 9pt;" +
-                                "}" +
-                                ".dbg .console .text {" +
-                                    "width: 100%;" +
-                                    "height: auto;" +
-                                "}" +
-                                ".dbg .console .text .line {" +
-                                    "border-collapse: collapse;" +
-                                    "width: 100%;" +
-                                    "border-bottom: 1px solid #e0e0e0;" +
-                                    "font-size: 9pt;" +
-                                "}" +
-                                ".dbg .console .text .num {" +
-                                    "width: 40px;" +
-                                    "background-color: #f0f0f0;" +
-                                    "text-align: right;" +
-                                "}" +
-                                ".dbg .console .text .msg {" +
-                                    "padding-left: 10px;" +
-                                "}" +
-                                ".dbg .console .text .msg .prefix {" +
-                                    "color: #999999;" +
-                                "}" +
-                                ".dbg .console .text .msg .context {" +
-                                    "font-weight: bold;" +
-                                "}" +
-                                ".dbg .console .text .msg .path {" +
-                                    "color: #003399;" +
-                                "}" +
-                                ".dbg .console .text .msg .state {" +
-                                    "font-style: italic;" +
-                                "}" +
-                                ".dbg .console .text .msg .arrow {" +
-                                    "color: #999999;" +
-                                "}" +
-                                ".dbg .console .text .msg .method {" +
-                                    "font-family: monospace;" +
-                                "}" +
-                                ".dbg .grabber {" +
-                                    "position: absolute; " +
-                                    "cursor: move; " +
-                                    "width: 100%;" +
-                                    "height: 20px;" +
-                                    "background-color: transparent;" +
-                                    "opacity: 0.5;" +
-                                    "z-index: 100;" +
-                                "}" +
-                                ".dbg .exporter {" +
-                                    "position: absolute; " +
-                                    "top: 4px; " +
-                                    "right: 20px; " +
-                                    "padding: 2px 8px 2px 8px; " +
-                                    "border-top: 1px solid #777777;" +
-                                    "border-left: 1px solid #777777;" +
-                                    "border-right: 1px solid #555555;" +
-                                    "border-bottom: 1px solid #555555;" +
-                                    "background: #666666;" +
-                                    "background: -moz-linear-gradient(top,  #666666 0%, #333333 49%, #222222 51%, #000000 100%);" +
-                                    "background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#666666), color-stop(49%,#333333), color-stop(51%,#222222), color-stop(100%,#000000));" +
-                                    "background: -webkit-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
-                                    "background: -o-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
-                                    "background: -ms-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
-                                    "background: linear-gradient(to bottom,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
-                                    "filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#666666', endColorstr='#000000',GradientType=0 );" +
-                                    "color: #c0c0c0;" +
-                                    "z-index: 100;" +
-                                "}" +
-                            "</style>" +
-                            "<div class=\"dbg\">" +
-                                "<div class=\"header\"><div class=\"text\">" + title + "</div></div>" +
-                                "<div class=\"viewer\"><canvas></canvas></div>" +
-                                "<div class=\"grabber\"></div>" +
-                                "<div class=\"exporter\">Export</div>" +
-                                "<div class=\"status\"><div class=\"text\"></div></div>" +
-                                "<div class=\"console\"><div class=\"text\"></div></div>" +
-                            "</div>"
-                        );
+                        /*  generate view mask  */
+                        _cs.dbg_view_mask(title);
 
                         /*  window-based resize support  */
                         _cs.dbg_refresh();
@@ -465,6 +686,9 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
 
                         /*  grabbing-based resize support  */
                         var grabbing = false;
+                        var positioning = false;
+                        var positioning_x = -1;
+                        var positioning_y = -1;
                         _cs.jq(".dbg .grabber", _cs.dbg.document).bind("mousedown", function (ev) {
                             grabbing = true;
                             _cs.jq(".dbg .grabber", _cs.dbg.document).css("background-color", "red");
@@ -481,6 +705,19 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
                                 _cs.jq(".dbg .grabber", _cs.dbg.document).css("top", offset);
                                 _cs.dbg_grabber_offset = offset;
                                 ev.preventDefault();
+                            }
+                            else if (positioning) {
+                                if (positioning_x === -1)
+                                    positioning_x = ev.pageX;
+                                if (positioning_y === -1)
+                                    positioning_y = ev.pageY;
+                                var offsetX = positioning_x - ev.pageX;
+                                var offsetY = positioning_y - ev.pageY;
+                                positioning_x = ev.pageX;
+                                positioning_y = ev.pageY;
+                                _cs.dbg_canvas_info.x += offsetX;
+                                _cs.dbg_canvas_info.y += offsetY;
+                                _cs.dbg_reposition();
                             }
                         });
                         _cs.jq(".dbg", _cs.dbg.document).bind("mouseup", function (ev) {
@@ -502,6 +739,73 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
                             ev.preventDefault();
                             return false;
                         });
+
+                        /*  canvas scroll and zoom functionality  */
+                        var zoom_step   = 100;
+                        var scroll_step = 10;
+                        _cs.jq(".dbg .plus", _cs.dbg.document).bind("click", function (/* ev */) {
+                            _cs.dbg_canvas_info.w += zoom_step;
+                            _cs.dbg_canvas_info.h += zoom_step;
+                            _cs.dbg_refresh();
+                        });
+                        _cs.jq(".dbg .minus", _cs.dbg.document).bind("click", function (/* ev */) {
+                            _cs.dbg_canvas_info.w -= zoom_step;
+                            _cs.dbg_canvas_info.h -= zoom_step;
+                            _cs.dbg_refresh();
+                        });
+                        _cs.jq(".dbg .reset", _cs.dbg.document).bind("click", function (/* ev */) {
+                            _cs.dbg_canvas_info.w = _cs.dbg_canvas_info.wmin;
+                            _cs.dbg_canvas_info.h = _cs.dbg_canvas_info.hmin;
+                            _cs.dbg_refresh();
+                        });
+                        _cs.jq(".dbg .viewer canvas", _cs.dbg.document).bind("mousedown", function (/* ev */) {
+                            positioning = true;
+                            positioning_x = -1;
+                            positioning_y = -1;
+                        });
+                        _cs.jq(".dbg .viewer canvas", _cs.dbg.document).bind("mouseup", function (/* ev */) {
+                            positioning = false;
+                        });
+                        _cs.jq(_cs.dbg.document).bind("keydown", function (ev) {
+                            if (ev.keyCode === 43 || ev.keyCode === 107 || ev.keyCode === 187) {
+                                /*  key "+" pressed  */
+                                _cs.dbg_canvas_info.w += zoom_step;
+                                _cs.dbg_canvas_info.h += zoom_step;
+                                _cs.dbg_refresh();
+                            }
+                            else if (ev.keyCode === 45 || ev.keyCode === 109 || ev.keyCode === 189) {
+                                /*  key "-" pressed  */
+                                _cs.dbg_canvas_info.w -= zoom_step;
+                                _cs.dbg_canvas_info.h -= zoom_step;
+                                _cs.dbg_refresh();
+                            }
+                            else if (ev.keyCode === 48) {
+                                /*  key "0" pressed  */
+                                _cs.dbg_canvas_info.w = _cs.dbg_canvas_info.wmin;
+                                _cs.dbg_canvas_info.h = _cs.dbg_canvas_info.hmin;
+                                _cs.dbg_refresh();
+                            }
+                            else if (ev.keyCode === 37) {
+                                /*  key LEFT pressed  */
+                                _cs.dbg_canvas_info.x += scroll_step;
+                                _cs.dbg_reposition();
+                            }
+                            else if (ev.keyCode === 38) {
+                                /*  key UP pressed  */
+                                _cs.dbg_canvas_info.y += scroll_step;
+                                _cs.dbg_reposition();
+                            }
+                            else if (ev.keyCode === 39) {
+                                /*  key RIGHT pressed  */
+                                _cs.dbg_canvas_info.x -= scroll_step;
+                                _cs.dbg_reposition();
+                            }
+                            else if (ev.keyCode === 40) {
+                                /*  key DOWN pressed  */
+                                _cs.dbg_canvas_info.y -= scroll_step;
+                                _cs.dbg_reposition();
+                            }
+                        });
                     });
                 }, 500);
             }
@@ -517,8 +821,15 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
         }
     };
 
+    /*
+     *  ComponentJS debugger content rendering
+     */
+
     /*  the grabber offset  */
     _cs.dbg_grabber_offset = -1;
+
+    /*  the canvas size and position  */
+    _cs.dbg_canvas_info = { x: 0, y: 0, w: -1, h: -1, wmin: -1, hmin: -1 };
 
     /*  refresh the browser rendering  */
     _cs.dbg_refresh = function () {
@@ -540,15 +851,40 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
         var h2 = vh - _cs.dbg_grabber_offset + _cs.jq(".dbg .status", _cs.dbg.document).height();
         _cs.jq(".dbg .viewer",  _cs.dbg.document).height(h1);
         _cs.jq(".dbg .console", _cs.dbg.document).height(h2);
+        _cs.jq(".dbg .infobox", _cs.dbg.document).height(h2);
+        _cs.jq(".dbg .infobox", _cs.dbg.document).css("top",
+            _cs.dbg_grabber_offset + _cs.jq(".dbg .status", _cs.dbg.document).height());
         _cs.jq(".dbg .grabber", _cs.dbg.document).css("top", _cs.dbg_grabber_offset);
 
         /*  explicitly set the canvas size of the viewer  */
+        _cs.dbg_canvas_info.wmin = vw;
+        _cs.dbg_canvas_info.hmin = h1;
+        if (_cs.dbg_canvas_info.w < _cs.dbg_canvas_info.wmin)
+            _cs.dbg_canvas_info.w = _cs.dbg_canvas_info.wmin;
+        if (_cs.dbg_canvas_info.h < _cs.dbg_canvas_info.hmin)
+            _cs.dbg_canvas_info.h = _cs.dbg_canvas_info.hmin;
         _cs.jq(".dbg .viewer canvas", _cs.dbg.document)
-            .height(h1 - 20).attr("height", h1 - 20)
-            .width(vw - 20) .attr("width", vw - 20);
-
+            .height(_cs.dbg_canvas_info.h).attr("height", _cs.dbg_canvas_info.h)
+            .width (_cs.dbg_canvas_info.w).attr("width",  _cs.dbg_canvas_info.w);
+        _cs.dbg_reposition();
+     
         /*  trigger an initial update  */
         _cs.dbg_update();
+    };
+
+    /*  refresh the canvas positioning  */
+    _cs.dbg_reposition = function () {
+        if (_cs.dbg_canvas_info.x < 0)
+            _cs.dbg_canvas_info.x = 0;
+        if (_cs.dbg_canvas_info.x > _cs.dbg_canvas_info.w - _cs.dbg_canvas_info.wmin)
+            _cs.dbg_canvas_info.x = _cs.dbg_canvas_info.w - _cs.dbg_canvas_info.wmin;
+        if (_cs.dbg_canvas_info.y < 0)
+            _cs.dbg_canvas_info.y = 0;
+        if (_cs.dbg_canvas_info.y > _cs.dbg_canvas_info.h - _cs.dbg_canvas_info.hmin)
+            _cs.dbg_canvas_info.y = _cs.dbg_canvas_info.h - _cs.dbg_canvas_info.hmin;
+        _cs.jq(".dbg .viewer canvas", _cs.dbg.document)
+            .css("top",  -_cs.dbg_canvas_info.y)
+            .css("left", -_cs.dbg_canvas_info.x);
     };
 
     /*  update the debugger rendering  */
@@ -634,7 +970,6 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
 
             /*  viewer update  */
             if (_cs.dbg_state_invalid.components || _cs.dbg_state_invalid.states) {
-
                 /*  ensure the canvas (already) exists  */
                 var ctx = _cs.jq(".dbg .viewer canvas", _cs.dbg.document).get(0);
                 if (typeof ctx === "undefined")
@@ -642,8 +977,8 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
                 ctx = ctx.getContext("2d");
 
                 /*  determine canvas width/height and calculate grid width/height and offset width/height  */
-                var ch = _cs.jq(".dbg .viewer canvas", _cs.dbg.document).height();
-                var cw = _cs.jq(".dbg .viewer canvas", _cs.dbg.document).width();
+                var ch = _cs.jq(".dbg .viewer canvas", _cs.dbg.document).height() - 20;
+                var cw = _cs.jq(".dbg .viewer canvas", _cs.dbg.document).width()  - 20;
                 var gw = Math.floor(cw / W);
                 var gh = Math.floor(ch / (D + 1));
                 var ow = Math.floor(gw / 8);
@@ -664,8 +999,8 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
 
                         if (t === 1) {
                             /*  CASE 1: leaf node  */
-                            my_x = gw * X++;
-                            my_y = natural ? (ch - gh * d - gh) : (gh * d);
+                            my_x = 10 + gw * X++;
+                            my_y = natural ? (ch - gh * d - gh + 10) : (gh * d - 10);
                             my_w = gw - ow;
                             my_h = gh - oh;
                         }
@@ -685,7 +1020,7 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
 
                             /*  calculate our information  */
                             my_x = minx + Math.ceil((maxx - minx) / 2);
-                            my_y = natural ? (ch - gh * d - gh) : (gh * d);
+                            my_y = natural ? (ch - gh * d - gh + 10) : (gh * d - 10);
                             my_w = gw - ow;
                             my_h = gh - oh;
 
@@ -817,12 +1152,56 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
                         _cs.annotation(comp, "debugger_x", my_x);
                         _cs.annotation(comp, "debugger_y", my_y);
                         _cs.annotation(comp, "debugger_w", my_w);
-                        /* _cs.annotation(comp, "debugger_h", my_h); */
+                        _cs.annotation(comp, "debugger_h", my_h);
                     }
 
                     /*  pass-through the global X position  */
                     return X;
                 }, 0);
+
+                /*  component information on mouse click  */
+                var infoboxed = false;
+                _cs.jq(".dbg .viewer canvas", _cs.dbg.document).bind("mousedown", function (ev) {
+                    if (ev.target !== _cs.jq(".dbg .viewer canvas", _cs.dbg.document).get(0))
+                        return;
+                    infobox_event(ev);
+                    infoboxed = true;
+                });
+                _cs.jq(".dbg .viewer canvas", _cs.dbg.document).bind("mousemove", function (ev) {
+                    if (ev.target !== _cs.jq(".dbg .viewer canvas", _cs.dbg.document).get(0))
+                        return;
+                    if (infoboxed)
+                        infobox_event(ev);
+                });
+                _cs.jq(".dbg .viewer canvas", _cs.dbg.document).bind("mouseup", function (ev) {
+                    if (ev.target !== _cs.jq(".dbg .viewer canvas", _cs.dbg.document).get(0))
+                        return;
+                    _cs.jq(".dbg .infobox", _cs.dbg.document).css("display", "none");
+                    infoboxed = false;
+                });
+
+                /*  determine component on infobox event  */
+                var infobox_event = function (ev) {
+                    var mx = ev.offsetX;
+                    var my = ev.offsetY;
+                    var comp = null;
+                    _cs.root.walk_down(function (level, comp_this, X, depth_first) {
+                        if (depth_first) {
+                            var x = _cs.annotation(comp_this, "debugger_x");
+                            var y = _cs.annotation(comp_this, "debugger_y");
+                            var w = _cs.annotation(comp_this, "debugger_w");
+                            var h = _cs.annotation(comp_this, "debugger_h");
+                            if (x <= mx && mx <= x + w &&
+                                y <= my && my <= y + h)
+                                comp = comp_this;
+                        }
+                    }, 0);
+                    if (comp !== null) {
+                        var html = _cs.dbg_infobox_content(comp);
+                        _cs.jq(".dbg .infobox", _cs.dbg.document).html(html);
+                        _cs.jq(".dbg .infobox", _cs.dbg.document).css("display", "block");
+                    }
+                };
             }
 
             _cs.dbg_state_invalid.components = true;
@@ -831,7 +1210,7 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
     };
 
     /*
-     *  ComponentJS hooking
+     *  ComponentJS debugger hooking
      */
 
     /*  hook into internal logging  */

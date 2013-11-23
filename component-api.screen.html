@@ -377,7 +377,7 @@
             <div id="head1" class="head1">ComponentJS</div>
             <div id="head2" class="head2">Application Programming Interface (API)</div>
         </div>
-        <div id="the_version" class="the_version">0.9.7</div>
+        <div id="the_version" class="the_version">0.9.8</div>
         <div class="spec">
             <img class="logo" src="http://componentjs.com/ComponentJS-logo.svg" alt="ComponentJS"/>
             <h2><a name="api_management">API Management</a></h2>
@@ -1442,9 +1442,49 @@ cs(this).callable("load-person", true)
 </div></li></ul>
 <h2><a name="hooks">Hooks</a></h2>
 <div class="intro">
-<span class="FIXME">FIXME</span>
+Hooks are functionality extension points.
+The single provider performs a <span class="M"><a href="#hook">hook</a></span> under run-time while
+the multiple consumers have <span class="M"><a href="#latch">latch</a></span>ed into this hook beforehand.
 </div><ul>
-<li><div class="synopsis"><span class="FIXME">FIXME</span>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="latch">latch</a></span>({
+ <span class="F">name</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="meta">[</span><span class="F">ctx</span><span class="meta">:</span> <span class="T">Object</span>,<span class="meta">]</span>
+ <span class="F">func</span><span class="meta">:</span> <span class="T">Function</span>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">args</span><span class="meta">:</span> <span class="T">Object<span class="meta">[</span><span class="meta">]</span></span>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">spool</span><span class="meta">:</span> <span class="T">String</span><span class="meta">]</span>
+ })<span class="meta">:</span> <span class="T">Number</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">latch</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="P">func</span><span class="meta">:</span> <span class="T">Function</span>,
+ <span class="P">args...</span><span class="meta">:</span> <span class="T">Object</span>)<span class="meta">:</span> <span class="T">Number</span>
+</div><div class="desc"> Latch into the hook identified by name <span class="F">name</span> on component
+ <span class="O">component</span> and execute the callback function <span class="F">func</span> on every hook
+ execution. The callback function is executed as <span class="F">func</span><code>(</code><span class="P">args</span><code>:
+ </code><span class="T">Object</span><code>, ...,</code><span class="P">sargs</span><code>: </code><span class="T">Object</span><code>, ...)</code>. Option <span class="F">ctx</span>
+ allows you to give <code>this</code> a particular value for the callback
+ <span class="F">func</span>. Option <span class="F">args</span> allows you to pass additional parameters to
+ <span class="F">func</span> (before those passed by <span class="M"><a href="#hook">hook</a></span>()).
+
+</div><div class="example">var id = cs("/foo/bar").latch("access-allowed", function (entity) {
+    return (entity.type() === "Person");
+});
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="unlatch">unlatch</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">String</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">unlatch</span>(<span class="P">id</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Void</span>
+</div><div class="desc"> Unlatch from the hook identified by <span class="F">id</span>, previously acquired by a call to <span class="M"><a href="#latch">latch</a></span>().
+ This is usually done implicitly through the spooling mechanism.
+
+</div><div class="example">cs("/foo/bar").unlatch(id);
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="hook">hook</a></span>({
+ <span class="F">name</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="meta">[</span><span class="F">proc</span><span class="meta">:</span> <span class="T">String</span>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">args</span><span class="meta">:</span> <span class="T">Object<span class="meta">[</span><span class="meta">]</span></span><span class="meta">]</span>
+ })<span class="meta">:</span> <span class="T">Number</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">hook</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="meta">[</span><span class="P">proc</span><span class="meta">:</span> <span class="T">String</span>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="P">args...</span><span class="meta">:</span> <span class="T">Object</span><span class="meta">]</span>)<span class="meta">:</span> <span class="T">Number</span>
 </div><div class="desc"> <span class="FIXME">FIXME</span>
 
 </div></li></ul>
@@ -1501,7 +1541,7 @@ cs(this).callable("load-person", true)
 <li><a href="#register">register</a></li><li><a href="#unregister">unregister</a></li><li><a href="#registration">registration</a></li><li><a href="#callable">callable</a></li><li><a href="#call">call</a></li></ul>
 <h2><a href="#hooks">Hooks</a></h2>
 <ul>
-</ul>
+<li><a href="#latch">latch</a></li><li><a href="#unlatch">unlatch</a></li><li><a href="#hook">hook</a></li></ul>
 
         </div>
         <div id="foot" class="foot">

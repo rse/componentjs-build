@@ -384,7 +384,7 @@
             <div id="head1" class="head1">ComponentJS</div>
             <div id="head2" class="head2">Application Programming Interface (API)</div>
         </div>
-        <div id="the_version" class="the_version">1.0.1</div>
+        <div id="the_version" class="the_version">1.0.2</div>
         <div class="spec">
             <img class="logo" src="http://componentjs.com/ComponentJS-logo.svg" alt="ComponentJS"/>
             <h2><a name="api_management">API Management</a></h2>
@@ -1141,8 +1141,8 @@ $.get(url2, function (data) {
 <h2><a name="spools">Spools</a></h2>
 <div class="intro">
 In ComponentJS there are at least 4 resource allocating operations which have corresponding deallocation operations:
-Model <span class="M"><a href="#observe">observe</a></span>()/<span class="M"><a href="#unobserve">unobserve</a></span>(), Socket <span class="M"><a href="#plug">plug</a></span>()/<span class="M"><a href="#unplug">unplug</a></span>(), Event <span class="M"><a href="#subscribe">subscribe</a></span>()/<span class="M"><a href="#unsubscribe">unsubscribe</a></span>(), Service
-<span class="M"><a href="#register">register</a></span>()/<span class="M"><a href="#unregister">unregister</a></span>() and Hook <span class="M"><a href="#latch">latch</a></span>()/<span class="M"><a href="#unlatch">unlatch</a></span>(). For correct run-time operation it is required that each
+Model <span class="M"><a href="#observe">observe</a></span>()/<span class="M"><a href="#unobserve">unobserve</a></span>(), Socket <span class="M"><a href="#plug">plug</a></span>()/<span class="M"><a href="#unplug">unplug</a></span>(), Event <span class="M"><a href="#subscribe">subscribe</a></span>()/<span class="M"><a href="#unsubscribe">unsubscribe</a></span>(), Service and
+<span class="M"><a href="#register">register</a></span>()/<span class="M"><a href="#unregister">unregister</a></span>(). For correct run-time operation it is required that each
 allocation operation, performed in a state enter method, is properly reversed with the corresponding deallocation
 operation in the state leave method. As this is extremely cumbersome (especially because you have to store the
 identifiers returned by the allocation operations as you need them for the deallocation operation), ComponentJS provides
@@ -1518,7 +1518,7 @@ cs(this).value("foo", "bar")
 <h2><a name="events">Events</a></h2>
 <div class="intro">
 The Event mechanism is a central one in ComponentJS. Both
-Models, Services and Hooks are all internally based on the Events mechanism.
+Models and Services are internally based on the Events mechanism.
 An Event is an object published towards a target component. It is delivered
 in 4 phases:<p/>
 <ul><li>In phase 1 (the "capturing" phase) the Event is delivered

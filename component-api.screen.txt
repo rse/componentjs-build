@@ -1,6 +1,6 @@
 ComponentJS
 Application Programming Interface (API)
-1.0.1
+1.0.2
 ComponentJS
 
 API Management
@@ -499,13 +499,13 @@ Spools
 
 In ComponentJS there are at least 4 resource allocating operations which have
 corresponding deallocation operations: Model observe()/unobserve(), Socket plug
-()/unplug(), Event subscribe()/unsubscribe(), Service register()/unregister()
-and Hook latch()/unlatch(). For correct run-time operation it is required that
-each allocation operation, performed in a state enter method, is properly
-reversed with the corresponding deallocation operation in the state leave
-method. As this is extremely cumbersome (especially because you have to store
-the identifiers returned by the allocation operations as you need them for the
-deallocation operation), ComponentJS provides
+()/unplug(), Event subscribe()/unsubscribe(), Service and register()/unregister
+(). For correct run-time operation it is required that each allocation
+operation, performed in a state enter method, is properly reversed with the
+corresponding deallocation operation in the state leave method. As this is
+extremely cumbersome (especially because you have to store the identifiers
+returned by the allocation operations as you need them for the deallocation
+operation), ComponentJS provides
 convenient spool mechanism which all of the above allocation operations support
 and which also can be used by the application itself.
 
@@ -737,9 +737,9 @@ Model information and storing events into it.
 
 Events
 
-The Event mechanism is a central one in ComponentJS. Both Models, Services and
-Hooks are all internally based on the Events mechanism. An Event is an object
-published towards a target component. It is delivered in 4 phases:
+The Event mechanism is a central one in ComponentJS. Both Models and Services
+are internally based on the Events mechanism. An Event is an object published
+towards a target component. It is delivered in 4 phases:
 
   * In phase 1 (the "capturing" phase) the Event is delivered to all components
     on the path from the root component (inclusive) towards the target

@@ -89,8 +89,8 @@
     $cs.version = {
         major: 1,
         minor: 0,
-        micro: 1,
-        date:  20131009
+        micro: 2,
+        date:  20131225
     };
 
 
@@ -139,7 +139,7 @@
 
     /*  utility function: debugging  */
     $cs.debug = (function () {
-        var debug_level = 9;
+        var debug_level = 0;
         return function (level, msg) {
             if (arguments.length === 0)
                 /*  return old debug level  */
@@ -491,12 +491,18 @@
 
     /*  custom Token class  */
     _cs.token = function () {
+        this.name   = "";
         this.text   = "";
         this.tokens = [];
         this.pos    = 0;
         this.len    = 0;
     };
     _cs.token.prototype = {
+        /*  setter for caller context name  */
+        setName: function (name) {
+            this.name = name;
+        },
+
         /*  setter for plain-text input  */
         setText: function (text) {
             this.text = text;
@@ -513,7 +519,7 @@
             if (typeof offset === "undefined")
                 offset = 0;
             if (offset >= this.len)
-                throw new Error("parse error: not enough tokens");
+                throw _cs.exception(this.name, "parse error: not enough tokens");
             return this.tokens[this.pos + offset].symbol;
         },
 
@@ -522,7 +528,7 @@
             if (typeof len === "undefined")
                 len = 1;
             if (len > this.len)
-                throw new Error("parse error: not enough tokens available to skip: " + this.ctx());
+                throw _cs.exception(this.name, "parse error: not enough tokens available to skip: " + this.ctx());
             this.pos += len;
             this.len -= len;
         },
@@ -530,9 +536,9 @@
         /*  consume the current token (by expecting it to be a particular symbol)  */
         consume: function (symbol) {
             if (this.len <= 0)
-                throw new Error("parse error: no more tokens available to consume: " + this.ctx());
+                throw _cs.exception(this.name, "parse error: no more tokens available to consume: " + this.ctx());
             if (this.tokens[this.pos].symbol !== symbol)
-                throw new Error("parse error: expected token symbol \"" + symbol + "\": " + this.ctx());
+                throw _cs.exception(this.name, "parse error: expected token symbol \"" + symbol + "\": " + this.ctx());
             this.pos++;
             this.len--;
         },
@@ -546,7 +552,7 @@
             /*  the current token itself  */
             var ctx = "<" + this.text.substr(tok.b2, tok.e2 - tok.b2 + 1) + ">";
             ctx = this.text.substr(tok.b1, tok.b2 - tok.b1) + ctx;
-            ctx = ctx + this.text.substr(tok.e2, tok.e1 - tok.e2);
+            ctx = ctx + this.text.substr(tok.e2 + 1, tok.e1 - tok.e2);
 
             /*  the previous and following token(s)  */
             var k = (width - ctx.length);
@@ -627,6 +633,7 @@
     _cs.validate_tokenize = function (spec) {
         /*  create new Token abstraction  */
         var token = new _cs.token();
+        token.setName("validate");
         token.setText(spec);
 
         /*  determine individual token symbols  */
@@ -635,7 +642,7 @@
         while (spec !== "") {
             m = spec.match(/^(\s*)([^{}\[\]:,?*+()!|\s]+|[{}\[\]:,?*+()!|])(\s*)/);
             if (m === null)
-                throw new Error("parse error: cannot further canonicalize: \"" + spec + "\"");
+                throw _cs.exception("validate", "parse error: cannot further canonicalize: \"" + spec + "\"");
             token.addToken(
                 b,
                 b + m[1].length,
@@ -673,7 +680,7 @@
             else if (symbol.match(/^[A-Z][_a-zA-Z$0-9]*$/))
                 ast = this.parse_class(token);
             else
-                throw new Error("parse error: invalid token symbol: \"" + token.ctx() + "\"");
+                throw _cs.exception("validate", "parse error: invalid token symbol: \"" + token.ctx() + "\"");
             return ast;
         },
 
@@ -740,7 +747,7 @@
         parse_primary: function (token) {
             var primary = token.peek();
             if (!primary.match(/^(?:null|undefined|boolean|number|string|function|object)$/))
-                throw new Error("parse error: invalid primary type \"" + primary + "\"");
+                throw _cs.exception("validate", "parse error: invalid primary type \"" + primary + "\"");
             token.skip();
             return { type: "primary", name: primary };
         },
@@ -749,7 +756,7 @@
         parse_special: function (token) {
             var special = token.peek();
             if (!special.match(/^(?:clazz|trait|component)$/))
-                throw new Error("parse error: invalid special type \"" + special + "\"");
+                throw _cs.exception("validate", "parse error: invalid special type \"" + special + "\"");
             token.skip();
             return { type: "special", name: special };
         },
@@ -758,7 +765,7 @@
         parse_any: function (token) {
             var any = token.peek();
             if (any !== "any")
-                throw new Error("parse error: invalid any type \"" + any + "\"");
+                throw _cs.exception("validate", "parse error: invalid any type \"" + any + "\"");
             token.skip();
             return { type: "any" };
         },
@@ -767,7 +774,7 @@
         parse_class: function (token) {
             var clazz = token.peek();
             if (!clazz.match(/^[A-Z][_a-zA-Z$0-9]*$/))
-                throw new Error("parse error: invalid class type \"" + clazz + "\"");
+                throw _cs.exception("validate", "parse error: invalid class type \"" + clazz + "\"");
             token.skip();
             return { type: "class", name: clazz };
         },
@@ -808,7 +815,7 @@
         parse_key: function (token) {
             var key = token.peek();
             if (!key.match(/^[_a-zA-Z$][_a-zA-Z$0-9]*$/))
-                throw new Error("parse error: invalid key \"" + key + "\"");
+                throw _cs.exception("validate", "parse error: invalid key \"" + key + "\"");
             token.skip();
             return key;
         }
@@ -833,7 +840,7 @@
                     case "class":   valid = this.exec_class  (value, node); break;
                     case "any":     valid = true;                           break;
                     default:
-                        throw new Error("validation error: invalid validation AST: " +
+                        throw _cs.exception("validate", "invalid validation AST: " +
                             "node has unknown type \"" + node.type + "\"");
                 }
             }
@@ -1886,8 +1893,8 @@
                     (on current node or on any parent node)  */
                 var v;
                 for (var scope = [], node = this;
-                     node !== null;
-                     scope.unshift(node.name()), node = node.parent()) {
+                    node !== null;
+                    scope.unshift(node.name()), node = node.parent()) {
 
                     /*  optionally skip the target component
                         (usually if a property on the parent components
@@ -2164,8 +2171,9 @@
                     spool:     {             def: null  }
                 });
 
-                /*  honor exclusive request  */
-                var subscriptions = this._subscriptions(params.name, params.spec);
+                /*  honor exclusive request
+                    (attention: name can also be a regular expression object!)  */
+                var subscriptions = this._subscriptions(params.name.toString(), params.spec);
                 if (subscriptions.length === 1 && subscriptions[0].exclusive)
                     throw _cs.exception("subscribe", "existing exclusive subscription prevents additional one");
                 if (params.exclusive && subscriptions.length > 0)

@@ -1,10 +1,10 @@
 /*
 **  ComponentJS -- Component System for JavaScript <http://componentjs.com>
-**  Copyright (c) 2009-2013 Ralf S. Engelschall <http://engelschall.com>
+**  Copyright (c) 2009-2014 Ralf S. Engelschall <http://engelschall.com>
 **
 **  This Source Code Form is subject to the terms of the Mozilla Public
-**  License, v. 2.0. If a copy of the MPL was not distributed with this
-**  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+**  License (MPL), version 2.0. If a copy of the MPL was not distributed
+**  with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 /*
@@ -18,6 +18,7 @@
 /* global ComponentJS:false */
 
 ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
+
     /*
      *  minimum emulation of jQuery
      */
@@ -153,6 +154,7 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
             return this[pos];
         }
     };
+
 
     /*  create debugger view mask (markup and style)  */
     _cs.dbg_view_mask = function (title) {
@@ -388,6 +390,7 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
         );
     };
 
+
     /*  debugger console log  */
     _cs.dbg_logline = 0;
     _cs.dbg_logbook = "";
@@ -423,6 +426,7 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
         _cs.dbg_state_invalidate("console");
         _cs.dbg_update();
     };
+
 
     /*  determine component information for infobox  */
     _cs.dbg_infobox_content = function (comp) {
@@ -573,6 +577,7 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
         return html;
     };
 
+
     /*
      *  ComponentJS debugger window
      */
@@ -639,7 +644,7 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
             if (_cs.dbg === null) {
                 /*  determine (potentially application specific) title  */
                 var title = "ComponentJS Debugger";
-                if (typeof params.name !== null)
+                if (params.name !== null)
                     title += " (" + params.name + ")";
 
                 /*  create external debugger window  */
@@ -820,6 +825,7 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
             }
         }
     };
+
 
     /*
      *  ComponentJS debugger content rendering
@@ -1008,12 +1014,12 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
 
                             /*  determine boundaries for x position  */
                             var minx = _cs.annotation(children[0], "debugger_x");
-                            var miny = _cs.annotation(children[0], "debugger_y");
+                            /* var miny = _cs.annotation(children[0], "debugger_y"); */
                             var maxx = minx;
-                            var maxy = miny;
+                            /* var maxy = miny; */
                             if (children.length > 1) {
                                 maxx = _cs.annotation(children[children.length - 1], "debugger_x");
-                                maxy = _cs.annotation(children[children.length - 1], "debugger_y");
+                                /* maxy = _cs.annotation(children[children.length - 1], "debugger_y"); */
                             }
 
                             /*  calculate our information  */
@@ -1157,27 +1163,6 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
                     return X;
                 }, 0);
 
-                /*  component information on mouse click  */
-                var infoboxed = false;
-                _cs.jq(".dbg .viewer canvas", _cs.dbg.document).bind("mousedown", function (ev) {
-                    if (ev.target !== _cs.jq(".dbg .viewer canvas", _cs.dbg.document).get(0))
-                        return;
-                    infobox_event(ev);
-                    infoboxed = true;
-                });
-                _cs.jq(".dbg .viewer canvas", _cs.dbg.document).bind("mousemove", function (ev) {
-                    if (ev.target !== _cs.jq(".dbg .viewer canvas", _cs.dbg.document).get(0))
-                        return;
-                    if (infoboxed)
-                        infobox_event(ev);
-                });
-                _cs.jq(".dbg .viewer canvas", _cs.dbg.document).bind("mouseup", function (ev) {
-                    if (ev.target !== _cs.jq(".dbg .viewer canvas", _cs.dbg.document).get(0))
-                        return;
-                    _cs.jq(".dbg .infobox", _cs.dbg.document).css("display", "none");
-                    infoboxed = false;
-                });
-
                 /*  determine component on infobox event  */
                 var infobox_event = function (ev) {
                     var mx = ev.offsetX;
@@ -1200,12 +1185,34 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
                         _cs.jq(".dbg .infobox", _cs.dbg.document).css("display", "block");
                     }
                 };
+
+                /*  component information on mouse click  */
+                var infoboxed = false;
+                _cs.jq(".dbg .viewer canvas", _cs.dbg.document).bind("mousedown", function (ev) {
+                    if (ev.target !== _cs.jq(".dbg .viewer canvas", _cs.dbg.document).get(0))
+                        return;
+                    infobox_event(ev);
+                    infoboxed = true;
+                });
+                _cs.jq(".dbg .viewer canvas", _cs.dbg.document).bind("mousemove", function (ev) {
+                    if (ev.target !== _cs.jq(".dbg .viewer canvas", _cs.dbg.document).get(0))
+                        return;
+                    if (infoboxed)
+                        infobox_event(ev);
+                });
+                _cs.jq(".dbg .viewer canvas", _cs.dbg.document).bind("mouseup", function (ev) {
+                    if (ev.target !== _cs.jq(".dbg .viewer canvas", _cs.dbg.document).get(0))
+                        return;
+                    _cs.jq(".dbg .infobox", _cs.dbg.document).css("display", "none");
+                    infoboxed = false;
+                });
             }
 
             _cs.dbg_state_invalid.components = true;
             _cs.dbg_state_invalid.states     = true;
         }
     };
+
 
     /*
      *  ComponentJS debugger hooking

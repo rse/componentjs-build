@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <!--
     ComponentJS - Component System for JavaScript <http://componentjs.com>
-    Copyright (c) 2009-2013 Ralf S. Engelschall <http://engelschall.com>
+    Copyright (c) 2009-2014 Ralf S. Engelschall <http://engelschall.com>
 
     This Source Code Form is subject to the terms of the Mozilla Public
-    License, v. 2.0. If a copy of the MPL was not distributed with this
-    file, You can obtain one at http://mozilla.org/MPL/2.0/.
+    License (MPL), version 2.0. If a copy of the MPL was not distributed
+    with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 <html>
     <head>
@@ -384,7 +384,7 @@
             <div id="head1" class="head1">ComponentJS</div>
             <div id="head2" class="head2">Application Programming Interface (API)</div>
         </div>
-        <div id="the_version" class="the_version">1.0.2</div>
+        <div id="the_version" class="the_version">1.1.0</div>
         <div class="spec">
             <img class="logo" src="http://componentjs.com/ComponentJS-logo.svg" alt="ComponentJS"/>
             <h2><a name="api_management">API Management</a></h2>
@@ -401,9 +401,6 @@ is exposed. By default ComponentJS is exposed under the symbol name
 
 </div><div class="example">ComponentJS.symbol("cs")        /* standard    */
 var cs = ComponentJS.symbol()   /* alternative */
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis">ComponentJS.<span class="M"><a name="version">version</a></span><span class="meta"> = </span>{
@@ -426,9 +423,6 @@ some of its internals only once all plugins were loaded and executed.
  but can be called after any calls to <span class="M"><a href="#symbol">symbol</a></span>(), <span class="M"><a href="#debug">debug</a></span>() or <span class="M"><a href="#ns">ns</a></span>().
 
 </div><div class="example">cs.bootstrap()
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis">ComponentJS.<span class="M"><a name="shutdown">shutdown</a></span>()<span class="meta">:</span> <span class="T">Void</span>
@@ -436,9 +430,6 @@ some of its internals only once all plugins were loaded and executed.
  This implicitly destroy the existing component tree, too.
 
 </div><div class="example">cs.shutdown()
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis">ComponentJS.<span class="M"><a name="plugin">plugin</a></span>()<span class="meta">:</span> <span class="T">String<span class="meta">[</span><span class="meta">]</span></span></div><div class="synopsis">
@@ -489,9 +480,6 @@ if (cs.plugin("debugger")) {
          cs.debug_window({ ... })
     }
 }
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis">ComponentJS.<span class="M"><a name="debug_instrumented">debug_instrumented</a></span>()<span class="meta">:</span> <span class="T">Boolean</span>
@@ -501,9 +489,6 @@ if (cs.plugin("debugger")) {
  ComponentJS is able to determine Firefox's Firebug and Chrome's Inspector only.
 
 </div><div class="example">if (cs.debug_instrumented()) ...
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis">ComponentJS.<span class="M"><a name="debug_window">debug_window</a></span>({
@@ -544,7 +529,7 @@ ComponentJS internally uses a few code structuring utility functions for impleme
 class method parameters and class attributes. Those utility functions
 are also exposed for consumption by application developers, but they are
 NOT(!) required for using ComponentJS. Especially, it is NOT(!) required
-that component shadow objects are defined by <code>cs.clazz</code>!
+that component backing objects are defined by <code>cs.clazz</code>!
 </div><ul>
 <li><div class="synopsis">ComponentJS.<span class="M"><a name="ns">ns</a></span>(<span class="P">path</span><span class="meta">:</span> <span class="T">String</span><span class="meta">[</span>, <span class="P">leaf</span><span class="meta">:</span> <span class="T">Object</span><span class="meta"> = </span>{}<span class="meta">]</span>)<span class="meta">:</span> <span class="T">Object</span>
 </div><div class="desc"> Classes and traits should be structured through namespaces. A namespace is a
@@ -558,34 +543,59 @@ that component shadow objects are defined by <code>cs.clazz</code>!
 </div><div class="example">cs.ns("my.app"); my.app.ui = cs.clazz({ ... })  /* standard    */
 cs.ns("my.app").ui = cs.clazz({ ... })          /* alternative */
 cs.ns("my.app.ui", cs.clazz({ ... })            /* alternative */
-</div><div class="desc">
+</div></li></ul>
+<ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="select">select</a></span>(<span class="P">object</span><span class="meta">:</span> <span class="T">Object</span>, <span class="P">path</span><span class="meta">:</span> <span class="T">String</span><span class="meta">[</span>, <span class="P">value</span><span class="meta">:</span> <span class="T">Object</span><span class="meta">]</span>)<span class="meta">:</span> <span class="T">Object</span>
+</div><div class="desc"> Dereference into (and this way subset) <span class="P">object</span> according to the
+ <span class="P">path</span> specification and either return the dereferenced value or
+ set a new <span class="P">value</span>. Object has to be a hash or array object. The
+ <span class="P">path</span> argument has to follow the following grammar (which is a
+ direct JavaScript dereferencing syntax):
 
+</div><table class="tabular"><tr><td>path</td><td>::=</td><td>segment segment*</td></tr>
+<tr><td>segment</td><td>::=</td><td>bybareword | bykey</td></tr>
+<tr><td>bybareword</td><td>::=</td><td>"<code>.</code>"? identifier</td></tr>
+<tr><td>bykey</td><td>::=</td><td>"<code>[</code>" key "<code>]</code>"</td></tr>
+<tr><td>identifier</td><td>::=</td><td>/<code>[_a-zA-Z$][_a-zA-Z$0-9]*</code>/</td></tr>
+<tr><td>key</td><td>::=</td><td>number | squote | dquote</td></tr>
+<tr><td>number</td><td>::=</td><td>/<code>[0-9]+</code>/</td></tr>
+<tr><td>dquote</td><td>::=</td><td>/<code>"(?:\\"|.)*?"</code>/</td></tr>
+<tr><td>squote</td><td>::=</td><td>/<code>'(?:\\'|.)*?'</code>/</td></tr>
 
+</table><div class="desc">
+ Setting the <span class="P">value</span> to <code>undefined</code> effectively removes the
+ dereferenced value. If the dereferenced parent object is a hash, this
+ means the value is <code>delete</code>'ed from it. If the dereferenced parent
+ object is an array, this means the value is <code>splice</code>'ed out of it.
+
+</div><div class="example">cs.select({ foo: { bar: { baz: [ 42, 7, "Quux" ] } } }, "foo['bar'].baz[2]") &rarr; "Quux"
 </div></li></ul>
 <ul>
 <li><div class="synopsis">ComponentJS.<span class="M"><a name="validate">validate</a></span>(<span class="P">object</span><span class="meta">:</span> <span class="T">Object</span>, <span class="P">spec</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Boolean</span>
 </div><div class="desc"> Validate an arbitrary nested JavaScript object <span class="P">object</span> against the
- textual specification <span class="P">spec</span>. The specification has to follow the
- following grammar (which is a mixture of JSON-like structure and RegExp-like
- quantifiers):
+ specification <span class="P">spec</span>. The specification <span class="P">spec</span> has to be either
+ a <code>RegExp</code> object for <span class="T">String</span> validation, a validation function of signature
+ "<span class="P">spec</span>(<span class="T">Object</span>): <span class="T">Boolean</span>" or a string following the following grammar (which
+ is a mixture of JSON-like structure and RegExp-like quantifiers):
 
 </div><table class="tabular"><tr><td>spec</td><td>::=</td><td>not | alt | hash | array | any | primary | class | special</td></tr>
 <tr><td>not</td><td>::=</td><td>"<code>!</code>" spec</td></tr>
 <tr><td>alt</td><td>::=</td><td>"<code>(</code>" spec ("<code>|</code>" spec)* "<code>)</code>"</td></tr>
 <tr><td>hash</td><td>::=</td><td>"<code>{</code>" (key arity? "<code>:</code>" spec ("<code>,</code>" key arity? "<code>:</code>" spec)*)? "<code>}</code>"</td></tr>
 <tr><td>array</td><td>::=</td><td>"<code>[</code>" (spec arity? ("<code>,</code>" spec arity?)*)? "<code>]</code>"</td></tr>
-<tr><td>arity</td><td>::=</td><td>"<code>?</code>" | "<code>*</code>" | "<code>+</code>"</td></tr>
-<tr><td>key</td><td>::=</td><td>/<code>^[_a-zA-Z$][_a-zA-Z$0-9]*$</code>/</td></tr>
+<tr><td>arity</td><td>::=</td><td>"<code>?</code>" | "<code>*</code>" | "<code>+</code>" | "<code>{</code>" number "<code>,</code>" (number | "<code>oo</code>") "<code>}</code>"</td></tr>
+<tr><td>number</td><td>::=</td><td>/<code>^[0-9]+$</code>/</td></tr>
+<tr><td>key</td><td>::=</td><td>/<code>^[_a-zA-Z$][_a-zA-Z$0-9]*$</code>/ | "<code>@</code>"</td></tr>
 <tr><td>any</td><td>::=</td><td>"<code>any</code>"</td></tr>
 <tr><td>primary</td><td>::=</td><td>/<code>^(?:null|undefined|boolean|number|string|function|object)$</code>/</td></tr>
 <tr><td>class</td><td>::=</td><td>/<code>^[A-Z][_a-zA-Z$0-9]*$</code>/</td></tr>
-<tr><td>special</td><td>::=</td><td>/<code>^(?:class|trait|component)$</code>/</td></tr>
+<tr><td>special</td><td>::=</td><td>/<code>^(?:clazz|trait|component)$</code>/</td></tr>
 
-</table><div class="example">cs.validate({ foo: "Foo", bar: "Bar", baz: [ 42, 7, "Quux" ] },
+</table><div class="desc">
+ The special key "<code>@</code>" can be used to match an arbitrary hash element key.
+
+</div><div class="example">cs.validate({ foo: "Foo", bar: "Bar", baz: [ 42, 7, "Quux" ] },
      "{ foo: string, bar: any, baz: [ number+, string* ], quux?: any }")
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis">ComponentJS.<span class="M"><a name="params">params</a></span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>, <span class="P">args</span><span class="meta">:</span> <span class="T">Object<span class="meta">[</span><span class="meta">]</span></span>, <span class="P">spec</span><span class="meta">:</span> <span class="T">Object</span>)<span class="meta">:</span> <span class="T">Object</span>
@@ -600,8 +610,9 @@ cs.ns("my.app.ui", cs.clazz({ ... })            /* alternative */
  and hence optional parameters), <span class="P">req</span> to indicate whether the
  parameter is required and <span class="P">valid</span> for type validation (either
  a string accepted by the <span class="M"><a href="#validate">validate</a></span>() method,
- or a valid regular expression C</.../>
- for validating a <span class="T">String</span> against it or an arbitrary callback function.
+ or a valid regular expression C</.../> object
+ for validating a <span class="T">String</span> against it or an arbitrary validation callback function
+ of signature "<span class="P">valid</span>(<span class="T">Object</span>): <span class="T">Boolean</span>".
 
 </div><div class="example">function config () {
     var params = $cs.params("config", arguments, {
@@ -618,22 +629,17 @@ cs.ns("my.app.ui", cs.clazz({ ... })            /* alternative */
 var value = config("foo", "bar");
 config("foo", "bar", "quux");
 config({ scope: "foo", key: "bar", value: "quux", force: true });
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
-<li><div class="synopsis">ComponentJS.<span class="M"><a name="attribute">attribute</a></span>({ <span class="F">name</span><span class="meta">:</span> <span class="T">String</span>, <span class="F">def</span><span class="meta">:</span> <span class="T">Object</span>, <span class="F">validate</span><span class="meta">:</span> <span class="T">Object</span> })<span class="meta">:</span> <span class="T">Function</span></div><div class="synopsis">
- ComponentJS.<span class="M">attribute</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>, <span class="P">def</span><span class="meta">:</span> <span class="T">Object</span>, <span class="P">validate</span><span class="meta">:</span> <span class="T">Object</span>)<span class="meta">:</span> <span class="T">Function</span>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="attribute">attribute</a></span>({ <span class="F">name</span><span class="meta">:</span> <span class="T">String</span>, <span class="F">def</span><span class="meta">:</span> <span class="T">Object</span>, <span class="F">valid</span><span class="meta">:</span> <span class="T">Object</span> })<span class="meta">:</span> <span class="T">Function</span></div><div class="synopsis">
+ ComponentJS.<span class="M">attribute</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>, <span class="P">def</span><span class="meta">:</span> <span class="T">Object</span>, <span class="P">valid</span><span class="meta">:</span> <span class="T">Object</span>)<span class="meta">:</span> <span class="T">Function</span>
 </div><div class="desc"> Create a cloneable attribute capturing getter/setter function with name <span class="P">name</span> (for exception
- handling reasons only), the default value <span class="P">def</span> and the value validation <span class="P">validate</span>.
+ handling reasons only), the default value <span class="P">def</span> and the value validation <span class="P">valid</span>.
 
 </div><div class="example">var id = ComponentJS.attribute("id", "foo", /^[a-z][a-zA-Z0-9_]*/);
 id() === "foo"
-id("bar") &rarr; "foo"; id() &rarr; "bar"
-</div><div class="desc">
-
-
+id("bar") &rarr; "foo"
+id() &rarr; "bar"
 </div></li></ul>
 <ul>
 <li><div class="synopsis">ComponentJS.<span class="M"><a name="clazz">clazz</a></span>({
@@ -664,7 +670,7 @@ id("bar") &rarr; "foo"; id() &rarr; "bar"
     protos: {
         bar: function (value_new) {
             var value_old = this._bar;
-            if (typeof value_new !=== "undefined")
+            if (typeof value_new !== "undefined")
                 this._bar = value_new;
             return value_old;
         }
@@ -705,7 +711,7 @@ id("bar") &rarr; "foo"; id() &rarr; "bar"
     class is attempted, then the <span class="F">extend</span> class of this class, etc.
 </li>
 </ul><div class="desc">
- NOTICE: As ComponentJS does not care at all how shadow objects of
+ NOTICE: As ComponentJS does not care at all how backing objects of
  components are defined, you can alternatively use an arbitrary
  solution for Class-based OO in JavaScript (e.g. TypeScript, JSClass,
  ExtendJS, DejaVu, Classy, jTypes, etc) or fallback to the also just
@@ -721,9 +727,6 @@ foo.prototype.bar = function (value_new) {
     return value_old;
 }
 [...]
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis">ComponentJS.<span class="M"><a name="trait">trait</a></span>({
@@ -788,9 +791,6 @@ looked up, state transitioned, communicated on and be destroyed.
 </div><div class="example">cs.create("/{sv,ui/{one,two}}", my.sv, {}, my.ui.one, my.ui.two);
 cs.create(this, "model/view", model, view);
 cs(this).create("model/view", model, view);
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis">ComponentJS.<span class="M"><a name="destroy">destroy</a></span>(<span class="P">abs-path</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
@@ -815,9 +815,6 @@ accessed via the following getter/setter-style methods.
  as it is done by ComponentJS internally on component creation time.
 
 </div><div class="example">cs(this).id() &rarr; "0000000000000000000000000000001"
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="name">name</a></span>()<span class="meta">:</span> <span class="T">String</span></div><div class="synopsis">
@@ -827,18 +824,12 @@ accessed via the following getter/setter-style methods.
  as it is done by ComponentJS internally on component creation time.
 
 </div><div class="example">cs("/foo/bar").name() === "bar"
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="obj">obj</a></span>()<span class="meta">:</span> <span class="T">Object</span>
-</div><div class="desc"> Retrieve the shadow <span class="T">Object</span> <span class="P">object</span> to the corresponding <span class="T">Component</span>.
+</div><div class="desc"> Retrieve the backing <span class="T">Object</span> <span class="P">object</span> to the corresponding <span class="T">Component</span>.
 
 </div><div class="example">cs(this).obj() === this
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="cfg">cfg</a></span>()<span class="meta">:</span> <span class="T">Array(String)</span></div><div class="synopsis">
@@ -880,7 +871,7 @@ global API symbol.
  2. Lookup <span class="T">Component</span> by path <span class="P">path</span>, relative to <span class="T">Component</span> <span class="P">component</span>.
  3. Lookup <span class="T">Component</span> by path <span class="P">path</span>, relative to the <span class="T">Component</span> corresponding
  to <span class="T">Object</span> <span class="P">object</span>.
- 4. Lookup <span class="T">Component</span> object via shadow object <span class="P">object</span>.
+ 4. Lookup <span class="T">Component</span> object via backing object <span class="P">object</span>.
  5. Lookup <span class="T">Component</span> object via the <span class="P">component</span> itself (no-operation).
  The paths have to follow the following grammar:
 
@@ -890,14 +881,11 @@ global API symbol.
 
 </table><div class="example">cs("/foo/bar")           /* absolute */
 cs(comp, "model/view")   /* relative to component */
-cs(this, "model/view")   /* relative to component via shadow object */
+cs(this, "model/view")   /* relative to component via backing object */
 cs("//bar")              /* full-tree lookup */
 cs(comp, "//bar")        /* sub-tree lookup */
 cs(this, "*/view")       /* wildcard lookup */
 cs(this, "..//view")     /* parent sub-tree lookup */
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="exists">exists</a></span>()<span class="meta">:</span> <span class="T">Boolean</span>
@@ -921,27 +909,18 @@ The following functions allow you to traverse this tree.
 
 </div><div class="example">cs("/foo/bar").path("/") &rarr; "/foo/bar"
 cs("/foo/bar").path() &rarr; [ cs("/foo/bar"), cs("/foo"), cs("/") ]
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="parent">parent</a></span>()<span class="meta">:</span> <span class="T">Component</span>
 </div><div class="desc"> Return the parent component of <span class="O">component</span>, or <code>null</code> if <span class="O">component</span> is the root or none component.
 
 </div><div class="example">cs(this).parent() === cs(this, "..")
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="children">children</a></span>()<span class="meta">:</span> <span class="T">Array(Component)</span>
 </div><div class="desc"> Return the array of child components of <span class="O">component</span>.
 
 </div><div class="example">cs(this).children()
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="attach">attach</a></span>(<span class="P">parent</span><span class="meta">:</span> <span class="T">Component</span>)<span class="meta">:</span> <span class="T">Void</span>
@@ -960,9 +939,6 @@ view1.children().forEach(function (child) {
     child.attach(view2)
     child.state(state)
 })
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="detach">detach</a></span>()<span class="meta">:</span> <span class="T">Void</span>
@@ -971,9 +947,6 @@ view1.children().forEach(function (child) {
  application when moving components within the component tree.
 
 </div><div class="example">cs(this).detach()
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="walk_up">walk_up</a></span>(<span class="P">callback</span><span class="meta">:</span> <span class="T">Function</span>, <span class="P">ctx</span><span class="meta">:</span> <span class="T">Object</span>)<span class="meta">:</span> <span class="T">Object</span>
@@ -986,9 +959,6 @@ view1.children().forEach(function (child) {
 </div><div class="example">var path = cs(this).walk_up("", function (depth, comp, ctx) {
     return "/" + comp.name() + ctx;
 }, "")
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="walk_down">walk_down</a></span>(<span class="P">callback</span><span class="meta">:</span> <span class="T">Function</span>, <span class="P">ctx</span><span class="meta">:</span> <span class="T">Object</span>)<span class="meta">:</span> <span class="T">Object</span>
@@ -1031,8 +1001,8 @@ transitions, enter and leave methods are called accordingly.
  })
 </div><div class="desc"> Clear all (if passed just a single <code>null</code> parameter) or add one state transition to target state
  <span class="P">target</span>, either at the top of the transition stack or in the middle, above the source state
- <span class="P">source</span>. When entering the target state, the optional component shadow object method <span class="P">enter</span> is
- called. When leaving the target state, the optional component shadow object method <span class="P">leave</span> is called.
+ <span class="P">source</span>. When entering the target state, the optional component backing object method <span class="P">enter</span> is
+ called. When leaving the target state, the optional component backing object method <span class="P">leave</span> is called.
  The <span class="P">color</span> is a "#RRGGBB" string used for visualizing the state in the debugger view. The default
  state transition definitions are given as an example.
 
@@ -1043,9 +1013,6 @@ cs.transition("prepared",     "prepare", "cleanup",  "#f2ec00");
 cs.transition("materialized", "render",  "release",  "#6699cc");
 cs.transition("visible",      "show",    "hide",     "#669933");
 cs.transition("enabled",      "enable",  "disable",  "#336600");
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="state">state</a></span>()<span class="meta">:</span> <span class="T">String</span></div><div class="synopsis">
@@ -1067,9 +1034,6 @@ cs.transition("enabled",      "enable",  "disable",  "#336600");
  in order to react to state transitions from outside the component, too.
 
 </div><div class="example">cs("/ui").state("visible")
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="state_compare">state_compare</a></span>({ <span class="F">state</span><span class="meta">:</span> <span class="T">String</span> })<span class="meta">:</span> <span class="T">Number</span></div><div class="synopsis">
@@ -1081,9 +1045,6 @@ cs.transition("enabled",      "enable",  "disable",  "#336600");
  is returned.
 
 </div><div class="example">if (cs(this).state_compare("visible") &lt; 0) ...
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="state_auto_increase">state_auto_increase</a></span>(<span class="P">increase</span><span class="meta">:</span> <span class="T">Boolean</span>)<span class="meta">:</span> <span class="T">Boolean</span></div><div class="synopsis">
@@ -1093,9 +1054,6 @@ cs.transition("enabled",      "enable",  "disable",  "#336600");
  parent component.
 
 </div><div class="example">cs(this).state_auto_increase(true)
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="state_auto_decrease">state_auto_decrease</a></span>(<span class="P">decrease</span><span class="meta">:</span> <span class="T">Boolean</span>)<span class="meta">:</span> <span class="T">Boolean</span></div><div class="synopsis">
@@ -1107,9 +1065,6 @@ cs.transition("enabled",      "enable",  "disable",  "#336600");
  all of its other sibling child components. Hence, use with care!
 
 </div><div class="example">cs(this).state_auto_decrease(true)
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="guard">guard</a></span>({ <span class="F">method</span><span class="meta">:</span> <span class="T">String</span>, <span class="F">level</span><span class="meta">:</span> <span class="T">Number</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
@@ -1151,13 +1106,15 @@ application itself.
 </div><ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="spool">spool</a></span>({
  <span class="F">name</span><span class="meta">:</span> <span class="T">String</span>,
- <span class="meta">[</span><span class="F">ctx</span><span class="meta">:</span> <span class="T">Object</span><span class="meta"> = </span>this,<span class="meta">]</span>
- <span class="F">func</span><span class="meta">:</span> <span class="T">Function</span>
+ <span class="F">ctx</span><span class="meta">:</span> <span class="T">Object</span>,
+ <span class="F">func</span><span class="meta">:</span> <span class="T">Function</span>,
  <span class="meta">[</span><span class="F">args</span><span class="meta">:</span> <span class="T">Array(Object)</span><span class="meta"> = </span>new Array()<span class="meta">]</span>
  })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
  <span class="O">component</span>.<span class="M">spool</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>,
- <span class="P">func</span><span class="meta">:</span> <span class="T">Function</span>)<span class="meta">:</span> <span class="T">Void</span>
-</div><div class="desc"> Remember action "<span class="F">ctx</span>.<span class="F">func</span>(<span class="F">args</span>)" on spool named <span class="F">name</span>.
+ <span class="P">ctx</span><span class="meta">:</span> <span class="T">Object</span>,
+ <span class="P">func</span><span class="meta">:</span> <span class="T">Function</span>,
+ <span class="meta">[</span><span class="P">args</span><span class="meta">:</span> <span class="T">Object</span>, ...<span class="meta">]</span>)<span class="meta">:</span> <span class="T">Void</span>
+</div><div class="desc"> Remember action "<span class="F">func</span>.<code>apply</code>(<span class="F">ctx</span>, <span class="F">args</span>)" on spool named <span class="F">name</span>.
  The <span class="F">name</span> parameter can be either just a plain spool-name "<code>name</code>"
  or a combination of (relative) component-path and spool-name "<code>path</code>:<code>name</code>".
  This allows one to spool on a component different from <span class="O">component</span> (usually
@@ -1169,9 +1126,6 @@ application itself.
     func: function (num, str) { ... },
     args: [ 42, "foo" ]
 });
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="spooled">spooled</a></span>({ <span class="F">name</span><span class="meta">:</span> <span class="T">String</span> })<span class="meta">:</span> <span class="T">Number</span></div><div class="synopsis">
@@ -1182,9 +1136,6 @@ application itself.
 
 </div><div class="example">if (cs(this).spooled("foo"))
     cs(this).unspool("foo")
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="unspool">unspool</a></span>({ <span class="F">name</span><span class="meta">:</span> <span class="T">String</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
@@ -1201,7 +1152,7 @@ application itself.
 An object can be "marked" with a set of names. ComponentJS internally
 does not use those markers at all, but the ComponentJS Debugger plugin
 at least uses markers named "service", "model", "view" and "controller" on
-<li>components' shadow object to render those components in different colors.</li>
+<li>components' backing object to render those components in different colors.</li>
 </div><ul>
 <li><div class="synopsis"><code>ComponentJS</code>.<span class="M"><a name="mark">mark</a></span>(<span class="P">obj</span><span class="meta">:</span> <span class="T">Object</span>, <span class="P">name</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
  <span class="O">component</span>.<span class="M">mark</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Void</span>
@@ -1222,9 +1173,6 @@ at least uses markers named "service", "model", "view" and "controller" on
     mixin: [ cs.marker.view ]
     ...
 });
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><code>ComponentJS</code>.<span class="M"><a name="marked">marked</a></span>(<span class="P">obj</span><span class="meta">:</span> <span class="T">Object</span>, <span class="P">name</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Boolean</span></div><div class="synopsis">
@@ -1248,6 +1196,7 @@ component-local information and to communicate information to foreign components
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="property">property</a></span>({
  <span class="F">name</span><span class="meta">:</span> <span class="T">String</span>,
  <span class="meta">[</span><span class="F">value</span><span class="meta">:</span> <span class="T">Object</span><span class="meta"> = </span><code>undefined</code>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">def</span><span class="meta">:</span> <span class="T">Object</span><span class="meta"> = </span><code>undefined</code>,<span class="meta">]</span>
  <span class="meta">[</span><span class="F">scope</span><span class="meta">:</span> <span class="T">String</span><span class="meta"> = </span><code>undefined</code>,<span class="meta">]</span>
  <span class="meta">[</span><span class="F">bubbling</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span><code>true</code>,<span class="meta">]</span>
  <span class="meta">[</span><span class="F">targeting</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span><code>true</code>,<span class="meta">]</span>
@@ -1278,6 +1227,7 @@ component-local information and to communicate information to foreign components
  do not get the value. This allows you for instance to skip so-called intermediate namespace-only
  components.
  Setting <span class="F">value</span> to "<code>null</code>" removes the property.
+ If no property <span class="F">name</span> is found at all, <span class="F">def</span> (by default the value <code>undefined</code>) is returned.
 
 </div><div class="example">cs(this).property("foo")
 </div></li></ul>
@@ -1317,9 +1267,6 @@ cs(this).socket({
     plug:   function (el) { $(this).append(el); },
     unplug: function (el) { $(el).remove(); }
 })
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="unsocket">unsocket</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">Number</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
@@ -1328,9 +1275,6 @@ cs(this).socket({
  This is usually done implicitly through the spooling mechanism.
 
 </div><div class="example">cs(this).unsocket(id)
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="link">link</a></span>({
@@ -1355,9 +1299,6 @@ cs(this).socket({
  operation via option <span class="F">spool</span>.
 
 </div><div class="example">cs(this).link({ name: "default", target: this, socket: "menu1" })
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="unlink">unlink</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">Number</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
@@ -1366,9 +1307,6 @@ cs(this).socket({
  This is usually done implicitly through the spooling mechanism.
 
 </div><div class="example">cs(this).unlink(id)
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="plug">plug</a></span>({
@@ -1386,9 +1324,6 @@ cs(this).socket({
  Returns an identifier for use with the corresponding <span class="M"><a href="#unplug">unplug</a></span>() operation.
 
 </div><div class="example">cs(this).plug({ object: ui, spool: "materialized" })
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="unplug">unplug</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">Number</span><span class="meta">[</span>, <span class="F">targeting</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta">]</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
@@ -1437,15 +1372,14 @@ displaying the Model information and storing events into it.
     "state:button-enabled": { value: false,   valid: "boolean" },
     "event:button-clicked": { value: false,   valid: "boolean", autoreset: true }
 })
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="value">value</a></span>({
  <span class="F">name</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="meta">[</span><span class="F">op</span><span class="meta">:</span> <span class="T">String</span>,<span class="meta">]</span>
  <span class="meta">[</span><span class="F">value</span><span class="meta">:</span> <span class="T">Object</span>,<span class="meta">]</span>
- <span class="meta">[</span><span class="F">force</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta">]</span>
+ <span class="meta">[</span><span class="F">force</span><span class="meta">:</span> <span class="T">Boolean</span>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">injected</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta">]</span>
  })</div><div class="synopsis">
  <span class="O">component</span>.<span class="M">value</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>,
  <span class="meta">[</span><span class="P">value</span><span class="meta">:</span> <span class="T">Object</span>,<span class="meta">]</span>
@@ -1456,12 +1390,113 @@ displaying the Model information and storing events into it.
  changing a value to the same value does not trigger anything.
  But if <span class="F">force</span> is <code>true</code> even setting a model element to its
  current value triggers observers.
+ Setting the option <span class="F">injected</span> to <code>true</code> should be done by plugins
+ only and prevents model value observers from rejecting the (already
+ injected) value.
 
 </div><div class="example">var val = cs(this).value("foo")
 cs(this).value("foo", "bar")
 </div><div class="desc">
+ If you store arbitrary sub-structured values, you can make
+ <span class="F">name</span> a path full specification based on the language supported
+ by the <span class="M"><a href="#select">select</a></span>() method:
 
+</div><div class="example">var val = cs(this).value("foo.bar[1].baz['the-quux'])
+cs(this).value("foo.bar[1].baz['the-quux']", "bar")
+</div><div class="desc">
+ In addition to the basic get/set operations on scalar values,
+ you can also use array and hash operations on collections
+ by using the <span class="F">op</span> option. Supported <span class="F">op</span>
+ values are <code>"get"</code>, <code>"set"</code>, <code>["splice",</code>offset<code>,</code>remove<code>]</code>,
+ <code>"delete"</code>, <code>"push"</code>, <code>"pop"</code>, <code>"unshift"</code> and <code>"shift"</code>.
+ The last four array operations are internally translated to the
+ corresponding <code>splice</code> operation. The arguments to the <code>splice</code>
+ operation are the same as for JavaScript's <code>Array.prototype.splice</code>:
+ "offset" is the 0-based offset into the array to operate at and
+ "remove" is the number of elements to remove at "offset" (before
+ the <span class="F">value</span> is added). The operations <code>get</code>/<code>set</code>/<code>delete</code>
+ operate on collection elements while the operations
+ <code>splice</code>/<code>push</code>/<code>pop</code>/<code>unshift</code>/<code>shift</code> operate on
+ collections, hence you have to provide a path in <span class="F">name</span> which is suitable for them.
+ The operations <code>get</code>/<code>set</code>/<code>delete</code> can operate on both array and
+ hash elements while <code>splice</code>/<code>push</code>/<code>pop</code>/<code>unshift</code>/<code>shift</code> can operate on
+ array objects only.
 
+</div><div class="desc">
+ To illustrate the functionality see the following comparisons
+ between the standard JavaScript variable access code and the ComponentJS
+ model value access code.
+
+</div><div class="desc">
+ First, working with scalars:
+
+</div><div class="example">//  val = foo.bar
+val = cs(this).value("foo.bar")
+val = cs(this).value({ name: "foo.bar", op: "get" })
+
+//  foo.bar = "quux"
+cs(this).value("foo.bar", "quux")
+cs(this).value({ name: "foo.bar", op: "set", value: "quux" })
+</div><div class="desc">
+ Second, working with Arrays:
+
+</div><div class="example">//  foo.bar = []
+cs(this).value("foo.bar", [])
+cs(this).value({ name: "foo.bar", value: [] })
+
+//  len = foo.bar.length
+len = cs(this).value("foo.bar").length
+
+//  val = foo.bar[42]
+val = cs(this).value("foo.bar[42]")
+val = cs(this).value({ name: "foo.bar[42]", op: "get" })
+
+//  foo.bar[42] = "quux"
+cs(this).value("foo.bar[42]", "quux")
+cs(this).value({ name: "foo.bar[42]", op: "set", value: "quux" })
+
+//  foo.bar.splice(1, 0, "quux")
+cs(this).value({ name: "foo.bar", op: [ "splice", 1, 0 ], value: "quux" })
+
+//  foo.bar.push("foo")
+cs(this).value({ name: "foo.bar", op: "push", value: "foo" })
+
+//  val = foo.bar.pop()
+val = cs(this).value({ name: "foo.bar", op: "pop" })
+
+//  foo.bar.unshift("bar")
+cs(this).value({ name: "foo.bar", op: "unshift", value: "bar" })
+
+//  val = foo.bar.shift()
+val = cs(this).value({ name: "foo.bar", op: "shift" })
+</div><div class="desc">
+ Third, working with hashes:
+
+</div><div class="example">//  foo.bar = {}
+cs(this).value("foo.bar", {})
+cs(this).value({ name: "foo.bar", value: {} })
+
+//  keys = Object.keys(foo.bar)
+keys = Object.keys(cs(this).value("foo.bar"))
+
+//  val = foo.bar.baz
+//  val = foo.bar["baz"]
+val = cs(this).value("foo.bar.baz")
+val = cs(this).value("foo.bar['baz']")
+val = cs(this).value({ name: "foo.bar.baz",    op: "get" })
+val = cs(this).value({ name: "foo.bar['baz']", op: "get" })
+
+//  foo.bar.baz = "quux"
+//  foo.bar["baz"] = "quux"
+cs(this).value("foo.bar.baz",    "quux")
+cs(this).value("foo.bar['baz']", "quux")
+cs(this).value({ name: "foo.bar.baz",    op: "set", value: "quux" })
+cs(this).value({ name: "foo.bar['baz']", op: "set", value: "quux" })
+
+//  delete foo.bar.baz
+//  delete foo.bar["baz"]
+cs(this).value({ name: "foo.bar.baz",    op: "delete" })
+cs(this).value({ name: "foo.bar['baz']", op: "delete" })
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="touch">touch</a></span>({
@@ -1474,26 +1509,23 @@ cs(this).value("foo", "bar")
  firing "set" observers manually.
 
 </div><div class="example">cs(this).touch("foo")
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="observe">observe</a></span>({
  <span class="F">name</span><span class="meta">:</span> <span class="T">String</span>,
  <span class="F">func</span><span class="meta">:</span> <span class="T">Function</span>,
  <span class="meta">[</span><span class="F">touch</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span>false,<span class="meta">]</span>
- <span class="meta">[</span><span class="F">operation</span><span class="meta">:</span> <span class="T">String</span><span class="meta"> = </span>"set",<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">op</span><span class="meta">:</span> <span class="T">String</span><span class="meta"> = </span>"set",<span class="meta">]</span>
  <span class="meta">[</span><span class="F">spool</span><span class="meta">:</span> <span class="T">String</span><span class="meta"> = </span>null<span class="meta">]</span>
  })<span class="meta">:</span> <span class="T">Number</span></div><div class="synopsis">
  <span class="O">component</span>.<span class="M">observe</span>(<span class="F">name</span><span class="meta">:</span> <span class="T">String</span>,
  <span class="F">func</span><span class="meta">:</span> <span class="T">Function</span>)<span class="meta">:</span> <span class="T">Number</span>
 </div><div class="desc"> Observe the value of <span class="O">component</span>'s model element named <span class="F">name</span>
- for <span class="F">operation</span> operations (by default "set" operations).
+ for <span class="F">op</span> operations (by default "set" operations).
  For "get" operations, the callback function <span class="F">func</span> has to be of
  signature <span class="F">func</span>(<span class="P">ev</span>: <span class="T">Event</span>, <span class="P">value</span>: <span class="T">Object</span>): <span class="T">Void</span>.
  For "set" and "changed" operations, the callback function <span class="F">func</span> has to be of signature
- <span class="F">func</span>(<span class="P">ev</span>: <span class="T">Event</span>, <span class="P">value-new</span>: <span class="T">Object</span>, <span class="P">value-old</span>: <span class="T">Object</span>): <span class="T">Void</span>.
+ <span class="F">func</span>(<span class="P">ev</span>: <span class="T">Event</span>, <span class="P">value-new</span>: <span class="T">Object</span>, <span class="P">value-old</span>: <span class="T">Object</span>, <span class="P">op</span>: <span class="T">Object</span>, <span class="P">path</span>: <span class="T">String</span>): <span class="T">Void</span>.
  Both types of callbacks can override the value by using <span class="P">ev</span>.<span class="M"><a href="#result">result</a></span>(<span class="P">value</span>).
  The <span class="M"><a href="#observe">observe</a></span>() method returns an id which uniquely identifies the observation.
  Instead of having to manually release the observation later via <span class="M"><a href="#unobserve">unobserve</a></span>()
@@ -1503,9 +1535,6 @@ cs(this).value("foo", "bar")
 </div><div class="example">id = cs(this).observe("state:username", function (ev, username) {
     ...
 })
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="unobserve">unobserve</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">Number</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
@@ -1590,9 +1619,6 @@ they provide various getter/setter methods:<p/>
         ...
     }
 })
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="unsubscribe">unsubscribe</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">Number</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
@@ -1601,19 +1627,6 @@ they provide various getter/setter methods:<p/>
  This is usually done implicitly through the spooling mechanism.
 
 </div><div class="example">cs(this).unsubscribe(id)
-</div><div class="desc">
-
-
-</div></li></ul>
-<ul>
-<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="subscription">subscription</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">Number</span> })<span class="meta">:</span> <span class="T">Boolean</span></div><div class="synopsis">
- <span class="O">component</span>.<span class="M">subscription</span>(<span class="P">id</span><span class="meta">:</span> <span class="T">Number</span>)<span class="meta">:</span> <span class="T">Boolean</span>
-</div><div class="desc"> Checks whether the subscription identified by <span class="F">id</span> exists on <span class="O">component</span>.
-
-</div><div class="example">cs(this).subscription(id)
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="publish">publish</a></span>({
@@ -1695,9 +1708,6 @@ the functionality consumer does <span class="M"><a href="#call">call</a></span>(
         return em.findById(clazz, id);
     }
 })
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="unregister">unregister</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">Number</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
@@ -1706,19 +1716,6 @@ the functionality consumer does <span class="M"><a href="#call">call</a></span>(
  This is usually done implicitly through the spooling mechanism.
 
 </div><div class="example">cs(this).unregister(id)
-</div><div class="desc">
-
-
-</div></li></ul>
-<ul>
-<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="registration">registration</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">Number</span> })<span class="meta">:</span> <span class="T">Boolean</span></div><div class="synopsis">
- <span class="O">component</span>.<span class="M">registration</span>(<span class="P">id</span><span class="meta">:</span> <span class="T">Number</span>)<span class="meta">:</span> <span class="T">Boolean</span>
-</div><div class="desc"> Checks whether the registration identified by <span class="F">id</span> exists on <span class="O">component</span>.
-
-</div><div class="example">cs(this).registration(id)
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="callable">callable</a></span>({ <span class="F">name</span><span class="meta">:</span> <span class="T">String</span><span class="meta">[</span>, <span class="F">value</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta">]</span> })<span class="meta">:</span> <span class="T">Boolean</span></div><div class="synopsis">
@@ -1735,9 +1732,6 @@ the functionality consumer does <span class="M"><a href="#call">call</a></span>(
 })
 cs(this).callable("load-person", false)
 cs(this).callable("load-person", true)
-</div><div class="desc">
-
-
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="call">call</a></span>({
@@ -1775,7 +1769,7 @@ cs(this).callable("load-person", true)
 <li><a href="#debug">debug</a></li><li><a href="#debug_instrumented">debug_instrumented</a></li><li><a href="#debug_window">debug_window</a></li></ul>
 <h2><a href="#code_structuring">Code Structuring</a></h2>
 <ul>
-<li><a href="#ns">ns</a></li><li><a href="#validate">validate</a></li><li><a href="#params">params</a></li><li><a href="#attribute">attribute</a></li><li><a href="#clazz">clazz</a></li><li><a href="#trait">trait</a></li></ul>
+<li><a href="#ns">ns</a></li><li><a href="#select">select</a></li><li><a href="#validate">validate</a></li><li><a href="#params">params</a></li><li><a href="#attribute">attribute</a></li><li><a href="#clazz">clazz</a></li><li><a href="#trait">trait</a></li></ul>
 <h2><a href="#component_creation">Component Creation</a></h2>
 <ul>
 <li><a href="#create">create</a></li><li><a href="#destroy">destroy</a></li></ul>
@@ -1808,10 +1802,10 @@ cs(this).callable("load-person", true)
 <li><a href="#model">model</a></li><li><a href="#value">value</a></li><li><a href="#touch">touch</a></li><li><a href="#observe">observe</a></li><li><a href="#unobserve">unobserve</a></li></ul>
 <h2><a href="#events">Events</a></h2>
 <ul>
-<li><a href="#subscribe">subscribe</a></li><li><a href="#unsubscribe">unsubscribe</a></li><li><a href="#subscription">subscription</a></li><li><a href="#publish">publish</a></li></ul>
+<li><a href="#subscribe">subscribe</a></li><li><a href="#unsubscribe">unsubscribe</a></li><li><a href="#publish">publish</a></li></ul>
 <h2><a href="#services">Services</a></h2>
 <ul>
-<li><a href="#register">register</a></li><li><a href="#unregister">unregister</a></li><li><a href="#registration">registration</a></li><li><a href="#callable">callable</a></li><li><a href="#call">call</a></li></ul>
+<li><a href="#register">register</a></li><li><a href="#unregister">unregister</a></li><li><a href="#callable">callable</a></li><li><a href="#call">call</a></li></ul>
 
         </div>
         <div id="foot" class="foot">

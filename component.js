@@ -1,17 +1,17 @@
 /*
 **  ComponentJS -- Component System for JavaScript <http://componentjs.com>
-**  Copyright (c) 2009-2013 Ralf S. Engelschall <http://engelschall.com>
+**  Copyright (c) 2009-2014 Ralf S. Engelschall <http://engelschall.com>
 **
 **  This Source Code Form is subject to the terms of the Mozilla Public
-**  License, v. 2.0. If a copy of the MPL was not distributed with this
-**  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+**  License (MPL), version 2.0. If a copy of the MPL was not distributed
+**  with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 (function (GLOBAL, EXPORTS, DEFINE) {
-
     /*
     **  GLOBAL LIBRARY NAMESPACING
     */
+
 
     /*  internal API  */
     var _cs = function () {};
@@ -85,18 +85,20 @@
         return ctx;
     };
 
+
     /*  API version  */
     $cs.version = {
-        major: 1,
+        major: 0,
         minor: 0,
-        micro: 2,
-        date:  20131225
+        micro: 0,
+        date:  19700101
     };
 
 
     /*
     **  COMMON UTILITY FUNCTIONALITIES
     */
+
 
     /*  utility function: create an exception string for throwing  */
     _cs.exception = function (method, error) {
@@ -107,8 +109,8 @@
             if (typeof GLOBAL.console === "object") {
                 if (typeof GLOBAL.console.trace === "function")
                     GLOBAL.console.trace();
-                else if (   typeof GLOBAL.printStackTrace !== "undefined" &&
-                            typeof GLOBAL.console.log === "function") {
+                else if (   typeof GLOBAL.printStackTrace !== "undefined"
+                         && typeof GLOBAL.console.log === "function") {
                     trace = GLOBAL.printStackTrace();
                     GLOBAL.console.log(trace.join("\n"));
                 }
@@ -123,17 +125,17 @@
     _cs.log = function (msg) {
         /*  try ComponentJS debugger  */
         if (_cs.hook("ComponentJS:log", "or", msg))
-            {} /*  do nothing, as plugins have already logged the message  */
+            { /* eslint no-empty: 0 */ } /*  do nothing, as plugins have already logged the message  */
 
         /*  try Firebug-style console (in regular browser or Node)  */
-        else if (   typeof GLOBAL.console     !== "undefined" &&
-                    typeof GLOBAL.console.log !== "undefined")
+        else if (   typeof GLOBAL.console     !== "undefined"
+                 && typeof GLOBAL.console.log !== "undefined")
             GLOBAL.console.log("[ComponentJS]: " + msg);
 
         /*  try API of Appcelerator Titanium  */
-        else if (   typeof GLOBAL.Titanium         !== "undefined" &&
-                    typeof GLOBAL.Titanium.API     !== "undefined" &&
-                    typeof GLOBAL.Titanium.API.log === "function")
+        else if (   typeof GLOBAL.Titanium         !== "undefined"
+                 && typeof GLOBAL.Titanium.API     !== "undefined"
+                 && typeof GLOBAL.Titanium.API.log === "function")
             GLOBAL.Titanium.API.log("[ComponentJS]: " + msg);
     };
 
@@ -162,8 +164,9 @@
         };
     })();
 
+
     /*  utility function: no operation (for passing as dummy callback)  */
-    $cs.nop = function () {};
+    _cs.nop = function () {};
 
     /*  utility function: annotate an object  */
     _cs.annotation = function (obj, name, value) {
@@ -240,7 +243,7 @@
     _cs.keysof = function (obj) {
         var keys = [];
         for (var key in obj) {
-            if (obj.hasOwnProperty(key))
+            if (Object.hasOwnProperty.call(obj, key))
                 keys.push(key);
         }
         return keys;
@@ -253,14 +256,14 @@
         var quote = function (string) {
             escapable.lastIndex = 0;
             return (
-                escapable.test(string) ?
-                  "\"" + string.replace(escapable, function (a) {
+                escapable.test(string)
+                ? "\"" + string.replace(escapable, function (a) {
                       var c = meta[a];
-                      return typeof c === "string" ?
-                            c :
-                            "\\u" + ("0000" + a.charCodeAt(0).toString(16)).slice(-4);
-                  }) + "\"" :
-                  "\"" + string + "\""
+                      return typeof c === "string"
+                          ? c
+                          : "\\u" + ("0000" + a.charCodeAt(0).toString(16)).slice(-4);
+                  }) + "\""
+                : "\"" + string + "\""
             );
         };
         var encode = function (value, seen) {
@@ -288,8 +291,8 @@
                         value = "<" + _cs.annotation(value, "type") + ">";
                     else if (Object.prototype.toString.call(value) === "[object Function]")
                         value = "<function>";
-                    else if (   Object.prototype.toString.call(value) === "[object Array]" ||
-                                value instanceof Array) {
+                    else if (   Object.prototype.toString.call(value) === "[object Array]"
+                             || value instanceof Array) {
                         for (var i = 0; i < value.length; i++)
                             a[i] = arguments.callee(value[i], seen); /* RECURSION */
                         value = (a.length === 0 ? "[]" : "[" + a.join(",") + "]");
@@ -306,6 +309,7 @@
                     break;
                 default:
                     value = "<unknown>";
+                    break;
             }
             return value;
         };
@@ -327,6 +331,7 @@
         /*  helper functions  */
         var myself = arguments.callee;
         var clone_func = function (f, continue_recursion) {
+            /* eslint no-unused-vars: 0 */
             var g = function ComponentJS_function_clone () {
                 return f.apply(this, arguments);
             };
@@ -430,8 +435,8 @@
                         /*  method/function  */
                         var src = _cs.clone(source[key], filter);
                         _cs.annotation(src, "name", key);
-                        if (   _cs.istypeof(target[key]) === "function" &&
-                               _cs.isown(target, key)                  )
+                        if (   _cs.istypeof(target[key]) === "function"
+                            && _cs.isown(target, key)                  )
                             _cs.annotation(src, "base", target[key]);
                         target[key] = src;
                     }
@@ -444,6 +449,7 @@
         }
         return target;
     };
+
 
     /*  utility function: concatenate array values  */
     _cs.concat = function () {
@@ -488,6 +494,7 @@
         for (var i = 0; i < source.length; i++)
             callback(source[i], i);
     };
+
 
     /*  custom Token class  */
     _cs.token = function () {
@@ -597,17 +604,41 @@
         }
     };
 
-    /*  API function: validate an arbitrary value against a type specification  */
-    $cs.validate = function (value, spec, non_cache) {
+
+    /*  API function: validate an arbitrary value  */
+    $cs.validate = function (value, spec) {
+        /*  case 1: specification is a regular expression object  */
+        if (typeof spec === "object" && spec instanceof RegExp)
+            return spec.test(value.toString());
+
+        /*  case 1: specification is a function  */
+        else if (typeof spec === "function")
+            return spec(value);
+
+        /*  case 3: specification is a validation expression  */
+        else if (typeof spec === "string")
+            return _cs.validate_at(value, spec);
+
+        /*  anything else is a usage error  */
+        else
+            throw _cs.exception("validate", "invalid specification argument: \"" + spec + "\"");
+    };
+
+    /*  internal: validate an arbitrary value against a type specification  */
+    _cs.validate_at = function (value, spec, path) {
         /*  compile validation AST from specification
             or reuse cached pre-compiled validation AST  */
-        var ast;
-        if (!non_cache)
-            ast = _cs.validate_cache[spec];
-        if (typeof ast === "undefined")
+        var ast = _cs.validate_cache[spec];
+        if (typeof ast === "undefined") {
             ast = _cs.validate_compile(spec);
-        if (!non_cache)
             _cs.validate_cache[spec] = ast;
+        }
+
+        /*  optionally subset the AST  */
+        if (typeof path !== "undefined") {
+            var steps = (typeof path === "string" ? _cs.select_parse(path) : path);
+            ast = _cs.validate_subset(ast, steps);
+        }
 
         /*  execute validation AST against the value  */
         return _cs.validate_executor.exec_spec(value, ast);
@@ -782,24 +813,24 @@
         /*  parse arity specification  */
         parse_arity: function (token, charset) {
             var arity = [ 1, 1 ];
-            if (   token.len >= 5 &&
-                   token.peek(0) === "{" &&
-                   token.peek(1).match(/^[0-9]+$/) &&
-                   token.peek(2) === "," &&
-                   token.peek(3).match(/^(?:[0-9]+|oo)$/) &&
-                   token.peek(4) === "}"          ) {
+            if (   token.len >= 5
+                && token.peek(0) === "{"
+                && token.peek(1).match(/^[0-9]+$/)
+                && token.peek(2) === ","
+                && token.peek(3).match(/^(?:[0-9]+|oo)$/)
+                && token.peek(4) === "}"          ) {
                 arity = [
                     parseInt(token.peek(1), 10),
-                    (  token.peek(3) === "oo" ?
-                       Number.MAX_VALUE :
-                       parseInt(token.peek(3), 10))
+                    (  token.peek(3) === "oo"
+                     ? Number.MAX_VALUE
+                     : parseInt(token.peek(3), 10))
                 ];
                 token.skip(5);
             }
             else if (
-                   token.len >= 1 &&
-                   token.peek().length === 1 &&
-                   charset.indexOf(token.peek()) >= 0) {
+                   token.len >= 1
+                && token.peek().length === 1
+                && charset.indexOf(token.peek()) >= 0) {
                 var c = token.peek();
                 switch (c) {
                     case "?": arity = [ 0, 1 ];                break;
@@ -814,11 +845,48 @@
         /*  parse hash key specification  */
         parse_key: function (token) {
             var key = token.peek();
-            if (!key.match(/^[_a-zA-Z$][_a-zA-Z$0-9]*$/))
+            if (!key.match(/^(?:[_a-zA-Z$][_a-zA-Z$0-9]*|@)$/))
                 throw _cs.exception("validate", "parse error: invalid key \"" + key + "\"");
             token.skip();
             return key;
         }
+    };
+
+    /*
+     *  VALIDATION AST SUB-SETTING
+     */
+
+    /*  subset an AST through a path of dereferencing steps  */
+    _cs.validate_subset = function (node, path) {
+        var i, imax, j, jmax;
+        for (i = 0, imax = path.length; i < imax; i++) {
+            if (node.type === "hash") {
+                var found = false;
+                for (j = 0, jmax = node.elements.length; j < jmax; j++) {
+                    if (node.elements[j].key === path[i]) {
+                        node = node.elements[j].element;
+                        found = true;
+                        break;
+                    }
+                    else if (node.elements[j].key === "@") {
+                        node = node.elements[j].element;
+                        found = true;
+                        /*  continue processing  */
+                    }
+                }
+                if (!found)
+                    throw _cs.exception("validate", "dereference error: hash key \"" + path[i] + "\" not found");
+            }
+            else if (node.type === "array") {
+                j = parseInt(path[i], 10);
+                if (j >= node.elements.length)
+                    throw _cs.exception("validate", "dereference error: array index #" + j + " (\"" + path[i] + "\") not found");
+                node = node.elements[j].element;
+            }
+            else
+                throw _cs.exception("validate", "dereference error: no more hash or array to be dereferenced by \"" + path[i] + "\"");
+        }
+        return node;
     };
 
     /*
@@ -855,8 +923,8 @@
         /*  validate through boolean "or" operation  */
         exec_or: function (value, node) {
             return (
-                   this.exec_spec(value, node.op1)  /*  RECURSION  */ ||
-                   this.exec_spec(value, node.op2)  /*  RECURSION  */
+                   this.exec_spec(value, node.op1)  /*  RECURSION  */
+                || this.exec_spec(value, node.op2)  /*  RECURSION  */
             );
         },
 
@@ -871,7 +939,9 @@
                 for (i = 0; i < node.elements.length; i++) {
                     el = node.elements[i];
                     fields[el.key] = el.element;
-                    if (el.arity[0] > 0 && typeof value[el.key] === "undefined") {
+                    if (   el.arity[0] > 0
+                        && (   (el.key === "@" && _cs.keysof(value).length === 0)
+                            || (el.key !== "@" && typeof value[el.key] === "undefined"))) {
                         valid = false;
                         break;
                     }
@@ -881,15 +951,19 @@
                 /*  pass 2: ensure that no unknown fields exist
                     and that all existing fields are valid  */
                 for (var field in value) {
-                    if (   !Object.hasOwnProperty.call(value, field) ||
-                           !Object.propertyIsEnumerable.call(value, field) ||
-                           (field === "constructor" || field === "prototype"))
+                    if (   !Object.hasOwnProperty.call(value, field)
+                        || !Object.propertyIsEnumerable.call(value, field)
+                        || field === "constructor"
+                        || field === "prototype"                          )
                         continue;
-                    if (   typeof fields[field] === "undefined" ||
-                           !this.exec_spec(value[field], fields[field])) {  /*  RECURSION  */
-                        valid = false;
-                        break;
-                    }
+                    if (   typeof fields[field] !== "undefined"
+                        && this.exec_spec(value[field], fields[field])) /*  RECURSION  */
+                        continue;
+                    if (   typeof fields["@"] !== "undefined"
+                        && this.exec_spec(value[field], fields["@"]))   /*  RECURSION  */
+                        continue;
+                    valid = false;
+                    break;
                 }
             }
             return valid;
@@ -929,9 +1003,10 @@
         /*  validate custom JavaScript type  */
         exec_class: function (value, node) {
             /* jshint evil:true */
-            return (   typeof value === "object" &&
-                      (   Object.prototype.toString.call(value) === "[object " + node.name + "]") ||
-                          eval("value instanceof " + node.name)                                  );
+            /* eslint no-eval: 0 */
+            return (   typeof value === "object"
+                   && (   Object.prototype.toString.call(value) === "[object " + node.name + "]")
+                       || eval("value instanceof " + node.name)                                  );
         },
 
         /*  validate special ComponentJS type  */
@@ -953,7 +1028,8 @@
 
         /*  1. determine number of total    positional parameters,
             2. determine number of required positional parameters,
-            3. set default values  */
+            3. set default values
+            4. sanity check default value against validation  */
         var positional = 0;
         var required   = 0;
         var pos2name   = {};
@@ -970,16 +1046,22 @@
                 }
 
                 /*  process default value  */
-                if (typeof spec[name].def !== "undefined")
+                if (typeof spec[name].def !== "undefined") {
+                    if (typeof spec[name].valid !== "undefined")
+                        if (!$cs.validate(spec[name].def, spec[name].valid))
+                            throw _cs.exception(func_name, "parameter \"" + name + "\" has " +
+                                "default value " + _cs.json(spec[name].def) + ", which does not validate " +
+                                "against validation specification \"" + spec[name].valid + "\"");
                     params[name] = spec[name].def;
+                }
             }
         }
 
         /*  determine or at least guess whether we were called with
             positional or name-based parameters  */
         var name_based = false;
-        if (   func_args.length === 1 &&
-               _cs.istypeof(func_args[0]) === "object") {
+        if (   func_args.length === 1
+            && _cs.istypeof(func_args[0]) === "object") {
             /*  ok, looks like a regular call like
                 "foo({ foo: ..., bar: ...})"  */
             name_based = true;
@@ -996,18 +1078,11 @@
 
         /*  common value validity checking  */
         var check_validity = function (func, name, value, valid) {
-            if (typeof valid === "string") {
+            if (typeof valid !== "undefined")
                 if (!$cs.validate(value, valid))
-                    throw _cs.exception(func, "value of parameter \"" + name + "\" not valid");
-            }
-            else if (typeof valid === "object" && valid instanceof RegExp) {
-                if (!(typeof value === "string" && value.match(valid)))
-                    throw _cs.exception(func, "value of parameter \"" + name + "\" not valid (regexp)");
-            }
-            else if (typeof valid === "function") {
-                if (!valid(value))
-                    throw _cs.exception(func, "value of parameter \"" + name + "\" not valid (callback)");
-            }
+                    throw _cs.exception(func, "parameter \"" + name + "\" has " +
+                        "value " + _cs.json(value) + ", which does not validate " +
+                        "against \"" + valid + "\"");
         };
 
         /*  set actual values  */
@@ -1026,9 +1101,9 @@
             }
             for (name in spec) {
                 if (_cs.isown(spec, name)) {
-                    if (   typeof spec[name].req !== "undefined" &&
-                           spec[name].req &&
-                           typeof args[name] === "undefined")
+                    if (   typeof spec[name].req !== "undefined"
+                        && spec[name].req
+                        && typeof args[name] === "undefined")
                         throw _cs.exception(func_name, "required parameter \"" + name + "\" missing");
                 }
             }
@@ -1046,10 +1121,9 @@
                 if (typeof pos2name["..."] === "undefined")
                     throw _cs.exception(func_name, "too many arguments provided");
                 args = [];
-                for (; i < func_args.length; i++) {
-                    check_validity(func_name, pos2name["..."], func_args[i], spec[pos2name["..."]].valid);
+                for (; i < func_args.length; i++)
                     args.push(func_args[i]);
-                }
+                check_validity(func_name, pos2name["..."], args, spec[pos2name["..."]].valid);
                 params[pos2name["..."]] = args;
             }
         }
@@ -1060,6 +1134,7 @@
         /*  return prepared parameter object  */
         return params;
     };
+
 
     /*  Base16 encoding (number)  */
     _cs.base16_number = function (num, min, uppercase) {
@@ -1077,6 +1152,7 @@
         }
         return base16;
     };
+
 
     /*  advanced: 128-bit Counter-ID generation  */
     _cs.cid = (function () {
@@ -1097,13 +1173,14 @@
 
             /*  return counter  */
             return (
-                  _cs.base16_number(counter[0], 8, true) +
-                  _cs.base16_number(counter[1], 8, true) +
-                  _cs.base16_number(counter[2], 8, true) +
-                  _cs.base16_number(counter[3], 8, true)
+                  _cs.base16_number(counter[0], 8, true)
+                + _cs.base16_number(counter[1], 8, true)
+                + _cs.base16_number(counter[2], 8, true)
+                + _cs.base16_number(counter[3], 8, true)
             );
         };
     })();
+
 
     /*  for passing a function as a callback parameter,
         wrap the function into a proxy function which
@@ -1188,75 +1265,45 @@
         };
     };
 
+
     /*  for defining getter/setter style attributes  */
     $cs.attribute = function () {
         /*  determine parameters  */
         var params = $cs.params("attribute", arguments, {
-            name:     { pos: 0, req: true  },
-            def:      { pos: 1, req: true  },
-            validate: { pos: 2, def: null  }
+            name:  { pos: 0, req: true,      valid: "string"                   },
+            def:   { pos: 1, req: true,      valid: "any"                      },
+            valid: { pos: 2, def: undefined, valid: "(function|RegExp|string)" }
         });
 
         /*  return closure-based getter/setter method  */
-        return _cs.proxy({ value: params.def }, function (value_new, validate_only) {
+        return _cs.proxy({ value: params.def }, function (value_new) {
             /*  remember old value  */
             var value_old = this.value;
 
             /*  act on new value if given  */
             if (arguments.length > 0) {
                 /*  check whether new value is valid  */
-                var is_valid = true;
-                if (params.validate !== null) {
-                    /*  case 1: plain type comparison  */
-                    if (   typeof params.validate === "string" ||
-                           typeof params.validate === "boolean" ||
-                           typeof params.validate === "number" )
-                        is_valid = (value_new === params.validate);
-
-                    /*  case 2: regular expression string match  */
-                    else if (   typeof params.validate === "object" &&
-                                params.validate instanceof RegExp  )
-                        is_valid = params.validate.test(value_new);
-
-                    /*  case 3: flexible callback function check  */
-                    else if (typeof params.validate === "function")
-                        is_valid = params.validate(value_new, value_old, validate_only, params.name);
-
-                    /*  otherwise: error  */
-                    else
+                if (typeof params.valid !== "undefined")
+                    if (!$cs.validate(value_new, params.valid))
                         throw _cs.exception("attribute",
-                            "validation value \"" + params.validate + "\" " +
-                            "for attribute \"" + params.name + "\" " +
-                            "is of unsupported type \"" + (typeof params.validate) + "\"");
-                }
+                            "invalid value \"" + value_new + "\" " +
+                            "for attribute \"" + params.name + "\"");
 
-                /*  either return validation result...  */
-                if (typeof validate_only !== "undefined" && validate_only)
-                    return is_valid;
+                /*  set new value  */
+                this.value = value_new;
 
-                /*  ...or set new valid value...  */
-                else if (is_valid) {
-                    /*  set new value  */
-                    this.value = value_new;
-
-                    /*  optionally notify observers  */
-                    var obj = this.__this__;
-                    if (   typeof obj !== "undefined" &&
-                           typeof obj.notify === "function")
-                        obj.notify.call(obj, "attribute:set:" + params.name, value_new, value_old, params.name);
-                }
-
-                /*  ...or throw an exception  */
-                else
-                    throw _cs.exception("attribute",
-                        "invalid value \"" + value_new + "\" " +
-                        "for attribute \"" + params.name + "\"");
+                /*  optionally notify observers  */
+                var obj = this.__this__;
+                if (   typeof obj !== "undefined"
+                    && typeof obj.notify === "function")
+                    obj.notify.call(obj, "attribute:set:" + params.name, value_new, value_old, params.name);
             }
 
             /*  return old value  */
             return value_old;
         }, true);
     };
+
 
     /*  internal hook registry  */
     _cs.hooks = {};
@@ -1358,9 +1405,98 @@
     };
 
 
+    /*  API function: select an arbitrary value via a path specification
+        and either get the current value or set the new value  */
+    $cs.select = function (obj, spec, value) {
+        /*  compile path specification (or use pre-compiled path)  */
+        var path = (typeof spec === "string" ? _cs.select_parse(spec) : spec);
+
+        /*  subset the object graph  */
+        return (
+              arguments.length === 2
+            ? _cs.select_path(obj, path)
+            : _cs.select_path(obj, path, value)
+        );
+    };
+
+    /*  the internal compile cache  */
+    _cs.select_cache = {};
+
+    /*  compile a path specification into array of dereferencing steps  */
+    _cs.select_parse = function (spec) {
+        var path = _cs.select_cache[spec];
+        if (typeof path === "undefined") {
+            path = [];
+            var pos = 0;
+            var txt = spec;
+            var m;
+            while (txt !== "") {
+                if ((m = txt.match(/^\s*(?:\.)?\s*([a-zA-Z$0-9_][a-zA-Z$0-9_:-]*)/)) !== null)
+                    path.push(m[1]);
+                else if ((m = txt.match(/^\s*\[\s*(\d+|\*{1,2})\s*\]/)) !== null)
+                    path.push(m[1]);
+                else if ((m = txt.match(/^\s*\[\s*"((?:\\"|.)*?)"\s*\]/)) !== null)
+                    path.push(m[1].replace(/\\"/g, "\""));
+                else if ((m = txt.match(/^\s*\[\s*'((?:\\'|.)*?)'\s*\]/)) !== null)
+                    path.push(m[1].replace(/\\'/g, "'"));
+                else if ((m = txt.match(/^\s+$/)) !== null)
+                    break;
+                else
+                    throw _cs.exception("select", "parse error: invalid character at: " +
+                        spec.substr(0, pos) + "<" + txt.substr(0, 1) + ">" + txt.substr(1));
+                pos += m[0].length;
+                txt = txt.substr(m[0].length);
+            }
+            _cs.select_cache[spec] = path;
+        }
+        return path;
+    };
+
+    /*  subset an object graph  */
+    _cs.select_path = function (obj, path) {
+        /*  handle special case of empty path */
+        if (path.length === 0) {
+            if (arguments.length === 3)
+                throw _cs.exception("select", "cannot set value on empty path");
+            else
+                return obj;
+        }
+
+        /*  step into object graph according to path prefix  */
+        var i = 0;
+        while (i < path.length - 1) {
+            if (typeof obj !== "object")
+                throw _cs.exception("select", "cannot further dereference: no more intermediate objects in path");
+            obj = obj[path[i++]];
+        }
+
+        /*  get the old value  */
+        if (typeof obj !== "object")
+            throw _cs.exception("select", "cannot further dereference: no object at end of path");
+        var value_old = obj[path[i]];
+
+        /*  optionally set new value  */
+        if (arguments.length === 3) {
+            var value_new = arguments[2];
+            if (value_new === undefined) {
+                /*  delete value from collection  */
+                if (obj instanceof Array)
+                    obj.splice(parseInt(path[i], 10), 1);
+                else
+                    delete obj[path[i]];
+            }
+            else
+                /*  set value into collection  */
+                obj[path[i]] = value_new;
+        }
+
+        return value_old;
+    };
+
     /*
     **  CLASS SYSTEM
     */
+
 
     /*  utility function: define a JavaScript "class"  */
     _cs.clazz_or_trait = function (params, is_clazz) {
@@ -1397,8 +1533,8 @@
                 if (dynamics !== null) {
                     for (var field in dynamics) {
                         if (_cs.isown(dynamics, field)) {
-                            if (   _cs.istypeof(dynamics[field]) !== "null" &&
-                                   _cs.istypeof(dynamics[field].clone) === "function")
+                            if (   _cs.istypeof(dynamics[field]) !== "null"
+                                && _cs.istypeof(dynamics[field].clone) === "function")
                                 obj[field] = dynamics[field].clone();
                             else
                                 obj[field] = _cs.clone(dynamics[field]);
@@ -1427,7 +1563,7 @@
             };
             init(obj, clz, arg, true);
 
-            return;
+            return obj;
         };
 
         /*
@@ -1478,7 +1614,7 @@
 
         /*  remember user-supplied constructor function
             (and provide fallback implementation)  */
-        var cons = $cs.nop;
+        var cons = _cs.nop;
         if (_cs.isdefined(params.cons))
             cons = params.cons;
         else if (_cs.isdefined(params.extend))
@@ -1533,16 +1669,16 @@
                 return base.apply(this, arguments);
 
             /*  attempt 2: call base/super/parent function in inheritance chain (directly on object)  */
-            else if (   _cs.istypeof(name) === "string" &&
-                        _cs.istypeof(extend) === "clazz" &&
-                        _cs.istypeof(extend[name]) === "function")
+            else if (   _cs.istypeof(name) === "string"
+                     && _cs.istypeof(extend) === "clazz"
+                     && _cs.istypeof(extend[name]) === "function")
                 return extend[name].apply(this, arguments);
 
             /*  attempt 3: call base/super/parent function in inheritance chain (via prototype object)  */
-            else if (   _cs.istypeof(name) === "string" &&
-                        _cs.istypeof(extend) === "clazz" &&
-                        _cs.istypeof(extend.prototype) === "object" &&
-                        _cs.istypeof(extend.prototype[name]) === "function")
+            else if (   _cs.istypeof(name) === "string"
+                     && _cs.istypeof(extend) === "clazz"
+                     && _cs.istypeof(extend.prototype) === "object"
+                     && _cs.istypeof(extend.prototype[name]) === "function")
                 return extend.prototype[name].apply(this, arguments);
 
             /*  else just give up and throw an exception  */
@@ -1584,17 +1720,18 @@
         return clazz;
     };
 
+
     /*  API function: define a usual JavaScript "class"  */
     $cs.clazz = function () {
         /*  determine parameters  */
         var params = $cs.params("clazz", arguments, {
-            name:        { def: undefined, valid: "string"       },
-            extend:      { def: undefined, valid: "clazz"        },
-            mixin:       { def: undefined, valid: "[trait*]"     },
-            cons:        { def: undefined, valid: "function"     },
-            dynamics:    { def: undefined, valid: "object"       },
-            protos:      { def: undefined, valid: "object"       },
-            statics:     { def: undefined, valid: "object"       }
+            name:        { def: undefined, valid: "string"           },
+            extend:      { def: undefined, valid: "clazz"            },
+            mixin:       { def: undefined, valid: "[ trait* ]"       },
+            cons:        { def: undefined, valid: "function"         },
+            statics:     { def: undefined, valid: "object"           },
+            dynamics:    { def: undefined, valid: "object"           },
+            protos:      { def: undefined, valid: "{ @?: function }" }
         });
 
         /*  just pass through definition  */
@@ -1611,13 +1748,13 @@
     $cs.trait = function () {
         /*  determine parameters  */
         var params = $cs.params("trait", arguments, {
-            name:        { def: undefined, valid: "string"       },
-            mixin:       { def: undefined, valid: "[trait*]"     },
-            cons:        { def: undefined, valid: "function"     },
-            setup:       { def: undefined, valid: "function"     },
-            dynamics:    { def: undefined, valid: "object"       },
-            protos:      { def: undefined, valid: "object"       },
-            statics:     { def: undefined, valid: "object"       }
+            name:        { def: undefined, valid: "string"           },
+            mixin:       { def: undefined, valid: "[ trait* ]"       },
+            cons:        { def: undefined, valid: "function"         },
+            setup:       { def: undefined, valid: "function"         },
+            statics:     { def: undefined, valid: "object"           },
+            dynamics:    { def: undefined, valid: "object"           },
+            protos:      { def: undefined, valid: "{ @?: function }" }
         });
 
         /*  just pass through definition  */
@@ -1635,6 +1772,7 @@
     **  GENERIC PATTERN TRAITS
     */
 
+
     /*  generic pattern: id  */
     $cs.pattern.id = $cs.trait({
         dynamics: {
@@ -1648,6 +1786,7 @@
             name: $cs.attribute("name", "")
         }
     });
+
 
     /*  generic pattern: tree  */
     $cs.pattern.tree = $cs.trait({
@@ -1743,6 +1882,7 @@
         }
     });
 
+
     /*  generic pattern: configuration  */
     $cs.pattern.config = $cs.trait({
         dynamics: {
@@ -1780,6 +1920,7 @@
             }
         }
     });
+
 
     /*  generic pattern: spool  */
     $cs.pattern.spool = $cs.trait({
@@ -1863,6 +2004,7 @@
         return info;
     };
 
+
     /*  generic pattern: tree property  */
     $cs.pattern.property = $cs.trait({
         mixin: [
@@ -1876,6 +2018,7 @@
                 var params = $cs.params("property", arguments, {
                     name:        { pos: 0, req: true      },
                     value:       { pos: 1, def: undefined },
+                    def:         {         def: undefined },
                     scope:       {         def: undefined },
                     bubbling:    {         def: true      },
                     targeting:   {         def: true      },
@@ -1886,8 +2029,8 @@
                 if (!params.targeting && !params.bubbling)
                     throw _cs.exception("property", "disabling both targeting and bubbling makes no sense");
 
-                /*  start resolving with an undefined value  */
-                var result; result = undefined;
+                /*  start resolving with the default value  */
+                var result; result = params.def;
 
                 /*  get old configuration value
                     (on current node or on any parent node)  */
@@ -1945,6 +2088,7 @@
         }
     });
 
+
     /*  generic pattern: specification  */
     $cs.pattern.spec = $cs.trait({
         mixin: [
@@ -1976,7 +2120,7 @@
                         }
                     }
                 }
-                return;
+                return undefined;
             },
 
             /*  method: determine whether this object matches the name/spec patterns  */
@@ -1986,8 +2130,8 @@
                     if (this.name() !== name_pattern)
                         return false;
                 }
-                else if (   typeof name_pattern === "object" &&
-                            name_pattern instanceof RegExp) {
+                else if (   typeof name_pattern === "object"
+                         && name_pattern instanceof RegExp) {
                     if (!(this.name().match(name_pattern)))
                         return false;
                 }
@@ -2009,11 +2153,11 @@
                                 return false;
                             break;
                         case "string":
-                            if (!(   (   typeof value === "string" &&
-                                         spec[key] === value) ||
-                                     (   typeof value === "object" &&
-                                         value instanceof RegExp &&
-                                         !(spec[key].match(value)))))
+                            if (!(   (   typeof value === "string"
+                                      && spec[key] === value)
+                                  || (   typeof value === "object"
+                                      && value instanceof RegExp
+                                      && !(spec[key].match(value)))))
                                 return false;
                             break;
                     }
@@ -2022,6 +2166,7 @@
             }
         }
     });
+
 
     /*  generic pattern: observable  */
     $cs.pattern.observable = $cs.trait({
@@ -2095,6 +2240,7 @@
             }
         }
     });
+
 
     /*  generic pattern: event  */
     $cs.pattern.event = $cs.clazz({
@@ -2207,20 +2353,27 @@
             },
 
             /*  determine subscription existence  */
-            subscription: function () {
+            _subscription: function () {
                 /*  determine parameters  */
-                var params = $cs.params("subscription", arguments, {
-                    id: { pos: 0, req: true }
+                var params = $cs.params("_subscription", arguments, {
+                    id:      { pos: 0, req: true  },
+                    details: { pos: 1, def: false }
                 });
 
                 /*  determine whether subscription exists  */
-                return (typeof this.__subscription[params.id] !== "undefined");
+                var result = (typeof this.__subscription[params.id] !== "undefined");
+
+                /*  optionally provide details about subscription  */
+                if (params.details)
+                    result = (result ? this.__subscription[params.id] : undefined);
+
+                return result;
             },
 
             /*  determine subscriptions (internal)  */
             _subscriptions: function () {
                 /*  determine parameters  */
-                var params = $cs.params("subscriptions", arguments, {
+                var params = $cs.params("_subscriptions", arguments, {
                     name:  { pos: 0, req: true },
                     spec:  { pos: 1, def: {}   }
                 });
@@ -2229,7 +2382,7 @@
                 var ev = $cs.event({
                     name:   params.name,
                     spec:   params.spec,
-                    target: $cs.nop
+                    target: _cs.nop
                 });
 
                 /*  find and return all matching subscriptions  */
@@ -2257,7 +2410,7 @@
                     capturing:    {             def: true            },
                     spreading:    {             def: false           },
                     bubbling:     {             def: true            },
-                    completed:    {             def: $cs.nop         },
+                    completed:    {             def: _cs.nop         },
                     resultinit:   {             def: undefined       },
                     resultstep:   {             def: function (a, b) { return b; } },
                     directresult: {             def: false           },
@@ -2280,7 +2433,7 @@
                     }
                     if (!subscribers) {
                         if (params.noresult)
-                            return;
+                            return undefined;
                         else if (params.directresult)
                             return params.resultinit;
                         else
@@ -2325,11 +2478,11 @@
                         if (!_cs.isown(comp.__subscription, id))
                             continue;
                         var s = comp.__subscription[id];
-                        if (   (   (state === "capturing" && s.capturing) ||
-                                   (state === "targeting"               ) ||
-                                   (state === "spreading" && s.spreading) ||
-                                   (state === "bubbling"  && s.bubbling )) &&
-                               ev.matches(s.name, s.spec)                 ) {
+                        if (   (   (state === "capturing" && s.capturing)
+                                || (state === "targeting"               )
+                                || (state === "spreading" && s.spreading)
+                                || (state === "bubbling"  && s.bubbling ))
+                            && ev.matches(s.name, s.spec)                 ) {
 
                             /*  verbosity  */
                             if (!params.silent)
@@ -2438,7 +2591,7 @@
 
                 /*  return the event, directly the result value or no result value at all  */
                 if (params.noresult)
-                    return;
+                    return undefined;
                 else if (params.directresult)
                     return ev.result();
                 else
@@ -2446,6 +2599,7 @@
             }
         }
     });
+
 
     /*  generic pattern: command  */
     $cs.pattern.command = $cs.clazz({
@@ -2455,22 +2609,18 @@
         dynamics: {
             /*  standard attributes  */
             ctx:   $cs.attribute("ctx",   null),
-            func:  $cs.attribute("func",  $cs.nop),
+            func:  $cs.attribute("func",  _cs.nop),
             args:  $cs.attribute("args",  []),
             async: $cs.attribute("async", false),
 
             /*  usually observed attribute  */
-            enabled: $cs.attribute({
-                name:     "enabled",
-                def:      true,
-                validate: function (v) { return typeof v === "boolean"; }
-            })
+            enabled: $cs.attribute("enabled", true, "boolean")
         },
         protos: {
             /*  method: execute the command  */
             execute: function (caller_args, caller_result) {
                 if (!this.enabled())
-                    return;
+                    return undefined;
                 var args = [];
                 if (this.async()) {
                     args.push(function (value) {
@@ -2522,6 +2672,7 @@
         return result;
     };
 
+
     /*  component states  */
     _cs.states = [
         { /* component is not existing (bootstrapping state transitions only) */
@@ -2551,8 +2702,8 @@
         /*  determine storage position  */
         var pos = 1;
         while (pos < _cs.states.length) {
-            if (   source !== null &&
-                   _cs.states[pos].state === source)
+            if (   source !== null
+                && _cs.states[pos].state === source)
                 break;
             pos++;
         }
@@ -2711,8 +2862,8 @@
                     children = comp.children();
                     for (i = 0; i < children.length; i++) {
                         if (children[i].state_compare(state) < 0) {
-                            if (   children[i].state_auto_increase() ||
-                                   children[i].property("ComponentJS:state-auto-increase") === true) {
+                            if (   children[i].state_auto_increase()
+                                || children[i].property("ComponentJS:state-auto-increase") === true) {
                                 _cs.state_progression_run(children[i], state, "downward"); /*  RECURSION  */
                                 if (children[i].state_compare(state) < 0) {
                                     /*  enqueue state transition for child  */
@@ -2808,8 +2959,8 @@
                 if (_direction === "upward-and-downward" || _direction === "upward") {
                     if (comp.parent() !== null) {
                         if (comp.parent().state_compare(state_lower) > 0) {
-                            if (   comp.parent().state_auto_decrease() ||
-                                   comp.parent().property("ComponentJS:state-auto-decrease") === true) {
+                            if (   comp.parent().state_auto_decrease()
+                                || comp.parent().property("ComponentJS:state-auto-decrease") === true) {
                                 _cs.state_progression_run(comp.parent(), state_lower, "upward"); /*  RECURSION  */
                                 if (comp.parent().state_compare(state_lower) > 0) {
                                     /*  enqueue state transition for parent  */
@@ -2912,15 +3063,15 @@
                 var valid = false;
                 var i;
                 for (i = 0; i < _cs.states.length; i++) {
-                    if (   _cs.states[i].enter === params.method ||
-                           _cs.states[i].leave === params.method) {
+                    if (   _cs.states[i].enter === params.method
+                        || _cs.states[i].leave === params.method) {
                         valid = true;
                         break;
                     }
                 }
                 if (!valid)
-                    throw _cs.exception("guard", "no such declared enter/leave method: \"" +
-                          params.method + "\"");
+                    throw _cs.exception("guard", "no such declared enter/leave method: \""
+                        + params.method + "\"");
 
                 /*  ensure the guard slot exists  */
                 if (!_cs.isdefined(this.__state_guards[params.method]))
@@ -2955,6 +3106,7 @@
             }
         }
     });
+
 
     /*  generic pattern: service  */
     $cs.pattern.service = $cs.trait({
@@ -3022,17 +3174,6 @@
                 return id;
             },
 
-            /*  determine registration existence  */
-            registration: function () {
-                /*  determine parameters  */
-                var params = $cs.params("registration", arguments, {
-                    id: { pos: 0, req: true }
-                });
-
-                /*  determine whether registration exists  */
-                return this.subscription(params.id);
-            },
-
             /*  unregister a service  */
             unregister: function () {
                 /*  determine parameters  */
@@ -3097,8 +3238,9 @@
         }
     });
 
-    /*  generic pattern: shadow object  */
-    $cs.pattern.shadow = $cs.trait({
+
+    /*  generic pattern: backing object  */
+    $cs.pattern.backing = $cs.trait({
         dynamics: {
             __obj: null
         },
@@ -3163,6 +3305,7 @@
         }
     });
 
+
     /*  generic pattern: socket  */
     $cs.pattern.socket = $cs.trait({
         mixin: [
@@ -3187,17 +3330,17 @@
                 });
 
                 /*  sanity check parameters  */
-                if (   _cs.istypeof(params.plug) === "string" &&
-                       _cs.istypeof(params.ctx[params.plug]) !== "function")
+                if (   _cs.istypeof(params.plug) === "string"
+                    && _cs.istypeof(params.ctx[params.plug]) !== "function")
                     throw _cs.exception("socket", "no plug method named \"" + params.plug + "\" found on context object");
-                else if (   _cs.istypeof(params.plug) !== "string" &&
-                            _cs.istypeof(params.plug) !== "function")
+                else if (   _cs.istypeof(params.plug) !== "string"
+                         && _cs.istypeof(params.plug) !== "function")
                     throw _cs.exception("socket", "plug operation neither method name nor function");
-                if (   _cs.istypeof(params.unplug) === "string" &&
-                       _cs.istypeof(params.ctx[params.unplug]) !== "function")
+                if (   _cs.istypeof(params.unplug) === "string"
+                    && _cs.istypeof(params.ctx[params.unplug]) !== "function")
                     throw _cs.exception("socket", "no unplug method named \"" + params.unplug + "\" found on context object");
-                else if (   _cs.istypeof(params.unplug) !== "string" &&
-                            _cs.istypeof(params.unplug) !== "function")
+                else if (   _cs.istypeof(params.unplug) !== "string"
+                         && _cs.istypeof(params.unplug) !== "function")
                     throw _cs.exception("socket", "unplug operation neither method name nor function");
 
                 /*  remember parameters as (optionally scoped) component property  */
@@ -3305,7 +3448,7 @@
                 var id = _cs.cid();
                 this.__plugs[id] = params;
 
-                /*  pass-though operation to common helper function  */
+                /*  pass-through operation to common helper function  */
                 _cs.plugger("plug", this, params.name, params.object, params.targeting);
 
                 /*  optionally spool reverse operation  */
@@ -3370,6 +3513,7 @@
             throw _cs.exception(op, "failed to perform \"" + op + "\" operation");
     };
 
+
     /*  utility function: mark a component  */
     $cs.mark = function (obj, name) {
         var marker = _cs.annotation(obj, "marker");
@@ -3407,12 +3551,13 @@
         view:       $cs.trait({ cons: function () { $cs.mark(this, "view");       } })
     };
 
+
     /*  load store via optional plugin  */
     _cs.store_load = function (comp) {
         if (comp.__store === null) {
             _cs.hook("ComponentJS:store-load", "none", comp);
-            if (   comp.__store === null ||
-                   typeof comp.__store !== "object")
+            if (   comp.__store === null
+                || typeof comp.__store !== "object")
                 comp.__store = {};
         }
     };
@@ -3477,6 +3622,7 @@
         }
     });
 
+
     /*  generic pattern for model management  */
     $cs.pattern.model = $cs.trait({
         protos: {
@@ -3484,136 +3630,170 @@
             model: function () {
                 /*  determine parameters  */
                 var params = $cs.params("model", arguments, {
-                    model: { pos: 0, def: null }
+                    spec: { pos: 0, req: true, valid:
+                        "{ @: {" +
+                        " value?: any," +
+                        " valid?: (string|function|RegExp)," +
+                        " autoreset?: boolean," +
+                        " store?: boolean" +
+                        "} }"
+                    }
                 });
 
-                /*  simplify further processing  */
-                var model = params.model;
-                if (model === null)
-                    model = undefined;
+                /*  create new model  */
+                var model = { spec: params.spec, data: {} };
+                _cs.foreach(_cs.keysof(model.spec), function (name) {
+                    var item = model.spec[name];
 
-                /*  sanity check model  */
-                var name;
-                if (_cs.isdefined(model)) {
-                    for (name in model) {
-                        if (typeof model[name].value === "undefined")
-                            model[name].value = "";
-                        if (typeof model[name].valid === "undefined")
-                            model[name].valid = "string";
-                        if (typeof model[name].autoreset === "undefined")
-                            model[name].autoreset = false;
-                        if (typeof model[name].store === "undefined")
-                            model[name].store = false;
-                        for (var key in model[name]) {
-                            if (key !== "value" && key !== "valid" && key !== "autoreset" && key !== "store")
-                                throw _cs.exception("model", "invalid specification key \"" +
-                                    key + "\" in specification of model field \"" + name + "\"");
-                        }
-                        if (!$cs.validate(model[name].value, model[name].valid))
-                            throw _cs.exception("model", "model field \"" + name + "\" has " +
-                                "default value " + _cs.json(model[name].value) + ", which does not validate " +
-                                "against validation \"" + model[name].valid + "\"");
-                    }
-                }
+                    /*  provide default values for all the optional model item options  */
+                    if (typeof item.value     === "undefined") item.value     = "";
+                    if (typeof item.valid     === "undefined") item.valid     = "string";
+                    if (typeof item.autoreset === "undefined") item.autoreset = false;
+                    if (typeof item.store     === "undefined") item.store     = false;
 
-                /*  try to load stored model values  */
+                    /*  sanity check model item specification  */
+                    if (!$cs.validate(item.value, item.valid))
+                        throw _cs.exception("model", "model field \"" + name + "\" has " +
+                            "default value " + _cs.json(item.value) + ", which does not validate " +
+                            "against validation specification \"" + item.valid + "\"");
+
+                    /*  take over initial model item value  */
+                    model.data[name] = item.value;
+                });
+
+                /*  optionally load model values from store  */
                 var store = this.store("model");
                 if (store !== null) {
-                    if (_cs.isdefined(model)) {
-                        for (name in model) {
-                            if (model[name].store) {
-                                if (_cs.isdefined(store[name]))
-                                    model[name].value = store[name];
-                            }
-                        }
-                    }
+                    _cs.foreach(_cs.keysof(model.spec), function (name) {
+                        if (model.spec[name].store)
+                            if (_cs.isdefined(store[name]))
+                                model.data[name] = store[name];
+                    });
                 }
 
-                /*  retrieve old model  */
+                /*  optionally merge new model into old model  */
                 var model_old = this.property({ name: "ComponentJS:model", bubbling: false });
-
-                /*  store model  */
-                if (_cs.isdefined(model)) {
-                    if (_cs.isdefined(model_old)) {
-                        /*  merge model into existing one  */
-                        var model_new = {};
-                        _cs.extend(model_new, model_old);
-                        _cs.extend(model_new, model);
-                        this.property("ComponentJS:model", model_new);
-                        model = model_new;
-                    }
-                    else {
-                        /*  set initial model  */
-                        this.property("ComponentJS:model", model);
-                    }
-
-                    /*  optionally save stored model values  */
-                    store = {};
-                    var save = false;
-                    for (name in model) {
-                        if (model[name].store) {
-                            store[name] = model[name].value;
-                            save = true;
-                        }
-                    }
-                    if (save)
-                        this.store("model", store);
+                if (_cs.isdefined(model_old)) {
+                    var model_new = { spec: {}, data: {} };
+                    _cs.extend(model_new.spec, model_old.spec);
+                    _cs.extend(model_new.data, model_old.data);
+                    _cs.extend(model_new.spec, model.spec);
+                    _cs.extend(model_new.data, model.data);
+                    model = model_new;
                 }
 
-                /*  return old model  */
-                return model_old;
+                /*  optionally save model values to store  */
+                store = {};
+                var save = false;
+                _cs.foreach(_cs.keysof(model.spec), function (name) {
+                    if (model.spec[name].store) {
+                        store[name] = model.data[name];
+                        save = true;
+                    }
+                });
+                if (save)
+                    this.store("model", store);
+
+                /*  (re)attach model to component  */
+                this.property("ComponentJS:model", model);
             },
 
             /*  get/set model value  */
             value: function () {
                 /*  determine parameters  */
                 var params = $cs.params("value", arguments, {
-                    name:        { pos: 0, req: true      },
-                    value:       { pos: 1, def: undefined },
-                    force:       { pos: 2, def: false     },
-                    returnowner: {         def: false     }
+                    name:        { pos: 0, req: true,      valid: "string"   },
+                    value:       { pos: 1, def: undefined, valid: "any"      },
+                    force:       { pos: 2, def: false,     valid: "boolean"  },
+                    injected:    {         def: false,     valid: "boolean"  },
+                    op:          {         def: [],        valid: "(string|[string?]|[string,number,number])" },
+                    returnowner: {         def: false,     valid: "boolean"  }
                 });
+
+                /*  determine operation  */
+                if (typeof params.op === "string")
+                    params.op = [ params.op ];
+                if (params.op.length === 0)
+                    params.op = (_cs.isdefined(params.value) ? [ "set" ] : [ "get" ]);
+                else if (!params.op[0].match(/^(?:get|set|splice|delete|push|pop|shift|unshift)$/))
+                    throw _cs.exception("value", "invalid operation \"" + params.op[0] + "\"");
+                if (   params.op[0] === "splice"
+                    && (   params.op.length !== 3
+                        || typeof params.op[1] !== "number"
+                        || typeof params.op[2] !== "number"))
+                    throw _cs.exception("value", "invalid arguments for operation \"splice\"");
+
+                /*  parse the value name into selection path segments  */
+                var path = _cs.select_parse(params.name);
+
+                /*  create new canonical name out of the parsed path segments  */
+                var pathName = path.join(".");
 
                 /*  determine component owning model with requested value  */
                 var owner = null;
                 var model = null;
-                var comp = this;
+                var comp  = this;
                 while (comp !== null) {
                     owner = comp.property({ name: "ComponentJS:model", returnowner: true });
                     if (!_cs.isdefined(owner))
-                        throw _cs.exception("value", "no model found containing value \"" + params.name + "\"");
+                        throw _cs.exception("value", "no model found containing value \"" + path[0] + "\"");
                     model = owner.property("ComponentJS:model");
-                    if (_cs.isdefined(model[params.name]))
+                    if (_cs.isdefined(model.spec[path[0]]))
                         break;
                     comp = owner.parent();
                 }
                 if (comp === null)
-                    throw _cs.exception("value", "no model found containing value \"" + params.name + "\"");
+                    throw _cs.exception("value", "no model found containing value \"" + path[0] + "\"");
 
                 /*  get new model value  */
                 var value_new = params.value;
 
+                /*  translate special-case array operations to splice operation  */
+                var obj;
+                switch (params.op[0]) {
+                    case "unshift":
+                        params.op = [ "splice", 0, 0 ];
+                        break;
+                    case "shift":
+                        params.op = [ "splice", 0, 1 ];
+                        value_new = undefined;
+                        break;
+                    case "push":
+                        obj = $cs.select(model.data, path);
+                        params.op = [ "splice", obj.length, 0 ];
+                        break;
+                    case "pop":
+                        obj = $cs.select(model.data, path);
+                        params.op = [ "splice", obj.length - 1, 1 ];
+                        value_new = undefined;
+                        break;
+                }
+
                 /*  get old model value  */
                 var ev;
-                var value_old = model[params.name].value;
                 var result;
-                if (typeof value_new === "undefined") {
-                    if (owner.property({ name: "ComponentJS:model:subscribers:get", bubbling: false }) === true) {
+                var value_old = $cs.select(model.data, path);
+                if (params.op[0] === "splice") {
+                    /*  splice operation is on collection itself,
+                        so pick the target collection element!  */
+                    if (params.op[2] > 0)
+                        value_old = $cs.select(value_old, "" + params.op[1]);
+                    else
+                        value_old = undefined;
+                }
+                else if (params.op[0] === "get") {
+                    if (owner.property({ name: "ComponentJS:model:subscribers:get", def: 0, bubbling: false }) > 0) {
                         /*  send event to observers for value get and allow observers
                             to reject value get operation and/or change old value to get  */
                         ev = owner.publish({
-                            name:      "ComponentJS:model:" + params.name + ":get",
-                            args:      [ value_old ],
+                            name:      "ComponentJS:model:" + pathName + ":" + params.op[0],
+                            args:      [ value_old, value_old, params.op, pathName ],
                             capturing: false,
                             spreading: false,
                             bubbling:  false,
                             async:     false
                         });
                         if (ev.processing()) {
-                            /*  re-fetch value from model
-                                (in case the callback set a new value directly)  */
-                            value_old = model[params.name].value;
-
                             /*  allow value to be overridden by event result  */
                             result = ev.result();
                             if (typeof result !== "undefined")
@@ -3622,30 +3802,48 @@
                     }
                 }
 
-                /*  optionally set new model value  */
-                if (   typeof value_new !== "undefined" &&
-                       (params.force || value_old !== value_new)) {
+                /*  optionally set/delete/splice new model value  */
+                if (   (   params.op[0] === "set"
+                        && (params.force || value_old !== value_new))
+                    || params.op[0] === "delete"
+                    || params.op[0] === "splice"                     ) {
 
                     /*  check validity of new value  */
-                    if (!$cs.validate(value_new, model[params.name].valid))
-                        throw _cs.exception("value", "model field \"" + params.name + "\" receives " +
-                            "new value " + _cs.json(value_new) + ", which does not validate " +
-                            "against validation \"" + model[params.name].valid + "\"");
+                    if (   params.op[0] === "set"
+                        || (   params.op[0] === "splice"
+                            && value_new !== undefined  )) {
+                        var subPath = (
+                              params.op[0] === "splice"
+                            ? path.slice(1).concat([ "0" ])
+                            : path.slice(1)
+                        );
+                        if (!_cs.validate_at(value_new, model.spec[path[0]].valid, subPath))
+                            throw _cs.exception("value", "model field \"" + params.name + "\" receives " +
+                                "new value " + _cs.json(value_new) + ", which does not validate " +
+                                "against \"" + model.spec[path[0]].valid + "\"" +
+                                (subPath.length > 0 ? " at sub-path \"" + subPath.join(".") + "\"" : ""));
+                    }
 
-                    /*  send event to observers for value set operation and allow observers
+                    /*  send event to observers for value set/splice operation and allow observers
                         to reject value set operation and/or change new value to set  */
                     var cont = true;
-                    if (owner.property({ name: "ComponentJS:model:subscribers:set", bubbling: false }) === true) {
+                    if (owner.property({ name: "ComponentJS:model:subscribers:" + params.op[0], def: 0, bubbling: false }) > 0) {
                         ev = owner.publish({
-                            name:      "ComponentJS:model:" + params.name + ":set",
-                            args:      [ value_new, value_old ],
+                            name:      "ComponentJS:model:" + pathName + ":" + params.op[0],
+                            args:      [ value_new, value_old, params.op, pathName ],
                             capturing: false,
                             spreading: false,
                             bubbling:  false,
                             async:     false
                         });
-                        if (!ev.processing())
+                        if (!ev.processing()) {
+                            if (params.injected)
+                                throw _cs.exception("value", "model field \"" + params.name + "\" receives (again) " +
+                                    "value " + _cs.json(value_new) + ", which is rejected by observers, " +
+                                    "but the value was indicated to be already injected by third-parties " +
+                                    "(so it technically no longer can be rejected)");
                             cont = false;
+                        }
                         else {
                             /*  allow value to be overridden  */
                             result = ev.result();
@@ -3653,22 +3851,48 @@
                                 value_new = result;
                         }
                     }
-                    if (cont && !model[params.name].autoreset) {
-                        /*  set value in model  */
-                        model[params.name].value = value_new;
+                    if (cont && !model.spec[path[0]].autoreset) {
+                        /*  perform destructive operation on model  */
+                        if (params.op[0] === "set") {
+                            /*  set value in model  */
+                            $cs.select(model.data, path, value_new);
+                        }
+                        else if (params.op[0] === "splice") {
+                            /*  splice value into model  */
+                            obj = $cs.select(model.data, path);
+                            if (!(obj instanceof Array))
+                                throw new _cs.exception("value", "cannot splice: target object is not of Array type");
+                            if (typeof value_new !== "undefined")
+                                obj.splice(params.op[1], params.op[2], value_new);
+                            else
+                                obj.splice(params.op[1], params.op[2]);
+                        }
+                        else if (params.op[0] === "delete") {
+                            /*  delete value from model  */
+                            if (path.length < 2)
+                                throw new _cs.exception("value", "cannot delete model root or top-level model entry");
+                            obj = $cs.select(model.data, path.slice(0, path.length - 1));
+                            var pathSegment = path[path.length - 1];
+                            if (obj instanceof Array)
+                                obj.splice(parseInt(pathSegment, 10), 1);
+                            else if (typeof obj === "object")
+                                delete obj[pathSegment];
+                            else
+                                throw new _cs.exception("value", "cannot delete: target object is neither Array nor Object type");
+                        }
 
                         /*  synchronize model with underlying store  */
-                        if (model[params.name].store) {
+                        if (model.spec[path[0]].store) {
                             var store = owner.store("model");
-                            store[params.name] = model[params.name].value;
+                            store[path[0]] = model.data[path[0]];
                             owner.store("model", store);
                         }
 
                         /*  send event to observers after value finally changed  */
-                        if (owner.property({ name: "ComponentJS:model:subscribers:changed", bubbling: false }) === true) {
+                        if (owner.property({ name: "ComponentJS:model:subscribers:changed", def: 0, bubbling: false }) > 0) {
                             owner.publish({
-                                name:      "ComponentJS:model:" + params.name + ":changed",
-                                args:      [ value_new, value_old ],
+                                name:      "ComponentJS:model:" + pathName + ":changed",
+                                args:      [ value_new, value_old, params.op, pathName ],
                                 noresult:  true,
                                 capturing: false,
                                 spreading: false,
@@ -3687,14 +3911,15 @@
             touch: function () {
                 /*  determine parameters  */
                 var params = $cs.params("touch", arguments, {
-                    name: { pos: 0, req: true }
+                    name: { pos: 0, req: true, valid: "string" }
                 });
 
                 /*  simply force value to same value in order to trigger event  */
                 this.value({
-                    name: params.name,
-                    value: this.value(params.name),
-                    force: true
+                    name:     params.name,
+                    value:    this.value(params.name),
+                    injected: true,
+                    force:    true
                 });
             },
 
@@ -3702,33 +3927,43 @@
             observe: function () {
                 /*  determine parameters  */
                 var params = $cs.params("observe", arguments, {
-                    name:      { pos: 0, req: true  },
-                    func:      { pos: 1, req: true  },
-                    touch:     {         def: false },
-                    operation: {         def: "set" },
-                    spool:     {         def: null  }
+                    name:      { pos: 0, req: true,   valid: "string"        },
+                    func:      { pos: 1, req: true,   valid: "function"      },
+                    touch:     {         def: false,  valid: "boolean"       },
+                    op:        {         def: "set",  valid: /^(?:get|set|changed|splice|delete|)$/ },
+                    spool:     {         def: null,   valid: "(null|string)" }
                 });
+
+                /*  parse the value name into selection path segments  */
+                var path = _cs.select_parse(params.name);
 
                 /*  determine the actual component owning the model
                     as we want to subscribe the change event there only  */
                 var owner = null;
                 var model = null;
-                var comp = this;
+                var comp  = this;
                 while (comp !== null) {
                     owner = comp.property({ name: "ComponentJS:model", returnowner: true });
                     if (!_cs.isdefined(owner))
-                        throw _cs.exception("observe", "no model found containing value \"" + params.name + "\"");
+                        throw _cs.exception("observe", "no model found containing value \"" + path[0] + "\"");
                     model = owner.property("ComponentJS:model");
-                    if (_cs.isdefined(model[params.name]))
+                    if (_cs.isdefined(model.spec[path[0]]))
                         break;
                     comp = owner.parent();
                 }
                 if (comp === null)
-                    throw _cs.exception("observe", "no model found containing value \"" + params.name + "\"");
+                    throw _cs.exception("observe", "no model found containing value \"" + path[0] + "\"");
+
+                /*  support wildcard matching and always match childs  */
+                var name = path.join(".")
+                    .replace(/\./g, "\\.")
+                    .replace(/\*\*/g, ".+?")
+                    .replace(/\*/g, "[^.]+");
+                name += "(?:\\.[^.]+)*";
 
                 /*  subscribe to model value change event  */
                 var id = owner.subscribe({
-                    name:      "ComponentJS:model:" + params.name + ":" + params.operation,
+                    name:      new RegExp("ComponentJS:model:" + name + ":" + params.op),
                     capturing: false,
                     spreading: false,
                     bubbling:  false,
@@ -3737,7 +3972,10 @@
 
                 /*  mark component for having subscribers of operation
                     (for performance optimization reasons)  */
-                owner.property("ComponentJS:model:subscribers:" + params.operation, true);
+                var key = "ComponentJS:model:subscribers:" + params.op;
+                var subscribers = owner.property({ name: key, def: 0 });
+                subscribers += 1;
+                owner.property({ name: key, value: subscribers });
 
                 /*  optionally spool reverse operation  */
                 if (params.spool !== null) {
@@ -3756,26 +3994,33 @@
             unobserve: function () {
                 /*  determine parameters  */
                 var params = $cs.params("unobserve", arguments, {
-                    id: { pos: 0, req: true }
+                    id: { pos: 0, req: true, valid: "string" }
                 });
 
                 /*  determine the actual component owning the model
                     as we want to unsubscribe the change event there only  */
                 var owner = null;
                 var comp = this;
+                var subscription;
                 while (comp !== null) {
                     owner = comp.property({ name: "ComponentJS:model", returnowner: true });
                     if (!_cs.isdefined(owner))
                         throw _cs.exception("unobserve", "no model subscription found");
-                    if (owner.subscription(params.id))
+                    if ((subscription = owner._subscription(params.id, true)) !== undefined)
                         break;
                     comp = owner.parent();
                 }
                 if (comp === null)
                     throw _cs.exception("unobserve", "no model subscription found");
 
-                /*  subscribe to model value change event  */
+                /*  unsubscribe from model value change event  */
                 owner.unsubscribe(params.id);
+
+                /*  unmark component for having subscribers of operation  */
+                var key = "ComponentJS:model:subscribers:" + subscription.op;
+                var subscribers = owner.property({ name: key, def: 0 });
+                subscribers = subscribers > 0 ? subscribers - 1 : null;
+                owner.property({ name: key, value: subscribers });
             }
         }
     });
@@ -3784,6 +4029,7 @@
     /*
     **  COMPONENT API
     */
+
 
     /*  component class definition (placeholder)  */
     _cs.comp = null;
@@ -3803,7 +4049,7 @@
         $cs.pattern.service,
         $cs.pattern.eventing,
         $cs.pattern.property,
-        $cs.pattern.shadow,
+        $cs.pattern.backing,
         $cs.pattern.socket,
         $cs.pattern.model,
         $cs.pattern.store,
@@ -3840,6 +4086,7 @@
             return (this.name() !== "<none>");
         }
     };
+
 
     /*  internal bootstrapping flag  */
     _cs.bootstrapped = false;
@@ -3925,6 +4172,7 @@
         return;
     };
 
+
     /*  lookup component by path  */
     _cs.lookup = function (base, path) {
         /*  handle special calling conventions  */
@@ -3959,7 +4207,7 @@
             var base_type = _cs.istypeof(base);
             var base_comp = _cs.annotation(base, "comp");
             if (base_type !== "component" && base_comp !== null)
-                /*  success: found component object via shadow object  */
+                /*  success: found component object via backing object  */
                 comp = base_comp;
             else if (base_type !== "component")
                 /*  failure: found other object which is not already component  */
@@ -4053,6 +4301,7 @@
         }
     };
 
+
     /*  top-level API: create one or more components  */
     $cs.create = function () {
         /*  sanity check environment  */
@@ -4061,9 +4310,11 @@
             var msg = "ComponentJS: WARNING: component system still not bootstrapped " +
                 "(please call \"bootstrap\" method before first \"create\" method call!)";
             /* global alert:false */
+            /* eslint no-alert: 0 */
             if (typeof alert === "function")
                 alert(msg);
             /* global console:false */
+            /* eslint no-console: 0 */
             else if (typeof console !== "undefined" && typeof console.log === "function")
                 console.log(msg);
             $cs.bootstrap();
@@ -4286,6 +4537,7 @@
         return;
     };
 
+
     /*  define a state transition  */
     $cs.transition = function () {
         /*  special case  */
@@ -4327,18 +4579,19 @@
     **  GLOBAL LIBRARY EXPORTING
     */
 
+
     /*  export our global API...  */
-    if (   (   typeof EXPORTS === "object" &&
-               typeof GLOBAL.ComponentJS_export === "undefined") ||
-           (   typeof GLOBAL.ComponentJS_export !== "undefined" &&
-               GLOBAL.ComponentJS_export === "CommonJS"        ))
+    if (   (   typeof EXPORTS === "object"
+            && typeof GLOBAL.ComponentJS_export === "undefined")
+        || (   typeof GLOBAL.ComponentJS_export !== "undefined"
+            && GLOBAL.ComponentJS_export === "CommonJS"        ))
         /*  ...to scoped CommonJS environment  */
         EXPORTS.ComponentJS = $cs;
-    else if (   (   typeof DEFINE === "function" &&
-                    typeof DEFINE.amd === "object" &&
-                    typeof GLOBAL.ComponentJS_export === "undefined") ||
-                (   typeof GLOBAL.ComponentJS_export !== "undefined" &&
-                    GLOBAL.ComponentJS_export === "AMD"             ))
+    else if (   (   typeof DEFINE === "function"
+                 && typeof DEFINE.amd === "object"
+                 && typeof GLOBAL.ComponentJS_export === "undefined")
+             || (   typeof GLOBAL.ComponentJS_export !== "undefined"
+                 && GLOBAL.ComponentJS_export === "AMD"             ))
         /*  ...to scoped AMD environment  */
         DEFINE("ComponentJS", function () {
             return $cs;
@@ -4347,6 +4600,7 @@
         /*  ...to regular global environment  */
         $cs.symbol("ComponentJS");
     }
+
 
     /*  internal plugin registry  */
     _cs.plugins = {};
@@ -4388,18 +4642,18 @@
     /* global global:false */
     /* global exports:false */
     /* global define:false */
-    ( typeof window   !== "undefined" ?
-          window :
-          ( typeof global !== "undefined" ?
-              global :
-              ( typeof this !== "undefined" ?
-                  this :
-                  {} ))),
-    ( typeof exports === "object" ?
-          exports :
-          undefined ),
-    ( typeof define === "function" ?
-          define :
-          undefined )
+    ( typeof window !== "undefined"
+        ? window
+        : ( typeof global !== "undefined"
+            ? global
+            : ( typeof this !== "undefined"
+                ? this
+                : {} ))),
+    ( typeof exports === "object"
+        ? exports
+        : undefined ),
+    ( typeof define === "function"
+        ? define
+        : undefined )
 );
 

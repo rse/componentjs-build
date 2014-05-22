@@ -1,10 +1,10 @@
 /*
 **  ComponentJS -- Component System for JavaScript <http://componentjs.com>
-**  Copyright (c) 2009-2013 Ralf S. Engelschall <http://engelschall.com>
+**  Copyright (c) 2009-2014 Ralf S. Engelschall <http://engelschall.com>
 **
 **  This Source Code Form is subject to the terms of the Mozilla Public
-**  License, v. 2.0. If a copy of the MPL was not distributed with this
-**  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+**  License (MPL), version 2.0. If a copy of the MPL was not distributed
+**  with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 /*
@@ -13,8 +13,9 @@
  *  to a new common parent component.
  */
 
-/* global ComponentJS:false */
-/* jshint unused:false */
+/* global ComponentJS: false */
+/* eslint no-unused-vars: 0 */
+/* jshint unused: false */
 
 ComponentJS.plugin("migrate", function (_cs, $cs, GLOBAL) {
     /*  define the extra trait for components  */
@@ -44,10 +45,10 @@ ComponentJS.plugin("migrate", function (_cs, $cs, GLOBAL) {
                     else {
                         /*  migrate asynchronously  */
                         (function (comp, state_old) {
-                            comp.state({ state: "created", sync: false, callback: function (state_new) {
+                            comp.state({ state: "created", sync: false, callback: function (/* state_new */) {
                                 this.detach();
                                 this.attach(parent);
-                                this.state({ state: state_old, sync: false, callback: function (state_old) {
+                                this.state({ state: state_old, sync: false, callback: function (/* state_old */) {
                                     n--;
                                     if (n === 0)
                                         params.completed.call(null);

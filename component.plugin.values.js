@@ -1,10 +1,10 @@
 /*
 **  ComponentJS -- Component System for JavaScript <http://componentjs.com>
-**  Copyright (c) 2009-2013 Ralf S. Engelschall <http://engelschall.com>
+**  Copyright (c) 2009-2014 Ralf S. Engelschall <http://engelschall.com>
 **
 **  This Source Code Form is subject to the terms of the Mozilla Public
-**  License, v. 2.0. If a copy of the MPL was not distributed with this
-**  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+**  License (MPL), version 2.0. If a copy of the MPL was not distributed
+**  with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 /*
@@ -20,8 +20,9 @@
  *  stay in an optional plugin, of course.
  */
 
-/* global ComponentJS:false */
-/* jshint unused:false */
+/* global ComponentJS: false */
+/* eslint no-unused-vars: 0 */
+/* jshint unused: false */
 
 ComponentJS.plugin("values", function (_cs, $cs, GLOBAL) {
     /*  sanity check run-time environment  */

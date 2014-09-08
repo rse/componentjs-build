@@ -341,6 +341,13 @@
                 background-color: #f8f8f8;
                 padding: 4px 8px 4px 8px;
             }
+            div.notice {
+                margin-top: 4px;
+                border: 1px solid #efe0c0;
+                background-color: #fff0d0;
+                color: #887700;
+                padding: 4px 8px 4px 8px;
+            }
             div.desc {
                 margin-top: 8px;
                 margin-bottom: 8px;
@@ -384,7 +391,7 @@
             <div id="head1" class="head1">ComponentJS</div>
             <div id="head2" class="head2">Application Programming Interface (API)</div>
         </div>
-        <div id="the_version" class="the_version">1.1.1</div>
+        <div id="the_version" class="the_version">1.2.0</div>
         <div class="spec">
             <img class="logo" src="http://componentjs.com/ComponentJS-logo.svg" alt="ComponentJS"/>
             <h2><a name="api_management">API Management</a></h2>
@@ -483,7 +490,9 @@ if (cs.plugin("debugger")) {
 </div></li></ul>
 <ul>
 <li><div class="synopsis">ComponentJS.<span class="M"><a name="debug_instrumented">debug_instrumented</a></span>()<span class="meta">:</span> <span class="T">Boolean</span>
-</div><div class="desc"> [AVAILABLE THROUGH THE COMPONENTJS PLUGIN "debugger" ONLY]
+</div><div class="notice">  Notice: requires ComponentJS plugin <code>debugger</code> to be loaded!
+
+</div><div class="desc">
  Determine whether the current browser is "instrumented" for debugging, i.e., whether
  the browser's built-in debugger is activated (in detached mode only). Currently
  ComponentJS is able to determine Firefox's Firebug and Chrome's Inspector only.
@@ -502,7 +511,9 @@ if (cs.plugin("debugger")) {
  ComponentJS.<span class="M">debug_window</span>(<span class="P">enable</span><span class="meta">:</span> <span class="T">Boolean</span>,
  <span class="P">autoclose</span><span class="meta">:</span> <span class="T">Boolean</span>,
  <span class="P">name</span><span class="meta">:</span> <span class="T">String</span>)
-</div><div class="desc"> [AVAILABLE THROUGH THE COMPONENTJS PLUGIN "debugger" ONLY]
+</div><div class="notice">  Notice: requires ComponentJS plugin <code>debugger</code> to be loaded!
+
+</div><div class="desc">
  On <span class="F">enable</span> <code>true</code>/<code>false</code> open/close the extra browser window
  containing the ComponentJS debugger view for the ComponentJS application
  identified by <span class="F">name</span>. If <span class="F">autoclose</span> is <code>true</code>,
@@ -1016,22 +1027,32 @@ cs.transition("enabled",      "enable",  "disable",  "#336600");
 </div></li></ul>
 <ul>
 <li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="state">state</a></span>()<span class="meta">:</span> <span class="T">String</span></div><div class="synopsis">
- <span class="O">component</span>.<span class="M">state</span>(<span class="P">state</span><span class="meta">:</span> <span class="T">String</span><span class="meta">[</span>, <span class="P">callback</span><span class="meta">:</span> <span class="T">Function</span><span class="meta">]</span>)<span class="meta">:</span> <span class="T">String</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">state</span>(<span class="P">state</span><span class="meta">:</span> <span class="T">String</span><span class="meta">[</span>, <span class="P">func</span><span class="meta">:</span> <span class="T">Function</span><span class="meta">]</span>)<span class="meta">:</span> <span class="T">String</span></div><div class="synopsis">
  <span class="O">component</span>.<span class="M">state</span>({
  <span class="F">state</span><span class="meta">:</span> <span class="T">String</span>,
- <span class="meta">[</span><span class="F">callback</span><span class="meta">:</span> <span class="T">Function</span><span class="meta"> = </span>undefined,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">func</span><span class="meta">:</span> <span class="T">Function</span><span class="meta"> = </span>undefined,<span class="meta">]</span>
  <span class="meta">[</span><span class="F">sync</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span>false,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">min</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span>undefined,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">max</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span>undefined<span class="meta">]</span>
  })<span class="meta">:</span> <span class="T">String</span>
 </div><div class="desc"> Determine the current state or request a transition to a new state of <span class="O">component</span>.
  By default a state transition is performed asynchronously, but you
  can request a synchronous transition with <span class="F">sync</span>. For asynchronous
- transitions you can await the transition finish with <span class="F">callback</span>.
+ transitions you can await the transition finish with <span class="F">func</span>.
  The old state is returned on state transitions.
  On each state transition, for each transitively involved component and each
  target or intermediate state, a non-capturing/non-bubbling event is
  internally published named "<code>ComponentJS:state:</code><span class="F">state</span><code>:enter</code>"
- or "<code>ComponentJS:state:</code><span class="F">state</span><code>:leave</code>". You can subscribe to those
+ (after the higher state <span class="F">state</span> was entered from the state below it) or
+ "<code>ComponentJS:state:</code><span class="F">state</span><code>:leave</code>" (after the higher state
+ <span class="F">state</span> was left towards the state below it). You can subscribe to those
  in order to react to state transitions from outside the component, too.
+ By default if the current and requested state of <span class="O">component</span> is
+ just different, the current state is transitioned towards the requested
+ state. Setting parameter <span class="F">min</span> to <code>true</code> skips the transition if
+ the current state is already higher or equal to the requested state.
+ Setting parameter <span class="F">max</span> to <code>true</code> skips the transition if
+ the current state is already lower or equal to the requested state.
 
 </div><div class="example">cs("/ui").state("visible")
 </div></li></ul>
@@ -1504,7 +1525,7 @@ cs(this).value({ name: "foo.bar['baz']", op: "delete" })
  })</div><div class="synopsis">
  <span class="O">component</span>.<span class="M">touch</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>)
 </div><div class="desc"> Touches the value of <span class="O">component</span>'s model element named <span class="F">name</span>,
- without changing the value but with triggering all its "get" observers
+ without changing the value but with triggering all its "set" observers
  (its "changed" observers are not triggered). This can be useful for
  firing "set" observers manually.
 
@@ -1515,8 +1536,10 @@ cs(this).value({ name: "foo.bar['baz']", op: "delete" })
  <span class="F">name</span><span class="meta">:</span> <span class="T">String</span>,
  <span class="F">func</span><span class="meta">:</span> <span class="T">Function</span>,
  <span class="meta">[</span><span class="F">touch</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span>false,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">boot</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span>false,<span class="meta">]</span>
  <span class="meta">[</span><span class="F">op</span><span class="meta">:</span> <span class="T">String</span><span class="meta"> = </span>"set",<span class="meta">]</span>
- <span class="meta">[</span><span class="F">spool</span><span class="meta">:</span> <span class="T">String</span><span class="meta"> = </span>null<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">spool</span><span class="meta">:</span> <span class="T">String</span><span class="meta"> = </span>null,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">noevent</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span>false<span class="meta">]</span>
  })<span class="meta">:</span> <span class="T">Number</span></div><div class="synopsis">
  <span class="O">component</span>.<span class="M">observe</span>(<span class="F">name</span><span class="meta">:</span> <span class="T">String</span>,
  <span class="F">func</span><span class="meta">:</span> <span class="T">Function</span>)<span class="meta">:</span> <span class="T">Number</span>
@@ -1524,13 +1547,26 @@ cs(this).value({ name: "foo.bar['baz']", op: "delete" })
  for <span class="F">op</span> operations (by default "set" operations).
  For "get" operations, the callback function <span class="F">func</span> has to be of
  signature <span class="F">func</span>(<span class="P">ev</span>: <span class="T">Event</span>, <span class="P">value</span>: <span class="T">Object</span>): <span class="T">Void</span>.
- For "set" and "changed" operations, the callback function <span class="F">func</span> has to be of signature
- <span class="F">func</span>(<span class="P">ev</span>: <span class="T">Event</span>, <span class="P">value-new</span>: <span class="T">Object</span>, <span class="P">value-old</span>: <span class="T">Object</span>, <span class="P">op</span>: <span class="T">Object</span>, <span class="P">path</span>: <span class="T">String</span>): <span class="T">Void</span>.
- Both types of callbacks can override the value by using <span class="P">ev</span>.<span class="M"><a href="#result">result</a></span>(<span class="P">value</span>).
- The <span class="M"><a href="#observe">observe</a></span>() method returns an id which uniquely identifies the observation.
- Instead of having to manually release the observation later via <span class="M"><a href="#unobserve">unobserve</a></span>()
- you can use the spool mechanism and spool the corresponding <span class="M"><a href="#unobserve">unobserve</a></span>()
- operation via <span class="F">spool</span>.
+ For "set" (and "splice", "delete", "push", "pop", "unshift", "shift")
+ and "changed" operations, the callback function <span class="F">func</span> has to be
+ of signature <span class="F">func</span>(<span class="P">ev</span>: <span class="T">Event</span>, <span class="P">value-new</span>: <span class="T">Object</span>,
+ <span class="P">value-old</span>: <span class="T">Object</span>, <span class="P">op</span>: <span class="T">Object</span>, <span class="P">path</span>: <span class="T">String</span>):
+ <span class="T">Void</span>. Both types of callbacks can override the value by using
+ <span class="P">ev</span>.<span class="M"><a href="#result">result</a></span>(<span class="P">value</span>). The <span class="M"><a href="#observe">observe</a></span>() method returns an id which
+ uniquely identifies the observation. Instead of having to manually
+ release the observation later via <span class="M"><a href="#unobserve">unobserve</a></span>() you can use the spool
+ mechanism and spool the corresponding <span class="M"><a href="#unobserve">unobserve</a></span>() operation via
+ <span class="F">spool</span>. Option <span class="F">noevent</span> (similar to the same option for <span class="M"><a href="#subscribe">subscribe</a></span>())
+ prevents the passing of the event parameter <span class="P">ev</span> to the callback function
+ <span class="F">func</span> in case you don't need it. Option <span class="F">touch</span> causes <span class="M"><a href="#observe">observe</a></span>()
+ to execute <span class="M"><a href="#touch">touch</a></span>() internally at the end of its observation
+ registration operation for bootstrapping purposes. This indirectly
+ causes the callback function <span class="F">func</span> (and also all other observers) to
+ execute. Option <span class="F">boot</span> causes <span class="M"><a href="#observe">observe</a></span>() to execute the callback
+ function <span class="F">func</span> once at the end of its observation registration
+ operation for bootstrapping purposes. This explicitly causes the
+ callback function <span class="F">func</span> (and only <span class="F">func</span> and no other observers) to
+ excecute.
 
 </div><div class="example">id = cs(this).observe("state:username", function (ev, username) {
     ...
@@ -1755,6 +1791,282 @@ cs(this).callable("load-person", true)
 </li>
 </ul><div class="example">var person = cs("/sv").call("load-entity", "Person", 42)
 </div></li></ul>
+<h2><a name="test_driving">Test-Driving</a></h2>
+<div class="intro">
+ComponentJS has optional support for test-driving an application,
+based on asynchronously executed use-cases with the help
+of its <code>testdrive</code> plugin.
+</div><ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="suite">suite</a></span>()<span class="meta">:</span> <span class="T">Void</span>
+</div><div class="notice">  Notice: requires ComponentJS plugin <code>testdrive</code> to be loaded!
+
+</div><div class="notice">
+  Notice: requires external library jQuery to be loaded!
+
+</div><div class="desc">
+ Open the interactive dialog of use-cases which can be driven.
+ Usually this is executed from within the application itself
+ (in case the test-drive functionality is used for something
+ like UI macros) or through an external bookmark.
+
+</div><div class="example">/*  open test-drive suite from within application  */
+if (cs.plugin("testdrive"))
+    cs.suite();
+</div><div class="example"><!-
+</div></li></ul>
+<ul>
+</ul>
+<ul>
+<li><div class="synopsis"><span class="meta">[</span>new<span class="meta">]</span> ComponentJS.<span class="M"><a name="promise">promise</a></span>()<span class="meta">:</span> <span class="T">Promise</span></div><div class="synopsis">
+ <span class="meta">[</span>new<span class="meta">]</span> ComponentJS.<span class="M">promise</span>(<span class="P">executor</span><span class="meta">:</span> <span class="T">Function</span>)<span class="meta">:</span> <span class="T">Void</span>
+</div><div class="notice">  Notice: requires ComponentJS plugin <code>testdrive</code> to be loaded!
+
+</div><div class="desc">
+ Return a Promise/A+ based promise, internally backed by
+ an embedded "Thenable" implementation. The alternative
+ usage with an <span class="P">executor</span> (of type "<code>(fulfill: (value?: any) =&gt; Promise, 
+ reject: (value?: any) =&gt; Promise) =&gt; void</code>" in TypeScript definition syntax)
+ avoids a temporary variable.
+
+</div><div class="example">/*  standard usage  */
+var promise = new $cs.promise();
+doSomethingAsync(
+    function onSuccess (msg) { promise.fulfill(msg); }, 
+    function onError   (err) { promise.reject(err);  }
+);
+return promise.proxy;
+</div><div class="example">/*  alternative usage (regular)  */
+return new $cs.promise(function (fulfill, reject) {
+    doSomethingAsync(
+        function onSuccess (msg) { fulfill(msg); }, 
+        function onError   (err) { reject(err);  }
+    );
+}).proxy;
+</div><div class="example">/*  alternative usage (compact)  */
+return $cs.promise(function (fulfill, reject) {
+    doSomethingAsync(fulfill, reject);
+}).proxy;
+</div></li></ul>
+<ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="usecase">usecase</a></span>({
+ <span class="F">name</span><span class="meta">:</span> <span class="T">String</span>, 
+ <span class="F">desc</span><span class="meta">:</span> <span class="T">String</span>, 
+ <span class="meta">[</span><span class="F">conf</span><span class="meta">:</span> <span class="T">Object</span>,<span class="meta">]</span>
+ <span class="F">func</span><span class="meta">:</span> <span class="T">Function</span>
+ })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
+ ComponentJS.<span class="M">usecase</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>, 
+ <span class="P">desc</span><span class="meta">:</span> <span class="T">String</span>, 
+ <span class="P">func</span><span class="meta">:</span> <span class="T">Function</span>)<span class="meta">:</span> <span class="T">Void</span>
+</div><div class="notice">  Notice: requires ComponentJS plugin <code>testdrive</code> to be loaded!
+
+</div><div class="desc">
+ Define a single use-case of unique name <span class="F">name</span>, with description
+ <span class="F">desc</span>, default configuration <span class="F">conf</span> and the use-case executing
+ function <span class="F">func</span> (of type "<code>() =&gt; void</code>" in TypeScript definition syntax).
+ The <span class="P">name</span> is used for driving the use-case with <span class="M"><a href="#drive">drive</a></span>()
+ and <span class="F">conf</span> can be overwritten with <span class="M"><a href="#drive">drive</a></span>().
+ The function <span class="F">func</span> can either execute synchronously
+ or asynchronously. In case of a synchronous execution, the
+ return value of <span class="F">func</span> does not matter. In case of an asynchronous
+ execution, the return value of <span class="F">func</span> has to be a Promise/A+ based
+ promise (usually created with <span class="M"><a href="#ensure">ensure</a></span>(), <span class="M"><a href="#await">await</a></span>(), <span class="M"><a href="#drive">drive</a></span> or <span class="M"><a href="#poll">poll</a></span> implicitly,
+ or with <span class="M"><a href="#promise">promise</a></span>() explicitly). The callback function receives the
+ actual configuration as the first parameter.
+
+</div><div class="example">if (cs.plugin("testdrive")) {
+    cs.usecase("reset", "reset all login dialogs", function () {
+        return cs.ensure("/ui/panel/model", "prepared").then(function (comp) {
+            comp.value("event:reset", true);
+        });
+    });
+    cs.usecase({
+        name: "login",
+        desc: "fill out a login dialog",
+        conf: { num: 1, realm: "foo", username: "bar", password: "baz!quux" },
+        func: function (conf) {
+            return cs.ensure("//login" + conf.num + "/model", "prepared")
+                .then(function (comp) {
+                comp.value("data:realm", conf.realm);
+                comp.value("data:username", conf.username);
+                comp.value("data:password", conf.password);
+                comp.value("event:login-requested", true);
+            });
+        }
+    });
+    cs.usecase({
+        name: "awaitStatus",
+        desc: "await the status to show a particular text",
+        conf: { num: 1, realm: "foo", username: "bar", password: "baz!quux" },
+        func: function (conf) {
+            var re = new RegExp("login from \".*login" + conf.num +
+                "\" with realm \"" + conf.realm + "\", username \"" + 
+                conf.username + "\" and password \"" + conf.password + "\"");
+            return cs.poll(function (fulfill, reject) {
+                return $("div.status").text().match(re);
+            }, function () {
+                return cs.once($("div.status"), "mutation");
+            });
+        }
+    });
+    cs.usecase("all", "fill out all login dialogs", function () {
+        return cs.drive("reset")
+            .then(function () { return cs.drive("login",       { num: 2 }); })
+            .then(function () { return cs.drive("awaitStatus", { num: 2 }); })
+    });
+}
+</div></li></ul>
+<ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="drive">drive</a></span>({
+ <span class="F">name</span><span class="meta">:</span> <span class="T">String</span>, 
+ <span class="meta">[</span><span class="F">conf</span><span class="meta">:</span> <span class="T">Object</span>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">timeout</span><span class="meta">:</span> <span class="T">Number</span><span class="meta">]</span>
+ })<span class="meta">:</span> <span class="T">Promise</span></div><div class="synopsis">
+ ComponentJS.<span class="M">drive</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>, 
+ <span class="meta">[</span><span class="P">conf</span><span class="meta">:</span> <span class="T">Object</span>,<span class="meta">]</span> 
+ <span class="meta">[</span><span class="P">timeout</span><span class="meta">:</span> <span class="T">Number</span><span class="meta">]</span>)<span class="meta">:</span> <span class="T">Promise</span>
+</div><div class="notice">  Notice: requires ComponentJS plugin <code>testdrive</code> to be loaded!
+
+</div><div class="desc">
+ Drive a single use-case <span class="F">name</span>, with optional
+ configuration <span class="F">conf</span> and a run-time timeout of <span class="T">timeout</span> (by default 10*1000) milliseconds.
+ The function returns a Promise/A+ promise which is either fulfilled (with dummy value <code>true</code>)
+ or rejected with an error message.
+
+</div><div class="example">cs.drive("login", { num: 3 }, 2*1000).then(null, function (e) {
+    alert("failed to login");
+});
+</div></li></ul>
+<ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="ensure">ensure</a></span>({
+ <span class="F">path</span><span class="meta">:</span> <span class="T">String</span>, 
+ <span class="F">state</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="meta">[</span><span class="F">min</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span><code>true</code>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">max</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span><code>false</code>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">sync</span><span class="meta">:</span> <span class="T">Boolean</span><span class="meta"> = </span><code>false</code><span class="meta">]</span>
+ })<span class="meta">:</span> <span class="T">Promise</span></div><div class="synopsis">
+ ComponentJS.<span class="M">ensure</span>(<span class="P">path</span><span class="meta">:</span> <span class="T">String</span>, 
+ <span class="P">state</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Promise</span>
+</div><div class="notice">  Notice: requires ComponentJS plugin <code>testdrive</code> to be loaded!
+
+</div><div class="desc">
+ Ensure that a component under <span class="F">path</span> reaches a particular <span class="F">state</span> which is
+ at least (in case of <span class="F">min</span> = <code>true</code>), and/or at most (in case of <span class="F">max</span> = true) 
+ a particular <span class="F">state</span>, by synchronously (in case of <span class="F">sync</span> = <code>true</code>) or asynchronously 
+ (by default), triggering a state change on the component under <span class="F">path</span>.
+ The state change is explicitly trigger by <span class="M"><a href="#ensure">ensure</a></span>() itself.
+ The function returns a Promise/A+ promise which is either fulfilled with the component
+ object corresponding to <span class="F">path</span> or rejected with an error message.
+
+</div><div class="example">cs.ensure({ path: "//login1/model", state: "prepared", min: true })
+.then(function (comp) {
+    comp.value("data:username", "foo");
+});
+</div></li></ul>
+<ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="await">await</a></span>({
+ <span class="F">path</span><span class="meta">:</span> <span class="T">String</span>, 
+ <span class="F">state</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="meta">[</span><span class="F">direction</span><span class="meta">:</span> <span class="T">String</span><span class="meta"> = </span><code>"enter"</code><span class="meta">]</span>
+ })<span class="meta">:</span> <span class="T">Promise</span></div><div class="synopsis">
+ ComponentJS.<span class="M">await</span>(<span class="P">path</span><span class="meta">:</span> <span class="T">String</span>, 
+ <span class="P">state</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="meta">[</span><span class="P">direction</span><span class="meta">:</span> <span class="T">String</span><span class="meta"> = </span><code>"enter"</code><span class="meta">]</span>)<span class="meta">:</span> <span class="T">Promise</span>
+</div><div class="notice">  Notice: requires ComponentJS plugin <code>testdrive</code> to be loaded!
+
+</div><div class="desc">
+ Awaits that a component under <span class="F">path</span> reaches a particular <span class="F">state</span>,
+ either on enter (in case of <span class="F">direction</span> = <code>"enter"</code>) or
+ leave (in case of <span class="F">direction</span> = <code>"enter"</code>). The enter/leave methods
+ of the component will be already called in both cases. The component
+ under <span class="F">path</span> is NOT required to already exist. It is allowed
+ that it springs into existence later.
+ There is NO state change trigger by <span class="M"><a href="#await">await</a></span>() itself.
+ The function returns a Promise/A+ promise which is either fulfilled with the component
+ object corresponding to <span class="F">path</span> or rejected with an error message.
+
+</div><div class="example">cs.await({ path: "//login1/model", state: "prepared" }).then(function (comp) {
+    comp.value("data:username", "foo");
+});
+</div></li></ul>
+<ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="poll">poll</a></span>({
+ <span class="F">check</span><span class="meta">:</span> <span class="T">Function</span>, 
+ <span class="meta">[</span><span class="F">wait</span><span class="meta">:</span> <span class="T">Function</span>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="F">max</span><span class="meta">:</span> <span class="T">Number</span><span class="meta"> = </span><code>600</code><span class="meta">]</span>
+ })<span class="meta">:</span> <span class="T">Promise</span></div><div class="synopsis">
+ ComponentJS.<span class="M">poll</span>(<span class="P">check</span><span class="meta">:</span> <span class="T">Function</span>, 
+ <span class="meta">[</span><span class="P">wait</span><span class="meta">:</span> <span class="T">Function</span>,<span class="meta">]</span>
+ <span class="meta">[</span><span class="P">max</span><span class="meta">:</span> <span class="T">Number</span><span class="meta"> = </span><code>600</code><span class="meta">]</span>)<span class="meta">:</span> <span class="T">Promise</span>
+</div><div class="notice">  Notice: requires ComponentJS plugin <code>testdrive</code> to be loaded!
+
+</div><div class="desc">
+ Polls for a situation to occur by checking its occurance condition with <span class="F">check</span> (of
+ type <code>() =</code> Boolean> in TypeScript definition syntax) and
+ in case of a still <span class="F">false</span> return waits through <span class="F">wait</span>
+ and repeat from the beginning with a new round with <span class="F">check</span>.
+ The <span class="F">wait</span> function has to be of type "<code>() =&gt; Promise</code>"
+ and usually delays processing (usually with <code>setTimeout</code>())
+ and then resolves. If you pass a <span class="T">Number</span> instead of a <span class="T">Function</span>
+ to <span class="F">wait</span>, a default implementation is used which waits the
+ number of milliseconds. The default for <span class="F">wait</span> is <code>100</code>, i.e.,
+ it internally maps onto "<code>function () { return cs.sleep(100); }</code>".
+
+</div><div class="example">cs.usecase({
+    name: "awaitStatus",
+    desc: "await the status to show a particular text",
+    conf: { num: 1, realm: "foo", username: "bar", password: "baz!quux" },
+    func: function (conf) {
+        var re = new RegExp("login from \".*login" + conf.num +
+            "\" with realm \"" + conf.realm + "\", username \"" + 
+            conf.username + "\" and password \"" + conf.password + "\"");
+        return cs.poll(function (fulfill, reject) {
+            return $("div.status").text().match(re);
+        }, function () {
+            return cs.once($("div.status"), "mutation");
+        });
+    }
+});
+</div></li></ul>
+<ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="sleep">sleep</a></span>({
+ <span class="F">ms</span><span class="meta">:</span> <span class="T">Number</span>,
+ })<span class="meta">:</span> <span class="T">Promise</span></div><div class="synopsis">
+ ComponentJS.<span class="M">sleep</span>(<span class="P">ms</span><span class="meta">:</span> <span class="T">Number</span>)<span class="meta">:</span> <span class="T">Promise</span>
+</div><div class="notice">  Notice: requires ComponentJS plugin <code>testdrive</code> to be loaded!
+
+</div><div class="desc">
+ Sleeps a certain amount of milliseconds (with <code>setTimeout</code>())
+ and then resolves the promise which is returned by this function.
+
+</div><div class="example">cs.sleep(100).then(function () { ... })
+</div></li></ul>
+<ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="once">once</a></span>({
+ <span class="F">selector</span><span class="meta">:</span> <span class="T">String/Object</span>,
+ <span class="F">events</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="meta">[</span><span class="F">subselector</span><span class="meta">:</span> <span class="T">String</span><span class="meta"> = </span><code>null</code><span class="meta">]</span>
+ })<span class="meta">:</span> <span class="T">Promise</span></div><div class="synopsis">
+ ComponentJS.<span class="M">once</span>(<span class="P">selector</span><span class="meta">:</span> <span class="T">String/Object</span>,
+ <span class="P">events</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="meta">[</span><span class="P">subselector</span><span class="meta">:</span> <span class="T">String</span><span class="meta"> = </span><code>null</code><span class="meta">]</span>)<span class="meta">:</span> <span class="T">Promise</span>
+</div><div class="notice">  Notice: requires ComponentJS plugin <code>testdrive</code> to be loaded!
+
+</div><div class="notice">
+  Notice: requires external library jQuery to be loaded!
+
+</div><div class="desc">
+ Awaits once(!) with jQuery's <span class="M"><a href="#one">one</a></span>() method for a DOM
+ event to occur and then resolves the promise (with the jQuery event
+ object as the value) this function returns.
+ The three parameters <span class="F">selector</span>, <span class="F">events</span> and <span class="F">subselector</span>
+ are directly passed through to jQuery by mapping onto the
+ internal call "<code>jQuery(selector).one(events, subselector, ...)</code>".
+ Additionally, in case <span class="F">events</span> = <code>"mutation"</code> the function
+ internally uses the HTML5 <code>MutationObserver</code> functionality to
+ await a DOM mutation (in this case <span class="F">subselector</span> is ignored).
+
+</div><div class="example">cs.once("ul.list", "click", "li").then(function (ev) { ... })
+</div></li></ul>
 
         </div>
         <div class="navi">
@@ -1806,6 +2118,9 @@ cs(this).callable("load-person", true)
 <h2><a href="#services">Services</a></h2>
 <ul>
 <li><a href="#register">register</a></li><li><a href="#unregister">unregister</a></li><li><a href="#callable">callable</a></li><li><a href="#call">call</a></li></ul>
+<h2><a href="#test_driving">Test-Driving</a></h2>
+<ul>
+<li><a href="#suite">suite</a></li><li><a href="#promise">promise</a></li><li><a href="#usecase">usecase</a></li><li><a href="#drive">drive</a></li><li><a href="#ensure">ensure</a></li><li><a href="#await">await</a></li><li><a href="#poll">poll</a></li><li><a href="#sleep">sleep</a></li><li><a href="#once">once</a></li></ul>
 
         </div>
         <div id="foot" class="foot">

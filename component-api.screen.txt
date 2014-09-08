@@ -1,6 +1,6 @@
 ComponentJS
 Application Programming Interface (API)
-1.1.1
+1.2.0
 ComponentJS
 
 API Management
@@ -73,27 +73,27 @@ especially for visualizing the current component tree in real-time.
     cs.debug(9) cs.debug_window({ ... }) } }
 
   * ComponentJS.debug_instrumented(): Boolean
-    [AVAILABLE THROUGH THE COMPONENTJS PLUGIN "debugger" ONLY] Determine
-    whether the current browser is "instrumented" for debugging, i.e., whether
-    the browser's built-in debugger is activated (in detached mode only).
-    Currently ComponentJS is able to determine Firefox's Firebug and Chrome's
-    Inspector only.
+    Notice: requires ComponentJS plugin debugger to be loaded!
+    Determine whether the current browser is "instrumented" for debugging,
+    i.e., whether the browser's built-in debugger is activated (in detached
+    mode only). Currently ComponentJS is able to determine Firefox's Firebug
+    and Chrome's Inspector only.
     if (cs.debug_instrumented()) ...
 
   * ComponentJS.debug_window({ enable: Boolean, autoclose: Boolean, name: 
     String, width: Number = 800, height: Number = 600, natural: Boolean = false
     })
     ComponentJS.debug_window(enable: Boolean, autoclose: Boolean, name: String)
-    [AVAILABLE THROUGH THE COMPONENTJS PLUGIN "debugger" ONLY] On enable true/
-    false open/close the extra browser window containing the ComponentJS
-    debugger view for the ComponentJS application identified by name. If 
-    autoclose is true, optionally automatically close the debugger window with
-    application window (which usually is inconvenient during debugging because
-    on application reloads the ComponentJS debugger window is recreated with
-    default width/height at default position instead of reused). Parameters 
-    width and height can be used to change the initial window size. Parameter 
-    natural controls whether the component tree is drawn with the root
-    component at the bottom (true) or at the top (false).
+    Notice: requires ComponentJS plugin debugger to be loaded!
+    On enable true/false open/close the extra browser window containing the
+    ComponentJS debugger view for the ComponentJS application identified by 
+    name. If autoclose is true, optionally automatically close the debugger
+    window with application window (which usually is inconvenient during
+    debugging because on application reloads the ComponentJS debugger window is
+    recreated with default width/height at default position instead of reused).
+    Parameters width and height can be used to change the initial window size.
+    Parameter natural controls whether the component tree is drawn with the
+    root component at the bottom (true) or at the top (false).
     cs.debug_window({ enable: true, autoclose: false, name "My App" width: 800,
     height: 800, natural: true })
 
@@ -466,19 +466,27 @@ transitions, enter and leave methods are called accordingly.
     #336600");
 
   * component.state(): String
-    component.state(state: String[, callback: Function]): String
-    component.state({ state: String, [callback: Function = undefined,] [sync: 
-    Boolean = false,] }): String
+    component.state(state: String[, func: Function]): String
+    component.state({ state: String, [func: Function = undefined,] [sync: 
+    Boolean = false,] [min: Boolean = undefined,] [max: Boolean = undefined] })
+    : String
     Determine the current state or request a transition to a new state of 
     component. By default a state transition is performed asynchronously, but
     you can request a synchronous transition with sync. For asynchronous
-    transitions you can await the transition finish with callback. The old
-    state is returned on state transitions. On each state transition, for each
+    transitions you can await the transition finish with func. The old state is
+    returned on state transitions. On each state transition, for each
     transitively involved component and each target or intermediate state, a
     non-capturing/non-bubbling event is internally published named
-    "ComponentJS:state:state:enter" or "ComponentJS:state:state:leave". You can
-    subscribe to those in order to react to state transitions from outside the
-    component, too.
+    "ComponentJS:state:state:enter" (after the higher state state was entered
+    from the state below it) or "ComponentJS:state:state:leave" (after the
+    higher state state was left towards the state below it). You can subscribe
+    to those in order to react to state transitions from outside the component,
+    too. By default if the current and requested state of component is just
+    different, the current state is transitioned towards the requested state.
+    Setting parameter min to true skips the transition if the current state is
+    already higher or equal to the requested state. Setting parameter max to
+    true skips the transition if the current state is already lower or equal to
+    the requested state.
     cs("/ui").state("visible")
 
   * component.state_compare({ state: String }): Number
@@ -793,24 +801,35 @@ Model information and storing events into it.
   * component.touch({ name: String, })
     component.touch(name: String)
     Touches the value of component's model element named name, without changing
-    the value but with triggering all its "get" observers (its "changed"
+    the value but with triggering all its "set" observers (its "changed"
     observers are not triggered). This can be useful for firing "set" observers
     manually.
     cs(this).touch("foo")
 
   * component.observe({ name: String, func: Function, [touch: Boolean = false,]
-    [op: String = "set",] [spool: String = null] }): Number
+    [boot: Boolean = false,] [op: String = "set",] [spool: String = null,] [
+    noevent: Boolean = false] }): Number
     component.observe(name: String, func: Function): Number
     Observe the value of component's model element named name for op operations
     (by default "set" operations). For "get" operations, the callback function 
     func has to be of signature func(ev: Event, value: Object): Void. For "set"
-    and "changed" operations, the callback function func has to be of signature
-    func(ev: Event, value-new: Object, value-old: Object, op: Object, path: 
-    String): Void. Both types of callbacks can override the value by using ev.
-    result(value). The observe() method returns an id which uniquely identifies
-    the observation. Instead of having to manually release the observation
-    later via unobserve() you can use the spool mechanism and spool the
-    corresponding unobserve() operation via spool.
+    (and "splice", "delete", "push", "pop", "unshift", "shift") and "changed"
+    operations, the callback function func has to be of signature func(ev: 
+    Event, value-new: Object, value-old: Object, op: Object, path: String): 
+    Void. Both types of callbacks can override the value by using ev.result(
+    value). The observe() method returns an id which uniquely identifies the
+    observation. Instead of having to manually release the observation later
+    via unobserve() you can use the spool mechanism and spool the corresponding
+    unobserve() operation via spool. Option noevent (similar to the same option
+    for subscribe()) prevents the passing of the event parameter ev to the
+    callback function func in case you don't need it. Option touch causes 
+    observe() to execute touch() internally at the end of its observation
+    registration operation for bootstrapping purposes. This indirectly causes
+    the callback function func (and also all other observers) to execute.
+    Option boot causes observe() to execute the callback function func once at
+    the end of its observation registration operation for bootstrapping
+    purposes. This explicitly causes the callback function func (and only func
+    and no other observers) to excecute.
     id = cs(this).observe("state:username", function (ev, username) { ... })
 
   * component.unobserve({ id: Number }): Void
@@ -972,6 +991,155 @@ provide various getter/setter methods:
             service event in the "bubbling" phase.
         var person = cs("/sv").call("load-entity", "Person", 42)
 
+    Test-Driving
+
+    ComponentJS has optional support for test-driving an application, based on
+    asynchronously executed use-cases with the help of its testdrive plugin.
+      + ComponentJS.suite(): Void
+        Notice: requires ComponentJS plugin testdrive to be loaded!
+        Notice: requires external library jQuery to be loaded!
+        Open the interactive dialog of use-cases which can be driven. Usually
+        this is executed from within the application itself (in case the
+        test-drive functionality is used for something like UI macros) or
+        through an external bookmark.
+        /* open test-drive suite from within application */ if (cs.plugin
+        ("testdrive")) cs.suite();
+      + [new] ComponentJS.promise(): Promise
+        [new] ComponentJS.promise(executor: Function): Void
+        Notice: requires ComponentJS plugin testdrive to be loaded!
+        Return a Promise/A+ based promise, internally backed by an embedded
+        "Thenable" implementation. The alternative usage with an executor (of
+        type "(fulfill: (value?: any) => Promise, reject: (value?: any) =>
+        Promise) => void" in TypeScript definition syntax) avoids a temporary
+        variable.
+        /* standard usage */ var promise = new $cs.promise(); doSomethingAsync(
+        function onSuccess (msg) { promise.fulfill(msg); }, function onError
+        (err) { promise.reject(err); } ); return promise.proxy;
+        /* alternative usage (regular) */ return new $cs.promise(function
+        (fulfill, reject) { doSomethingAsync( function onSuccess (msg) {
+        fulfill(msg); }, function onError (err) { reject(err); } ); }).proxy;
+        /* alternative usage (compact) */ return $cs.promise(function (fulfill,
+        reject) { doSomethingAsync(fulfill, reject); }).proxy;
+      + ComponentJS.usecase({ name: String, desc: String, [conf: Object,] func:
+        Function }): Void
+        ComponentJS.usecase(name: String, desc: String, func: Function): Void
+        Notice: requires ComponentJS plugin testdrive to be loaded!
+        Define a single use-case of unique name name, with description desc,
+        default configuration conf and the use-case executing function func (of
+        type "() => void" in TypeScript definition syntax). The name is used
+        for driving the use-case with drive() and conf can be overwritten with 
+        drive(). The function func can either execute synchronously or
+        asynchronously. In case of a synchronous execution, the return value of
+        func does not matter. In case of an asynchronous execution, the return
+        value of func has to be a Promise/A+ based promise (usually created
+        with ensure(), await(), drive or poll implicitly, or with promise()
+        explicitly). The callback function receives the actual configuration as
+        the first parameter.
+        if (cs.plugin("testdrive")) { cs.usecase("reset", "reset all login
+        dialogs", function () { return cs.ensure("/ui/panel/model",
+        "prepared").then(function (comp) { comp.value("event:reset", true); });
+        }); cs.usecase({ name: "login", desc: "fill out a login dialog", conf:
+        { num: 1, realm: "foo", username: "bar", password: "baz!quux" }, func:
+        function (conf) { return cs.ensure("//login" + conf.num + "/model",
+        "prepared") .then(function (comp) { comp.value("data:realm",
+        conf.realm); comp.value("data:username", conf.username); comp.value
+        ("data:password", conf.password); comp.value("event:login-requested",
+        true); }); } }); cs.usecase({ name: "awaitStatus", desc: "await the
+        status to show a particular text", conf: { num: 1, realm: "foo",
+        username: "bar", password: "baz!quux" }, func: function (conf) { var re
+        = new RegExp("login from \".*login" + conf.num + "\" with realm \"" +
+        conf.realm + "\", username \"" + conf.username + "\" and password \"" +
+        conf.password + "\""); return cs.poll(function (fulfill, reject) {
+        return $("div.status").text().match(re); }, function () { return
+        cs.once($("div.status"), "mutation"); }); } }); cs.usecase("all", "fill
+        out all login dialogs", function () { return cs.drive("reset") .then
+        (function () { return cs.drive("login", { num: 2 }); }) .then(function
+        () { return cs.drive("awaitStatus", { num: 2 }); }) }); }
+      + ComponentJS.drive({ name: String, [conf: Object,] [timeout: Number] }):
+        Promise
+        ComponentJS.drive(name: String, [conf: Object,] [timeout: Number]): 
+        Promise
+        Notice: requires ComponentJS plugin testdrive to be loaded!
+        Drive a single use-case name, with optional configuration conf and a
+        run-time timeout of timeout (by default 10*1000) milliseconds. The
+        function returns a Promise/A+ promise which is either fulfilled (with
+        dummy value true) or rejected with an error message.
+        cs.drive("login", { num: 3 }, 2*1000).then(null, function (e) { alert
+        ("failed to login"); });
+      + ComponentJS.ensure({ path: String, state: String, [min: Boolean = true,
+        ] [max: Boolean = false,] [sync: Boolean = false] }): Promise
+        ComponentJS.ensure(path: String, state: String): Promise
+        Notice: requires ComponentJS plugin testdrive to be loaded!
+        Ensure that a component under path reaches a particular state which is
+        at least (in case of min = true), and/or at most (in case of max =
+        true) a particular state, by synchronously (in case of sync = true) or
+        asynchronously (by default), triggering a state change on the component
+        under path. The state change is explicitly trigger by ensure() itself.
+        The function returns a Promise/A+ promise which is either fulfilled
+        with the component object corresponding to path or rejected with an
+        error message.
+        cs.ensure({ path: "//login1/model", state: "prepared", min: true })
+        .then(function (comp) { comp.value("data:username", "foo"); });
+      + ComponentJS.await({ path: String, state: String, [direction: String = 
+        "enter"] }): Promise
+        ComponentJS.await(path: String, state: String, [direction: String = 
+        "enter"]): Promise
+        Notice: requires ComponentJS plugin testdrive to be loaded!
+        Awaits that a component under path reaches a particular state, either
+        on enter (in case of direction = "enter") or leave (in case of 
+        direction = "enter"). The enter/leave methods of the component will be
+        already called in both cases. The component under path is NOT required
+        to already exist. It is allowed that it springs into existence later.
+        There is NO state change trigger by await() itself. The function
+        returns a Promise/A+ promise which is either fulfilled with the
+        component object corresponding to path or rejected with an error
+        message.
+        cs.await({ path: "//login1/model", state: "prepared" }).then(function
+        (comp) { comp.value("data:username", "foo"); });
+      + ComponentJS.poll({ check: Function, [wait: Function,] [max: Number = 
+        600] }): Promise
+        ComponentJS.poll(check: Function, [wait: Function,] [max: Number = 600]
+        ): Promise
+        Notice: requires ComponentJS plugin testdrive to be loaded!
+        Polls for a situation to occur by checking its occurance condition with
+        check (of type () = Boolean> in TypeScript definition syntax) and in
+        case of a still false return waits through wait and repeat from the
+        beginning with a new round with check. The wait function has to be of
+        type "() => Promise" and usually delays processing (usually with
+        setTimeout()) and then resolves. If you pass a Number instead of a 
+        Function to wait, a default implementation is used which waits the
+        number of milliseconds. The default for wait is 100, i.e., it
+        internally maps onto "function () { return cs.sleep(100); }".
+        cs.usecase({ name: "awaitStatus", desc: "await the status to show a
+        particular text", conf: { num: 1, realm: "foo", username: "bar",
+        password: "baz!quux" }, func: function (conf) { var re = new RegExp
+        ("login from \".*login" + conf.num + "\" with realm \"" + conf.realm +
+        "\", username \"" + conf.username + "\" and password \"" +
+        conf.password + "\""); return cs.poll(function (fulfill, reject) {
+        return $("div.status").text().match(re); }, function () { return
+        cs.once($("div.status"), "mutation"); }); } });
+      + ComponentJS.sleep({ ms: Number, }): Promise
+        ComponentJS.sleep(ms: Number): Promise
+        Notice: requires ComponentJS plugin testdrive to be loaded!
+        Sleeps a certain amount of milliseconds (with setTimeout()) and then
+        resolves the promise which is returned by this function.
+        cs.sleep(100).then(function () { ... })
+      + ComponentJS.once({ selector: String/Object, events: String, [
+        subselector: String = null] }): Promise
+        ComponentJS.once(selector: String/Object, events: String, [subselector:
+        String = null]): Promise
+        Notice: requires ComponentJS plugin testdrive to be loaded!
+        Notice: requires external library jQuery to be loaded!
+        Awaits once(!) with jQuery's one() method for a DOM event to occur and
+        then resolves the promise (with the jQuery event object as the value)
+        this function returns. The three parameters selector, events and 
+        subselector are directly passed through to jQuery by mapping onto the
+        internal call "jQuery(selector).one(events, subselector, ...)".
+        Additionally, in case events = "mutation" the function internally uses
+        the HTML5 MutationObserver functionality to await a DOM mutation (in
+        this case subselector is ignored).
+        cs.once("ul.list", "click", "li").then(function (ev) { ... })
+
     API Management
 
       + symbol
@@ -1079,5 +1247,17 @@ provide various getter/setter methods:
       + unregister
       + callable
       + call
+
+    Test-Driving
+
+      + suite
+      + promise
+      + usecase
+      + drive
+      + ensure
+      + await
+      + poll
+      + sleep
+      + once
     ComponentJS
     Application Programming Interface (API)

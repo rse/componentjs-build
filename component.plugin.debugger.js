@@ -530,8 +530,9 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
         for (id in comp.__subscription)
             if (_cs.isown(comp.__subscription, id))
                 if (typeof comp.__subscription[id] === "object")
-                    if (!comp.__subscription[id].name.match(/^ComponentJS:/))
-                        subscriptions += "<code>" + comp.__subscription[id].name + "</code>, ";
+                    if (typeof comp.__subscription[id].name === "string")
+                        if (!comp.__subscription[id].name.match(/^ComponentJS:/))
+                            subscriptions += "<code>" + comp.__subscription[id].name + "</code>, ";
         subscriptions = subscriptions.replace(/, $/, "");
         if (subscriptions === "")
             subscriptions = "<span class=\"none\">none</span>";
@@ -545,9 +546,10 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
         for (id in comp.__subscription)
             if (_cs.isown(comp.__subscription, id))
                 if (typeof comp.__subscription[id] === "object")
-                    if (comp.__subscription[id].name.match(/^ComponentJS:service:/))
-                        registrations += "<code>" + comp.__subscription[id].name
-                            .replace(/^ComponentJS:service:/, "") + "</code>, ";
+                    if (typeof comp.__subscription[id].name === "string")
+                        if (comp.__subscription[id].name.match(/^ComponentJS:service:/))
+                            registrations += "<code>" + comp.__subscription[id].name
+                                .replace(/^ComponentJS:service:/, "") + "</code>, ";
         registrations = registrations.replace(/, $/, "");
         if (registrations === "")
             registrations = "<span class=\"none\">none</span>";
@@ -561,9 +563,10 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
         for (id in comp.__subscription)
             if (_cs.isown(comp.__subscription, id))
                 if (typeof comp.__subscription[id] === "object")
-                    if (comp.__subscription[id].name.match(/^ComponentJS:hook:/))
-                        hooks += "<code>" + comp.__subscription[id].name
-                            .replace(/^ComponentJS:hook:/, "") + "</code>, ";
+                    if (typeof comp.__subscription[id].name === "string")
+                        if (comp.__subscription[id].name.match(/^ComponentJS:hook:/))
+                            hooks += "<code>" + comp.__subscription[id].name
+                                .replace(/^ComponentJS:hook:/, "") + "</code>, ";
         hooks = hooks.replace(/, $/, "");
         if (hooks === "")
             hooks = "<span class=\"none\">none</span>";
@@ -1166,7 +1169,11 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
                 /*  determine component on infobox event  */
                 var infobox_event = function (ev) {
                     var mx = ev.offsetX;
+                    if (typeof mx === "undefined") mx = ev.layerX;
+                    if (typeof mx === "undefined") mx = ev.clientX;
                     var my = ev.offsetY;
+                    if (typeof my === "undefined") my = ev.layerY;
+                    if (typeof my === "undefined") my = ev.clientY - _cs.jq(".dbg .header", _cs.dbg.document).height();
                     var comp = null;
                     _cs.root.walk_down(function (level, comp_this, X, depth_first) {
                         if (depth_first) {

@@ -10,6 +10,60 @@
     have a look at the version control history under
     https://github.com/rse/componentjs/commits/master
 
+    Major changes between ComponentJS 1.1.1 and 1.2.0
+    -------------------------------------------------
+
+    o INCOMPATIBILITY:
+      Renamed the second argument of state() from "callback" to just
+      "func" to be aligned with all other callback parameters in the
+      API. This is just an incompatibility if state() is called with
+      named parameters, not if state() is called with positional
+      parameters.
+
+    o ADDITION:
+      Added new parameter "boot" (boolean) to method observe() which
+      allows one to once execute the callback function (and only the
+      callback function and no other callback functions of other
+      observers).
+
+    o ADDITION:
+      Added new "testdrive" plugin which provides a use-case based
+      suite of tests for test-driving an application through bare state
+      transitions and model manipulations.
+
+    o ADDITION:
+      Added "noevent" parameter to observe() which (similar to
+      "noevent" on subscribe()) prevents the event to be passed as
+      first argument to the callback function.
+
+    o ADDITION:
+      Provide internal hooks "ComponentJS:state-enter" and
+      "ComponentJS:state-leave" to plugins.
+
+    o ADDITION:
+      Method state() now supports the additional optional parameters
+      "min" and "max" for conveniently refining the transition request.
+
+    o BUGFIX:
+      On .create() enter the first user-defined state (on top of "dead")
+      instead of the hard-coded "created" state.
+
+    o BUGFIX:
+      Implement the internally published events "ComponentJS:state:<name>:enter"
+      and "ComponentJS:state:<name>:leave" the way they were documented.
+
+    o BUGFIX:
+      Prevent errors in debugger in case the subscription is not a
+      string (but perhaps a RegExp)
+
+    o BUGFIX:
+      Fix debugger's "click on component and show infobox" functionality
+      under Firefox and similar browers (where an Event has no
+      .offsetX/Y but .layerX/Y and .clientX/Y properties).
+
+    o BUGFIX:
+      fix description of parameter "touch" of method observe().
+
     Major changes between ComponentJS 1.1.0 and 1.1.1
     -------------------------------------------------
 

@@ -89,9 +89,9 @@
     /*  API version  */
     $cs.version = {
         major: 1,
-        minor: 1,
-        micro: 1,
-        date:  20140606
+        minor: 2,
+        micro: 0,
+        date:  20140908
     };
 
 
@@ -243,7 +243,7 @@
     _cs.keysof = function (obj) {
         var keys = [];
         for (var key in obj) {
-            if (Object.hasOwnProperty.call(obj, key))
+            if (_cs.isown(obj, key))
                 keys.push(key);
         }
         return keys;
@@ -611,7 +611,7 @@
         if (typeof spec === "object" && spec instanceof RegExp)
             return spec.test(value.toString());
 
-        /*  case 1: specification is a function  */
+        /*  case 2: specification is a function  */
         else if (typeof spec === "function")
             return spec(value);
 
@@ -2882,7 +2882,7 @@
 
                 /*  notify subscribers about new state  */
                 comp.publish({
-                    name:         "ComponentJS:state:" + _cs.states[comp.__state].state,
+                    name:         "ComponentJS:state:" + _cs.states[comp.__state].state + ":enter",
                     noresult:     true,
                     capturing:    false,
                     spreading:    false,
@@ -2890,6 +2890,9 @@
                     async:        true,
                     silent:       true
                 });
+
+                /*  give plugins a chance to react  */
+                _cs.hook("ComponentJS:state-enter", "none", comp, _cs.states[comp.__state].state);
 
                 /*  optionally automatically transition
                     child component(s) to higher state third  */
@@ -2980,7 +2983,7 @@
 
                 /*  notify subscribers about new state  */
                 comp.publish({
-                    name:         "ComponentJS:state:" + _cs.states[comp.__state].state,
+                    name:         "ComponentJS:state:" + _cs.states[comp.__state + 1].state + ":leave",
                     noresult:     true,
                     capturing:    false,
                     spreading:    false,
@@ -2988,6 +2991,9 @@
                     async:        true,
                     silent:       true
                 });
+
+                /*  give plugins a chance to react  */
+                _cs.hook("ComponentJS:state-leave", "none", comp, _cs.states[comp.__state + 1].state);
 
                 /*  optionally automatically transition
                     parent component to lower state third  */
@@ -3036,17 +3042,24 @@
                 var params = $cs.params("state", arguments, {
                     state:    { pos: 0, req: true,
                                 valid: function (s) { return _cs.state_name2idx(s) !== -1; } },
-                    callback: { pos: 1, def: undefined },
+                    func:     { pos: 1, def: undefined },
+                    min:      {         def: undefined },
+                    max:      {         def: undefined },
                     sync:     {         def: false     }
                 });
 
                 /*  if requested state is still not reached...  */
-                if (_cs.states[this.__state].state !== params.state) {
+                var sOld = this.__state;
+                var sNew = _cs.state_name2idx(params.state);
+                if (   ( params.min === true && !params.max          && sNew  >  sOld)
+                    || (!params.min          &&  params.max === true && sNew  <  sOld)
+                    || ( params.min === true &&  params.max === true && sNew !== sOld)
+                    || (!params.min          && !params.max          && sNew !== sOld)) {
                     var enqueue = true;
                     var request = {
                         comp:     this,
                         state:    params.state,
-                        callback: params.callback
+                        callback: params.func
                     };
                     if (params.sync) {
                         /*  perform new state transition request (synchronously)  */
@@ -3063,8 +3076,8 @@
                 }
                 else {
                     /*  still run its optional callback function  */
-                    if (typeof params.callback === "function")
-                        params.callback.call(this, params.state);
+                    if (typeof params.func === "function")
+                        params.func.call(this, params.state);
                 }
 
                 /*  return old (and perhaps still current) state  */
@@ -3859,8 +3872,8 @@
                                 (subPath.length > 0 ? " at sub-path \"" + subPath.join(".") + "\"" : ""));
                     }
 
-                    /*  send event to observers for value set/splice operation and allow observers
-                        to reject value set operation and/or change new value to set  */
+                    /*  send event to observers for value set/delete/splice operation
+                        and allow observers to reject operation and/or change new value to set  */
                     var cont = true;
                     if (owner.property({ name: "ComponentJS:model:subscribers:" + params.op[0], def: 0, bubbling: false }) > 0) {
                         ev = owner.publish({
@@ -3962,11 +3975,13 @@
             observe: function () {
                 /*  determine parameters  */
                 var params = $cs.params("observe", arguments, {
-                    name:      { pos: 0, req: true,   valid: "string"        },
-                    func:      { pos: 1, req: true,   valid: "function"      },
-                    touch:     {         def: false,  valid: "boolean"       },
-                    op:        {         def: "set",  valid: /^(?:get|set|changed|splice|delete|)$/ },
-                    spool:     {         def: null,   valid: "(null|string)" }
+                    name:        { pos: 0, req: true,   valid: "string"        },
+                    func:        { pos: 1, req: true,   valid: "function"      },
+                    touch:       {         def: false,  valid: "boolean"       },
+                    boot:        {         def: false,  valid: "boolean"       },
+                    op:          {         def: "set",  valid: /^(?:get|set|changed|splice|delete|)$/ },
+                    spool:       {         def: null,   valid: "(null|string)" },
+                    noevent:     {         def: false,  valid: "boolean"       }
                 });
 
                 /*  parse the value name into selection path segments  */
@@ -4002,6 +4017,7 @@
                     capturing: false,
                     spreading: false,
                     bubbling:  false,
+                    noevent:   params.noevent,
                     func:      params.func
                 });
 
@@ -4018,9 +4034,28 @@
                     info.comp.spool(info.name, this, "unobserve", id);
                 }
 
-                /*  if requested, touch the model value once (for an initial observer run)  */
+                /*  if requested (for a one-time initial observer run),
+                    either touch the model value once (which causes _all_ observers to trigger!)
+                    or do a "bootstrapping execution" of only our callback function once  */
                 if (params.touch)
                     this.touch(params.name);
+                else if (params.boot) {
+                    var value = this.value(params.name);
+                    var args = [ value, value, params.op, path.join(".") ];
+                    if (!params.noevent) {
+                        args.unshift($cs.event({
+                            name:        params.name,
+                            spec:        {},
+                            async:       false,
+                            result:      undefined,
+                            target:      this,
+                            propagation: true,
+                            processing:  true,
+                            dispatched:  false
+                        }));
+                    }
+                    params.func.apply(this, args);
+                }
 
                 return id;
             },
@@ -4520,10 +4555,12 @@
         /*  give plugins a chance to react (before creation of a component)  */
         _cs.hook("ComponentJS:comp-created", "none", comp);
 
-        /*  switch state from "dead" to "created"
+        /*  switch state from "dead" to the first user-defined state (usually "created")
             (here synchronously as one expects that after a creation of a
             component, the state is really already "created", of course)  */
-        comp.state({ state: "created", sync: true });
+        if (_cs.states.length <= 1)
+            throw _cs.exception("create", "no user-defined component states");
+        comp.state({ state: _cs.states[1].state, sync: true });
 
         /*  give plugins a chance to react (after creation of a component)  */
         _cs.hook("ComponentJS:state-invalidate", "none", "components");

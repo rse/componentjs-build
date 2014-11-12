@@ -90,8 +90,8 @@
     $cs.version = {
         major: 1,
         minor: 2,
-        micro: 0,
-        date:  20140908
+        micro: 1,
+        date:  20141112
     };
 
 
@@ -1591,7 +1591,16 @@
         }
 
         /*
-         *  STEP 3: OPTIONALLY EXPLICITLY INHERIT FROM MIXIN CLASSES
+         *  STEP 3: EXTEND CLASS WITH OWN PROPERTIES AND METHODS
+         */
+
+        if (_cs.isdefined(params.statics))
+            _cs.extend(clazz, params.statics);
+        if (_cs.isdefined(params.protos))
+            _cs.mixin(clazz.prototype, params.protos);
+
+        /*
+         *  STEP 4: OPTIONALLY EXPLICITLY INHERIT FROM MIXIN CLASSES
          */
 
         if (_cs.isdefined(params.mixin)) {
@@ -1609,7 +1618,7 @@
         }
 
         /*
-         *  STEP 4: OPTIONALLY SET OWN FIELDS/METHODS
+         *  STEP 5: REMEMBER INFORMATION
          */
 
         /*  remember user-supplied constructor function
@@ -1630,15 +1639,13 @@
         if (_cs.isdefined(params.setup))
             _cs.annotation(clazz, "setup", params.setup);
 
-        /*  extend class with own properties and methods  */
-        if (_cs.isdefined(params.statics))
-            _cs.extend(clazz, params.statics);
-        if (_cs.isdefined(params.protos))
-            _cs.mixin(clazz.prototype, params.protos);
-
         /*  remember dynamics for per-object initialization  */
         if (_cs.isdefined(params.dynamics))
             _cs.annotation(clazz, "dynamics", params.dynamics);
+
+        /*
+         *  STEP 6: PROVIDE BASE/SUPER/PARENT RESOLVING FUNCTIONALITY
+         */
 
         /*  internal utility method for resolving an annotation on a
             possibly cloned function (just for the following "base" method).
@@ -1655,26 +1662,33 @@
 
         /*  internal utility method for resolving the parent class
             in the inheritance chain by searching for one of its functions  */
-        var resolve_extend = function (clazz, func) {
+        var resolve_extend = function (name, clazz, func) {
             /*  determine inheritance of current class  */
             var extend = _cs.annotation(clazz, "extend");
             if (extend === null)
                 return null;
 
-            /*  determine whether function is in current class' prototypes  */
+            /*  find function in current class' prototypes and mixin chains  */
             var found = false;
-            var keys = _cs.keysof(clazz.prototype);
-            for (var i = 0; i < keys.length; i++) {
-                if (clazz.prototype[keys[i]] === func) {
-                    found = true;
-                    break;
+            var currentFuncOfChain = clazz.prototype[name];
+            if (currentFuncOfChain === func)
+                found = true;
+            else {
+                while (typeof currentFuncOfChain === "function") {
+                    currentFuncOfChain = resolve_annotation(currentFuncOfChain, "base");
+                    if (currentFuncOfChain === null)
+                        break;
+                    else if (currentFuncOfChain === func) {
+                        found = true;
+                        break;
+                    }
                 }
             }
 
             /*  if not found, search recusively in the parent hierarchy,
                 starting from the parent class  */
             if (!found)
-                return resolve_extend(extend, func);
+                return resolve_extend(name, extend, func);
 
             /*  return the parent class  */
             return extend;
@@ -1697,7 +1711,7 @@
                         optionally have to take those into account during resolving, too!  */
             var name = resolve_annotation(arguments.callee.caller, "name");
             var base = resolve_annotation(arguments.callee.caller, "base");
-            var extend = resolve_extend(this.constructor, resolve_clone(arguments.callee.caller));
+            var extend = resolve_extend(name, this.constructor, resolve_clone(arguments.callee.caller));
 
             /*  attempt 1: call base/super/parent function in mixin chain  */
             if (_cs.istypeof(base) === "function")
@@ -1723,7 +1737,7 @@
         };
 
         /*
-         * STEP 5: ALLOW TRAITS TO POST-ADJUST/SETUP DEFINED CLASS
+         *  STEP 7: ALLOW TRAITS TO POST-ADJUST/SETUP DEFINED CLASS
          */
 
         /*  only classes execute trait setups...  */
@@ -1744,7 +1758,7 @@
         }
 
         /*
-         * STEP 6: PROVIDE RESULTS
+         *  STEP 8: PROVIDE RESULTS
          */
 
         /*  optionally insert class into global namespace ourself  */

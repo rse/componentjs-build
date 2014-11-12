@@ -207,6 +207,8 @@ ComponentJS.plugin("testdrive", function (_cs, $cs, GLOBAL) {
         /* eslint no-use-before-define: 0 */
         /* eslint space-return-throw-case: 0 */
         /* eslint no-catch-shadow: 0 */
+        /* eslint no-shadow: 0 */
+        /* eslint comma-spacing: 0 */
         /* --- START VERBATIM EMBEDDING ---- */
 
     /*
@@ -499,10 +501,15 @@ ComponentJS.plugin("testdrive", function (_cs, $cs, GLOBAL) {
         });
 
         /*  optionally on-the-fly provide waiting-promise  */
-        if (typeof params.wait === "number")
-            params.wait = function () { return $cs.sleep(params.wait); };
+        if (typeof params.wait === "number") {
+            params.wait = (function (wait) {
+                return function () {
+                    return $cs.sleep(wait);
+                };
+            })(params.wait);
+        }
 
-        /*  create promise around a polling loop */
+        /*  create promise around a polling loop  */
         var check = params.check;
         var wait  = params.wait;
         var max   = params.max;

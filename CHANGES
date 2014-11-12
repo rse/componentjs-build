@@ -10,6 +10,23 @@
     have a look at the version control history under
     https://github.com/rse/componentjs/commits/master
 
+    Major changes between ComponentJS 1.2.0 and 1.2.1
+    -------------------------------------------------
+
+    o IMPROVEMENT:
+      Update build-time dependencies and remove the use of the now
+      obsolete Grunt task "grunt-extend-config".
+
+    o BUGFIX:
+      Fixed "wait" parameter of testdrive#poll() for the case of a
+      passed number instead of a function.
+
+    o BUGFIX:
+      The resolving order of Clazz/Trait was fixed.
+
+    o BUGFIX:
+      The traversal of Clazz/Trait on "this.base()" calls was fixed.
+
     Major changes between ComponentJS 1.1.1 and 1.2.0
     -------------------------------------------------
 

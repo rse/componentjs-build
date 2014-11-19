@@ -90,8 +90,8 @@
     $cs.version = {
         major: 1,
         minor: 2,
-        micro: 1,
-        date:  20141112
+        micro: 2,
+        date:  20141119
     };
 
 
@@ -1609,6 +1609,27 @@
                 /*  inherit all static fields  */
                 _cs.extend(clazz, params.mixin[i], no_internals);
 
+                /*  as methods in mixin classes (traits) always have to call "this.base()",
+                    because they do not know where they are mixed into, we have to ensure
+                    that there is a target for "this.base()". If there is either a non-function
+                    (even undefined) property in the class we mixin into or the property
+                    is not our own one (and hence coming through the prototype chain),
+                    we provide a fallback no-operation function as the base function.  */
+                for (var key in params.mixin[i].prototype) {
+                    if (!_cs.isown(params.mixin[i].prototype, key))
+                        continue;
+                    if (   _cs.istypeof(clazz.prototype[key]) !== "function"
+                        || !_cs.isown(clazz.prototype, key)                 ) {
+                        var nopFunc = _cs.nop;
+                        if (   _cs.isdefined(params.extend)
+                            && _cs.istypeof(params.extend[key]) === "function") {
+                            nopFunc = function () { this.base(); };
+                            _cs.annotation(nopFunc, "name", key);
+                        }
+                        clazz.prototype[key] = nopFunc;
+                    }
+                }
+
                 /*  inherit prototype methods  */
                 _cs.mixin(clazz.prototype, params.mixin[i].prototype, no_internals);
             }
@@ -1668,20 +1689,17 @@
             if (extend === null)
                 return null;
 
-            /*  find function in current class' prototypes and mixin chains  */
+            /*  find function in current class' prototype and mixin chain  */
             var found = false;
-            var currentFuncOfChain = clazz.prototype[name];
-            if (currentFuncOfChain === func)
-                found = true;
-            else {
-                while (typeof currentFuncOfChain === "function") {
-                    currentFuncOfChain = resolve_annotation(currentFuncOfChain, "base");
-                    if (currentFuncOfChain === null)
-                        break;
-                    else if (currentFuncOfChain === func) {
+            if (   _cs.istypeof(clazz.prototype[name]) === "function"
+                && _cs.isown(clazz.prototype, name)                  ) {
+                var currentFuncOfChain = clazz.prototype[name];
+                while (_cs.istypeof(currentFuncOfChain) === "function") {
+                    if (currentFuncOfChain === func) {
                         found = true;
                         break;
                     }
+                    currentFuncOfChain = resolve_annotation(currentFuncOfChain, "base");
                 }
             }
 
@@ -1694,11 +1712,11 @@
             return extend;
         };
 
-        /*  resolve to the optional parent clone object  */
+        /*  resolve to the optional parent/ancestor clone object  */
         var resolve_clone = function (func) {
-            if (   _cs.annotation(func, "clone") === null
-                && _cs.annotation(func.caller, "clone") === true)
-                func = func.caller;
+            if (_cs.annotation(func, "clone") === null)
+                while (_cs.annotation(func.caller, "clone") === true)
+                    func = func.caller;
             return func;
         };
 

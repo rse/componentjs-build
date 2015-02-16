@@ -1,6 +1,6 @@
 
     ComponentJS -- Component System for JavaScript <http://componentjs.com>
-    Copyright (c) 2009-2014 Ralf S. Engelschall <http://engelschall.com>
+    Copyright (c) 2009-2015 Ralf S. Engelschall <http://engelschall.com>
 
     Changes
     =======
@@ -9,6 +9,17 @@
     more fine-granular commit-based change information,
     have a look at the version control history under
     https://github.com/rse/componentjs/commits/master
+
+    Major changes between ComponentJS 1.2.2 and 1.2.3
+    -------------------------------------------------
+
+    o BUGFIX:
+      fix viewing of "Model" components in the debugger where
+      the model items were not correctly displayed.
+
+    o IMPROVEMENT:
+      provide platform independent alternative to Unix Makefile by
+      leveraging NPM scripts which have node_modules/.bin/ in PATH
 
     Major changes between ComponentJS 1.2.1 and 1.2.2
     -------------------------------------------------

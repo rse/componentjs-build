@@ -1,6 +1,6 @@
 /*
 **  ComponentJS -- Component System for JavaScript <http://componentjs.com>
-**  Copyright (c) 2009-2014 Ralf S. Engelschall <http://engelschall.com>
+**  Copyright (c) 2009-2015 Ralf S. Engelschall <http://engelschall.com>
 **
 **  This Source Code Form is subject to the terms of the Mozilla Public
 **  License (MPL), version 2.0. If a copy of the MPL was not distributed
@@ -498,8 +498,8 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
             if (_cs.isown(comp.__config, id))
                 if (id.match(/^ComponentJS:property:ComponentJS:model/))
                     if (typeof comp.__config[id] === "object")
-                        for (name in comp.__config[id])
-                            if (_cs.isown(comp.__config[id], name))
+                        for (name in comp.__config[id].data)
+                            if (_cs.isown(comp.__config[id].data, name))
                                 values += "<code>" + name + "</code>, ";
         values = values.replace(/, $/, "");
         if (values === "")

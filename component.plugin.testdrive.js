@@ -1,6 +1,6 @@
 /*
 **  ComponentJS -- Component System for JavaScript <http://componentjs.com>
-**  Copyright (c) 2009-2014 Ralf S. Engelschall <http://engelschall.com>
+**  Copyright (c) 2009-2015 Ralf S. Engelschall <http://engelschall.com>
 **
 **  This Source Code Form is subject to the terms of the Mozilla Public
 **  License (MPL), version 2.0. If a copy of the MPL was not distributed
@@ -192,7 +192,7 @@ ComponentJS.plugin("testdrive", function (_cs, $cs, GLOBAL) {
 
     /*
     **  Thenable -- Embeddable Minimum Strictly-Compliant Promises/A+ 1.1.1 Thenable
-    **  Copyright (c) 2013-2014 Ralf S. Engelschall <http://engelschall.com>
+    **  Copyright (c) 2013-2015 Ralf S. Engelschall <http://engelschall.com>
     **  Licensed under The MIT License <http://opensource.org/licenses/MIT>
     **  Source-Code distributed on <http://github.com/rse/thenable>
     */

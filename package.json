@@ -1,0 +1,49 @@
+{
+    "name":        "componentjs",
+    "homepage":    "http://componentjs.com/",
+    "description": "Powerful run-time Component System for structuring HTML5-based Rich Clients",
+    "version":     "1.2.4",
+    "license":     "MPL/2.0",
+    "author": {
+        "name":    "Ralf S. Engelschall",
+        "email":   "rse@engelschall.com",
+        "url":     "http://engelschall.com"
+    },
+    "keywords": [
+        "ecosystem:client",
+        "component system", "rich client", "html5", "single page app",
+        "model", "view", "controller", "event", "service", "socket"
+    ],
+    "repository": {
+        "type": "git",
+        "url":  "git://github.com/rse/componentjs.git"
+    },
+    "bugs": {
+        "url":  "http://github.com/rse/componentjs/issues"
+    },
+    "files": [
+        "CHANGES",
+        "LICENSE",
+        "README.md",
+        "component-api.print-a4.pdf",
+        "component-api.print-us.pdf",
+        "component-api.screen.html",
+        "component-api.screen.txt",
+        "component.js",
+        "component.min.js",
+        "component.plugin.debugger.js",
+        "component.plugin.debugger.min.js",
+        "component.plugin.extjs.js",
+        "component.plugin.extjs.min.js",
+        "component.plugin.jquery.js",
+        "component.plugin.jquery.min.js",
+        "component.plugin.localstorage.js",
+        "component.plugin.localstorage.min.js",
+        "component.plugin.migrate.js",
+        "component.plugin.migrate.min.js",
+        "component.plugin.testdrive.js",
+        "component.plugin.testdrive.min.js",
+        "component.plugin.values.js",
+        "component.plugin.values.min.js"
+    ]
+}

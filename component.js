@@ -90,8 +90,8 @@
     $cs.version = {
         major: 1,
         minor: 2,
-        micro: 3,
-        date:  20150216
+        micro: 4,
+        date:  20150221
     };
 
 

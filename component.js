@@ -90,8 +90,8 @@
     $cs.version = {
         major: 1,
         minor: 2,
-        micro: 4,
-        date:  20150221
+        micro: 5,
+        date:  20150426
     };
 
 
@@ -1603,6 +1603,22 @@
          *  STEP 4: OPTIONALLY EXPLICITLY INHERIT FROM MIXIN CLASSES
          */
 
+        /*  internal utility method for determining whether a function
+            exists somewhere in the inheritance chain  */
+        var has_base = function (name, clazz) {
+            var extend = _cs.annotation(clazz, "extend");
+            if (extend === null)
+                return false;
+            if (_cs.istypeof(extend) !== "clazz")
+                return false;
+            if (   _cs.istypeof(extend[name]) === "function"
+                || (   _cs.istypeof(extend.prototype) === "object"
+                    && _cs.istypeof(extend.prototype[name]) === "function"))
+                return true;
+            else
+                return has_base(name, extend);
+        };
+
         if (_cs.isdefined(params.mixin)) {
             /*  inherit from mixin classes  */
             for (var i = 0; i < params.mixin.length; i++) {
@@ -1621,9 +1637,8 @@
                     if (   _cs.istypeof(clazz.prototype[key]) !== "function"
                         || !_cs.isown(clazz.prototype, key)                 ) {
                         var nopFunc = _cs.nop;
-                        if (   _cs.isdefined(params.extend)
-                            && _cs.istypeof(params.extend[key]) === "function") {
-                            nopFunc = function () { this.base(); };
+                        if (has_base(key, clazz)) {
+                            nopFunc = function () { return this.base(); };
                             _cs.annotation(nopFunc, "name", key);
                         }
                         clazz.prototype[key] = nopFunc;

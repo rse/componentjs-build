@@ -90,8 +90,8 @@
     $cs.version = {
         major: 1,
         minor: 2,
-        micro: 5,
-        date:  20150426
+        micro: 7,
+        date:  20150913
     };
 
 
@@ -1636,12 +1636,15 @@
                         continue;
                     if (   _cs.istypeof(clazz.prototype[key]) !== "function"
                         || !_cs.isown(clazz.prototype, key)                 ) {
-                        var nopFunc = _cs.nop;
-                        if (has_base(key, clazz)) {
-                            nopFunc = function () { return this.base(); };
-                            _cs.annotation(nopFunc, "name", key);
-                        }
-                        clazz.prototype[key] = nopFunc;
+                        var target;
+                        if (has_base(key, clazz))
+                            /*  provide a trampoline function  */
+                            target = function () { return this.base.apply(this, arguments); };
+                        else
+                            /*  provide a no-operation function  */
+                            target = function () {};
+                        _cs.annotation(target, "name", key);
+                        clazz.prototype[key] = target;
                     }
                 }
 

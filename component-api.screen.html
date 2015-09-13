@@ -391,7 +391,7 @@
             <div id="head1" class="head1">ComponentJS</div>
             <div id="head2" class="head2">Application Programming Interface (API)</div>
         </div>
-        <div id="the_version" class="the_version">1.2.5</div>
+        <div id="the_version" class="the_version">1.2.7</div>
         <div class="spec">
             <img class="logo" src="http://componentjs.com/ComponentJS-logo.svg" alt="ComponentJS"/>
             <h2><a name="api_management">API Management</a></h2>
@@ -1684,7 +1684,7 @@ they provide various getter/setter methods:<p/>
  <span class="O">component</span>.<span class="M">publish</span>(<span class="P">name</span><span class="meta">:</span> <span class="T">String</span>,
  <span class="P">args</span>...<span class="meta">:</span> <span class="T">Object</span>)<span class="meta">:</span> <span class="T">Object</span>
 </div><div class="desc"> Publishes an <span class="T">Event</span> to component <span class="O">component</span> named <span class="F">name</span> and with
- optional arguments <span class="F">args</span>. By default the event is intended to be
+ optional arguments <span class="F">args</span>. By default, the event is intended to be
  dispatched in the (mandatory) targeting and (optional) capturing and
  bubbling phases. The following options allow you to further control
  the event publishing process:
@@ -1692,17 +1692,47 @@ they provide various getter/setter methods:<p/>
 </div><ul class="list">
 <li>Option <span class="F">spec</span> allows you to sub-specify/parametrize the event with
     arbitrary key/value pairs in case the <span class="F">name</span> is too generic.
+    This then has to be matched by the corresponding <span class="F">spec</span> option
+    of method <span class="M"><a href="#subscribe">subscribe</a></span>().
 </li><li>Option <span class="F">async</span> allows the event processing to occur asynchronously.
+    The default is synchronously.
 </li><li>Setting option <span class="F">capturing</span> to "<code>false</code>" indicates that the event should
-    not be intended to be dispatched in the capturing phase.
+    not be intended to be dispatched in the capturing phase. The default
+    is to be dispatched in the capturing phase.
 </li><li>Setting option <span class="F">spreading</span> to "<code>true</code>" indicates that the event should
     also be intended to be dispatched in the spreading phase.
+    The default is not to be dispatched in the spreading phase.
 </li><li>Setting option <span class="F">bubbling</span> to "<code>false</code>" indicates that the event should
     not be intended to be dispatched in the bubbling phase.
+    The default is to be dispatched in the bubbling phase.
 </li><li>Option <span class="F">completed</span> executes the specified callback function
     once the event was dispatched to subscribers in all possible phases.
     This allows you to react at the end of <span class="F">async</span>=<code>true</code> events.
-</li><li>Option <span class="F">resultinit</span> and <span class="F">resultstep</span>
+</li><li>Options <span class="F">resultinit</span> and <span class="F">resultstep</span> allow you to control
+    how the results of subscribers should be aggregated. The <span class="F">resultinit</span>
+    provides the initial value to start the aggregation. The <span class="F">resultstep</span>
+    is a callback function with signature "<code>(old: any, cur: any): any</code>"
+    which aggregates the initial/old value and the current value into
+    a new value. The default for <span class="F">resultinit</span> is "<code>undefined</code>" and
+    the default for <span class="F">resultstep</span> is "<code>function (old, cur) { return cur }</code>",
+    meaning that just the last result will be kept. The result is
+    delivered with the <span class="M"><a href="#result">result</a></span>() method of returned Event objects.
+</li><li>Option <span class="F">directresult</span> forces <span class="M"><a href="#publish()">publish()</a></span> to directly return
+    <code>ev.result()</code> instead of the Event object <code>ev</code>.
+</li><li>Option <span class="F">noresult</span> forces <span class="M"><a href="#publish()">publish()</a></span> to directly return
+    <code>undefined</code> instead of the Event object <code>ev</code>. This
+    allows <span class="M"><a href="#publish">publish</a></span>() to internally optimize the event handling
+    in case no Event object is necessary at all.
+</li><li>Option <span class="F">firstonly</span> automatically stops the event propagation/delivery
+    (with <code>ev.propagation(false)</code>) once the first subscriber has
+    accepted the value (meaning: has not called <code>ev.decline()</code> on the
+    Event object).
+</li><li>Option <span class="F">silent</span> can be used to disable the expensive creation of
+    internal debugging messages related to the Event processing.
+    This can be used to speed-optimize the event processing.
+</li><li>Option <span class="F">args</span> can be used to pass arguments to the subscribers.
+    The subscribers receive those arguments at the end of their
+    parameter list.
 </li>
 </ul><div class="example">cs(this).publish("data-loaded", data, info)
 </div></li></ul>

@@ -1,6 +1,6 @@
 /*
 **  ComponentJS -- Component System for JavaScript <http://componentjs.com>
-**  Copyright (c) 2009-2015 Ralf S. Engelschall <http://engelschall.com>
+**  Copyright (c) 2009-2016 Ralf S. Engelschall <http://engelschall.com>
 **
 **  This Source Code Form is subject to the terms of the Mozilla Public
 **  License (MPL), version 2.0. If a copy of the MPL was not distributed
@@ -89,9 +89,9 @@
     /*  API version  */
     $cs.version = {
         major: 1,
-        minor: 2,
-        micro: 7,
-        date:  20150913
+        minor: 3,
+        micro: 0,
+        date:  20160731
     };
 
 
@@ -4029,7 +4029,7 @@
                     func:        { pos: 1, req: true,   valid: "function"      },
                     touch:       {         def: false,  valid: "boolean"       },
                     boot:        {         def: false,  valid: "boolean"       },
-                    op:          {         def: "set",  valid: /^(?:get|set|changed|splice|delete|)$/ },
+                    op:          {         def: "set",  valid: /^(?:get|set|changed|splice|delete)$/ },
                     spool:       {         def: null,   valid: "(null|string)" },
                     noevent:     {         def: false,  valid: "boolean"       }
                 });

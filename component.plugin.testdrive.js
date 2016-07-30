@@ -1,6 +1,6 @@
 /*
 **  ComponentJS -- Component System for JavaScript <http://componentjs.com>
-**  Copyright (c) 2009-2015 Ralf S. Engelschall <http://engelschall.com>
+**  Copyright (c) 2009-2016 Ralf S. Engelschall <http://engelschall.com>
 **
 **  This Source Code Form is subject to the terms of the Mozilla Public
 **  License (MPL), version 2.0. If a copy of the MPL was not distributed
@@ -18,6 +18,36 @@
 /* jshint unused: false */
 
 ComponentJS.plugin("testdrive", function (_cs, $cs, GLOBAL) {
+
+    /*  internal store of usecases  */
+    var usecase = {};
+
+    /*  global API function: define/undefine a usecase  */
+    $cs.usecase = function () {
+        /*  determine parameters  */
+        var params = $cs.params("usecase", arguments, {
+            name:       { pos: 0, req: true, valid: "string"          },
+            desc:       { pos: 1, req: true, valid: "string"          },
+            conf:       {         def: {},   valid: "object"          },
+            func:       { pos: 2, req: true, valid: "(function|null)" }
+        });
+
+        /*  remember or delete usecase  */
+        if (params.func === null)
+            delete usecase[params.name];
+        else if (_cs.isdefined(usecase[params.name]))
+            throw _cs.exception("usecase", "usecase of name \"" + params.name + "\" already defined");
+        else {
+            usecase[params.name] = {
+                desc: params.desc,
+                conf: params.conf,
+                func: params.func
+            };
+        }
+
+        return;
+    };
+
 
     /*  global API function: show suite of usecases one can drive  */
     $cs.suite = function () {
@@ -45,6 +75,11 @@ ComponentJS.plugin("testdrive", function (_cs, $cs, GLOBAL) {
             $("body").append(ui);
         }
 
+        /*  determine sizes  */
+        var w = $(GLOBAL).width();
+        var uiw = (w / 10) * 8;
+        var uih = 400;
+
         /*  provide helper functions for animating the opening/closing of the UI  */
         var open = function (complete) {
             $(ui).show().animate({ top: 0 }, 300, "swing", complete);
@@ -63,11 +98,6 @@ ComponentJS.plugin("testdrive", function (_cs, $cs, GLOBAL) {
             close();
             return;
         }
-
-        /*  determine sizes  */
-        var w = $(GLOBAL).width();
-        var uiw = (w / 10) * 8;
-        var uih = 400;
 
         /*  style the UI panel  */
         ui
@@ -192,7 +222,7 @@ ComponentJS.plugin("testdrive", function (_cs, $cs, GLOBAL) {
 
     /*
     **  Thenable -- Embeddable Minimum Strictly-Compliant Promises/A+ 1.1.1 Thenable
-    **  Copyright (c) 2013-2015 Ralf S. Engelschall <http://engelschall.com>
+    **  Copyright (c) 2013-2016 Ralf S. Engelschall <http://engelschall.com>
     **  Licensed under The MIT License <http://opensource.org/licenses/MIT>
     **  Source-Code distributed on <http://github.com/rse/thenable>
     */
@@ -249,43 +279,6 @@ ComponentJS.plugin("testdrive", function (_cs, $cs, GLOBAL) {
                 executor.call(this, this.fulfill.bind(this), this.reject.bind(this));
         };
 
-        /*  promise API methods  */
-        api.prototype = {
-            /*  promise resolving methods  */
-            fulfill: function (value) { return deliver(this, STATE_FULFILLED, "fulfillValue", value); },
-            reject:  function (value) { return deliver(this, STATE_REJECTED,  "rejectReason", value); },
-
-            /*  "The then Method" [Promises/A+ 1.1, 1.2, 2.2]  */
-            then: function (onFulfilled, onRejected) {
-                var curr = this;
-                var next = new api();                                    /*  [Promises/A+ 2.2.7]  */
-                curr.onFulfilled.push(
-                    resolver(onFulfilled, next, "fulfill"));             /*  [Promises/A+ 2.2.2/2.2.6]  */
-                curr.onRejected.push(
-                    resolver(onRejected,  next, "reject" ));             /*  [Promises/A+ 2.2.3/2.2.6]  */
-                execute(curr);
-                return next.proxy;                                       /*  [Promises/A+ 2.2.7, 3.3]  */
-            }
-        };
-
-        /*  deliver an action  */
-        var deliver = function (curr, state, name, value) {
-            if (curr.state === STATE_PENDING) {
-                curr.state = state;                                      /*  [Promises/A+ 2.1.2.1, 2.1.3.1]  */
-                curr[name] = value;                                      /*  [Promises/A+ 2.1.2.2, 2.1.3.2]  */
-                execute(curr);
-            }
-            return curr;
-        };
-
-        /*  execute all handlers  */
-        var execute = function (curr) {
-            if (curr.state === STATE_FULFILLED)
-                execute_handlers(curr, "onFulfilled", curr.fulfillValue);
-            else if (curr.state === STATE_REJECTED)
-                execute_handlers(curr, "onRejected",  curr.rejectReason);
-        };
-
         /*  execute particular set of handlers  */
         var execute_handlers = function (curr, name, value) {
             /* global process: true */
@@ -313,21 +306,22 @@ ComponentJS.plugin("testdrive", function (_cs, $cs, GLOBAL) {
                 setTimeout(func, 0);
         };
 
-        /*  generate a resolver function  */
-        var resolver = function (cb, next, method) {
-            return function (value) {
-                if (typeof cb !== "function")                            /*  [Promises/A+ 2.2.1, 2.2.7.3, 2.2.7.4]  */
-                    next[method].call(next, value);                      /*  [Promises/A+ 2.2.7.3, 2.2.7.4]  */
-                else {
-                    var result;
-                    try { result = cb(value); }                          /*  [Promises/A+ 2.2.2.1, 2.2.3.1, 2.2.5, 3.2]  */
-                    catch (e) {
-                        next.reject(e);                                  /*  [Promises/A+ 2.2.7.2]  */
-                        return;
-                    }
-                    resolve(next, result);                               /*  [Promises/A+ 2.2.7.1]  */
-                }
-            };
+        /*  execute all handlers  */
+        var execute = function (curr) {
+            if (curr.state === STATE_FULFILLED)
+                execute_handlers(curr, "onFulfilled", curr.fulfillValue);
+            else if (curr.state === STATE_REJECTED)
+                execute_handlers(curr, "onRejected",  curr.rejectReason);
+        };
+
+        /*  deliver an action  */
+        var deliver = function (curr, state, name, value) {
+            if (curr.state === STATE_PENDING) {
+                curr.state = state;                                      /*  [Promises/A+ 2.1.2.1, 2.1.3.1]  */
+                curr[name] = value;                                      /*  [Promises/A+ 2.1.2.2, 2.1.3.2]  */
+                execute(curr);
+            }
+            return curr;
         };
 
         /*  "Promise Resolution Procedure"  */                           /*  [Promises/A+ 2.3]  */
@@ -383,6 +377,42 @@ ComponentJS.plugin("testdrive", function (_cs, $cs, GLOBAL) {
             promise.fulfill(x);                                          /*  [Promises/A+ 2.3.4, 2.3.3.4]  */
         };
 
+        /*  generate a resolver function  */
+        var resolver = function (cb, next, method) {
+            return function (value) {
+                if (typeof cb !== "function")                            /*  [Promises/A+ 2.2.1, 2.2.7.3, 2.2.7.4]  */
+                    next[method].call(next, value);                      /*  [Promises/A+ 2.2.7.3, 2.2.7.4]  */
+                else {
+                    var result;
+                    try { result = cb(value); }                          /*  [Promises/A+ 2.2.2.1, 2.2.3.1, 2.2.5, 3.2]  */
+                    catch (e) {
+                        next.reject(e);                                  /*  [Promises/A+ 2.2.7.2]  */
+                        return;
+                    }
+                    resolve(next, result);                               /*  [Promises/A+ 2.2.7.1]  */
+                }
+            };
+        };
+
+        /*  promise API methods  */
+        api.prototype = {
+            /*  promise resolving methods  */
+            fulfill: function (value) { return deliver(this, STATE_FULFILLED, "fulfillValue", value); },
+            reject:  function (value) { return deliver(this, STATE_REJECTED,  "rejectReason", value); },
+
+            /*  "The then Method" [Promises/A+ 1.1, 1.2, 2.2]  */
+            then: function (onFulfilled, onRejected) {
+                var curr = this;
+                var next = new api();                                    /*  [Promises/A+ 2.2.7]  */
+                curr.onFulfilled.push(
+                    resolver(onFulfilled, next, "fulfill"));             /*  [Promises/A+ 2.2.2/2.2.6]  */
+                curr.onRejected.push(
+                    resolver(onRejected,  next, "reject" ));             /*  [Promises/A+ 2.2.3/2.2.6]  */
+                execute(curr);
+                return next.proxy;                                       /*  [Promises/A+ 2.2.7, 3.3]  */
+            }
+        };
+
         /*  export API  */
         return api;
     }));
@@ -390,36 +420,6 @@ ComponentJS.plugin("testdrive", function (_cs, $cs, GLOBAL) {
         /* --- END VERBATIM EMBEDDING ---- */
         return module.exports;
     })();
-
-
-    /*  internal store of usecases  */
-    var usecase = {};
-
-    /*  global API function: define/undefine a usecase  */
-    $cs.usecase = function () {
-        /*  determine parameters  */
-        var params = $cs.params("usecase", arguments, {
-            name:       { pos: 0, req: true, valid: "string"          },
-            desc:       { pos: 1, req: true, valid: "string"          },
-            conf:       {         def: {},   valid: "object"          },
-            func:       { pos: 2, req: true, valid: "(function|null)" }
-        });
-
-        /*  remember or delete usecase  */
-        if (params.func === null)
-            delete usecase[params.name];
-        else if (_cs.isdefined(usecase[params.name]))
-            throw _cs.exception("usecase", "usecase of name \"" + params.name + "\" already defined");
-        else {
-            usecase[params.name] = {
-                desc: params.desc,
-                conf: params.conf,
-                func: params.func
-            };
-        }
-
-        return;
-    };
 
 
     /*  global API function: execute a usecase  */
@@ -542,6 +542,50 @@ ComponentJS.plugin("testdrive", function (_cs, $cs, GLOBAL) {
     /*  list of currently awaited scenarios  */
     var awaited = [];
 
+    /*  a situation change occurred...  */
+    var changeOccured = function (comp, state, direction) {
+        var i;
+
+        /*  if a component was created, refresh all component lookups
+            which previously resolved to the "none" component, in the hope
+            they now resolve to the new component  */
+        if (_cs.states.length <= 1)
+            throw _cs.exception("await(internal)", "no user-defined component states");
+        if (state === _cs.states[1].state && direction === "enter")
+            for (i = 0; i < awaited.length; i++)
+                if (awaited[i].comp === _cs.none)
+                    awaited[i].comp = $cs(awaited[i].path);
+
+        /*  iterate over all awaiting situations...  */
+        for (i = 0; typeof awaited[i] !== "undefined"; ) {
+            if (   awaited[i].comp      === comp
+                && awaited[i].state     === state
+                && awaited[i].direction === direction) {
+
+                /*  asynchronously fulfill all promises and remove entry from awaited situations  */
+                for (var j = 0; j < awaited[i].promises.length; j++) {
+                    (function (promise, comp) {
+                        /* global setTimeout: false */
+                        setTimeout(_cs.hook("ComponentJS:settimeout:func", "pass", function () {
+                            promise.fulfill(comp);
+                        }), 0);
+                    })(awaited[i].promises[j], comp);
+                }
+                awaited.splice(i, 1);
+            }
+            else
+                i++;
+        }
+
+        /* if a component was destroyed, it will soon no longer be
+           attached to the component tree, so change its lookup back to
+           "none" in all remaining awaiting situations  */
+        if (state === _cs.states[1].state && direction === "leave")
+            for (i = 0; i < awaited.length; i++)
+                if (awaited[i].comp === comp)
+                    awaited[i].comp = _cs.none;
+    };
+
     /*  global API function: await a particular state to occur  */
     $cs.await = function (path, state, direction) {
         /*  determine parameters  */
@@ -592,50 +636,6 @@ ComponentJS.plugin("testdrive", function (_cs, $cs, GLOBAL) {
 
         /*  return (proxied) promise  */
         return promise.proxy;
-    };
-
-    /*  a situation change occurred...  */
-    var changeOccured = function (comp, state, direction) {
-        var i;
-
-        /*  if a component was created, refresh all component lookups
-            which previously resolved to the "none" component, in the hope
-            they now resolve to the new component  */
-        if (_cs.states.length <= 1)
-            throw _cs.exception("await(internal)", "no user-defined component states");
-        if (state === _cs.states[1].state && direction === "enter")
-            for (i = 0; i < awaited.length; i++)
-                if (awaited[i].comp === _cs.none)
-                    awaited[i].comp = $cs(awaited[i].path);
-
-        /*  iterate over all awaiting situations...  */
-        for (i = 0; typeof awaited[i] !== "undefined"; ) {
-            if (   awaited[i].comp      === comp
-                && awaited[i].state     === state
-                && awaited[i].direction === direction) {
-
-                /*  asynchronously fulfill all promises and remove entry from awaited situations  */
-                for (var j = 0; j < awaited[i].promises.length; j++) {
-                    (function (promise, comp) {
-                        /* global setTimeout: false */
-                        setTimeout(_cs.hook("ComponentJS:settimeout:func", "pass", function () {
-                            promise.fulfill(comp);
-                        }), 0);
-                    })(awaited[i].promises[j], comp);
-                }
-                awaited.splice(i, 1);
-            }
-            else
-                i++;
-        }
-
-        /* if a component was destroyed, it will soon no longer be
-           attached to the component tree, so change its lookup back to
-           "none" in all remaining awaiting situations  */
-        if (state === _cs.states[1].state && direction === "leave")
-            for (i = 0; i < awaited.length; i++)
-                if (awaited[i].comp === comp)
-                    awaited[i].comp = _cs.none;
     };
 
     /*  hook into the core functionality  */

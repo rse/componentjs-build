@@ -44,6 +44,8 @@
         "component.plugin.testdrive.js",
         "component.plugin.testdrive.min.js",
         "component.plugin.values.js",
-        "component.plugin.values.min.js"
+        "component.plugin.values.min.js",
+        "component.plugin.vue.js",
+        "component.plugin.vue.min.js"
     ]
 }

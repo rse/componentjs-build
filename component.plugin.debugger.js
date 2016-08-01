@@ -229,6 +229,12 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
                     "color: #f0f0f0;" +
                     "text-align: center;" +
                 "}" +
+                ".dbg .filter input {" +
+                    "width: 100%;" +
+                    "background: #eeeeee;" +
+                    "border: none;" +
+                    "padding: 2px 2px 3px 52px;" +
+                "}" +
                 ".dbg .status .text {" +
                     "position: relative;" +
                     "top: 3px;" +
@@ -240,7 +246,7 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
                     "height: 50%;" +
                     "background-color: #ffffff;" +
                     "color: #000000;" +
-                    "overflow: scroll;" +
+                    "overflow-y: scroll;" +
                     "font-size: 9pt;" +
                 "}" +
                 ".dbg .console .text {" +
@@ -323,7 +329,8 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
                     "color: #909090;" +
                     "font-style: italic;" +
                 "}" +
-                ".dbg .plus, .dbg .reset, .dbg .minus {" +
+                ".dbg .plus, .dbg .reset, .dbg .minus, .dbg .exporter {" +
+                    "cursor: pointer; " +
                     "position: absolute; " +
                     "top: 4px; " +
                     "width: 10px; " +
@@ -355,24 +362,9 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
                     "right: 140px; " +
                 "}" +
                 ".dbg .exporter {" +
-                    "position: absolute; " +
-                    "top: 4px; " +
                     "right: 20px; " +
-                    "padding: 2px 8px 2px 8px; " +
-                    "border-top: 1px solid #777777;" +
-                    "border-left: 1px solid #777777;" +
-                    "border-right: 1px solid #555555;" +
-                    "border-bottom: 1px solid #555555;" +
-                    "background: #666666;" +
-                    "background: -moz-linear-gradient(top,  #666666 0%, #333333 49%, #222222 51%, #000000 100%);" +
-                    "background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#666666), color-stop(49%,#333333), color-stop(51%,#222222), color-stop(100%,#000000));" +
-                    "background: -webkit-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
-                    "background: -o-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
-                    "background: -ms-linear-gradient(top,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
-                    "background: linear-gradient(to bottom,  #666666 0%,#333333 49%,#222222 51%,#000000 100%);" +
-                    "filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#666666', endColorstr='#000000',GradientType=0 );" +
-                    "color: #c0c0c0;" +
-                    "z-index: 100;" +
+                    "font-weight: normal; " +
+                    "width: auto;" +
                 "}" +
             "</style>" +
             "<div class=\"dbg\">" +
@@ -384,6 +376,7 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
                 "<div class=\"minus\">-</div>" +
                 "<div class=\"exporter\">Export</div>" +
                 "<div class=\"status\"><div class=\"text\"></div></div>" +
+                "<div class=\"filter\"><input type=\"text\" placeholder=\"Filter messages - RegExp enabled\"></div>" +
                 "<div class=\"console\"><div class=\"text\"></div></div>" +
                 "<div class=\"infobox\"></div>" +
             "</div>"
@@ -393,12 +386,15 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
 
     /*  debugger console log  */
     _cs.dbg_logline = 0;
-    _cs.dbg_logbook = "";
+    _cs.dbg_logbook = [];
+    /*  debugger filter value  */
+    _cs.dbg_filter = "";
 
     /*  log message to debugger console  */
     _cs.dbg_log = function (msg) {
         if (_cs.dbg === null)
             return;
+        var org = msg;
         msg = msg
             .replace("&", "&amp;")
             .replace("<", "&lt;")
@@ -416,15 +412,37 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
             "<span class=\"method\">$2</span>" +
             "<span class=\"arrow\">$3</span>"
         );
-        _cs.dbg_logbook =
-            "<table class=\"line\">" +
-                "<tr>" +
-                    "<td class=\"num\">" + _cs.dbg_logline + ".</td>" +
-                    "<td class=\"msg\">" + msg + "</td>" +
-                "</tr>" +
-            "</table>" + _cs.dbg_logbook;
+        _cs.dbg_logbook.push({ logline: _cs.dbg_logline, msg: msg, originalMsg: org });
         _cs.dbg_state_invalidate("console");
         _cs.dbg_update();
+    };
+
+    _cs.dbg_logbook_render = function () {
+        var html = "";
+        var match = /^\/(.*)\/(.*)?$/gm.exec(_cs.dbg_filter);
+        var pattern = _cs.dbg_filter;
+        var opts = "";
+        if (match && match.length >= 2) {
+            pattern = match[1];
+        }
+        if (match && match.length === 3) {
+            opts = match[2];
+        }
+        var filterRegExp = new RegExp(pattern, opts);
+
+        for (var id in _cs.dbg_logbook)
+            if (_cs.isown(_cs.dbg_logbook, id)) {
+                var logbook = _cs.dbg_logbook[id];
+                if (filterRegExp.exec(logbook.originalMsg))
+                    html =
+                        "<table class=\"line\">" +
+                        "<tr>" +
+                        "<td class=\"num\">" + logbook.logline + ".</td>" +
+                        "<td class=\"msg\">" + logbook.msg + "</td>" +
+                        "</tr>" +
+                        "</table>" + html;
+            }
+        return html;
     };
 
 
@@ -433,16 +451,28 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
         var name, method, id;
         var html = "";
 
+        var arrayToSortedCodeElements =  function (arr) {
+            arr.sort();
+            var values = "";
+            for (id in arr)
+                values += "<code>" + arr[id] + "</code>, ";
+            values = values.replace(/, $/, "");
+            if (values === "")
+                values = "<span class=\"none\">none</span>";
+            return values;
+        };
+
+        var generateHTMLTableRow = function (label, value) {
+            return "<tr>" +
+                "<td class=\"label\">" + label + "</td>" +
+                "<td class=\"value\">" + value + "</td>" +
+                "</tr>";
+        };
+
         /*  name and path  */
         name = comp.name().replace(/</, "&lt;").replace(/>/, "&gt;");
-        html += "<tr>" +
-            "<td class=\"label\">Name:</td>" +
-            "<td class=\"value\"><b>" + name + "</b></td>" +
-            "</tr>";
-        html += "<tr>" +
-            "<td class=\"label\">Path:</td>" +
-            "<td class=\"value\"><code>" + comp.path("/") + "</code></td>" +
-            "</tr>";
+        html += generateHTMLTableRow("Name:", "<b>" + name + "</b>");
+        html += generateHTMLTableRow("Path:", "<code>" + comp.path("/") + "</code>");
 
         /*  role markers  */
         var markers = "";
@@ -453,16 +483,11 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
         markers = markers.replace(/, $/, "");
         if (markers === "")
             markers = "<span class=\"none\">none</span>";
-        html += "<tr>" +
-            "<td class=\"label\">Markers:</td>" +
-            "<td class=\"value\">" + markers + "</td>" +
-            "</tr>";
+        html += generateHTMLTableRow("Markers:", markers);
 
         /*  state and guards  */
-        html += "<tr>" +
-            "<td class=\"label\">State:</td>" +
-            "<td class=\"value\"><code>" + comp.state() + "</code></td>" +
-            "</tr>";
+        html += generateHTMLTableRow("State:", "<code>" + comp.state() + "</code>");
+
         var guards = "";
         for (method in comp.__state_guards)
             if (_cs.isown(comp.__state_guards, method))
@@ -472,10 +497,7 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
         guards = guards.replace(/, $/, "");
         if (guards === "")
             guards = "<span class=\"none\">none</span>";
-        html += "<tr>" +
-            "<td class=\"label\">Guards:</td>" +
-            "<td class=\"value\">" + guards + "</td>" +
-            "</tr>";
+        html += generateHTMLTableRow("Guards:", guards);
 
         /*  spools  */
         var spools = "";
@@ -487,93 +509,49 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
         spools = spools.replace(/, $/, "");
         if (spools === "")
             spools = "<span class=\"none\">none</span>";
-        html += "<tr>" +
-            "<td class=\"label\">Spools:</td>" +
-            "<td class=\"value\">" + spools + "</td>" +
-            "</tr>";
+        html += generateHTMLTableRow("Spools:", spools);
 
         /*  model values  */
-        var values = "";
+        var modelNames = [];
         for (id in comp.__config)
             if (_cs.isown(comp.__config, id))
                 if (id.match(/^ComponentJS:property:ComponentJS:model/))
                     if (typeof comp.__config[id] === "object")
                         for (name in comp.__config[id].data)
                             if (_cs.isown(comp.__config[id].data, name))
-                                values += "<code>" + name + "</code>, ";
-        values = values.replace(/, $/, "");
-        if (values === "")
-            values = "<span class=\"none\">none</span>";
-        html += "<tr>" +
-            "<td class=\"label\">Model Values:</td>" +
-            "<td class=\"value\">" + values + "</td>" +
-            "</tr>";
+                                modelNames.push(name);
+        html += generateHTMLTableRow("Model Values:", arrayToSortedCodeElements(modelNames));
 
         /*  sockets  */
-        var sockets = "";
+        var socketNames = [];
         for (id in comp.__config)
             if (_cs.isown(comp.__config, id))
                 if (id.match(/^ComponentJS:property:ComponentJS:socket:/))
                     if (typeof comp.__config[id] === "object")
-                        sockets += "<code>" + id
-                            .replace(/^ComponentJS:property:ComponentJS:socket:/, "") + "</code>, ";
-        sockets = sockets.replace(/, $/, "");
-        if (sockets === "")
-            sockets = "<span class=\"none\">none</span>";
-        html += "<tr>" +
-            "<td class=\"label\">Sockets:</td>" +
-            "<td class=\"value\">" + sockets + "</td>" +
-            "</tr>";
+                        socketNames.push(id
+                            .replace(/^ComponentJS:property:ComponentJS:socket:/, ""));
+        html += generateHTMLTableRow("Sockets:", arrayToSortedCodeElements(socketNames));
 
-        /*  event subscriptions  */
-        var subscriptions = "";
+        /*  event subscriptions, service registrations and hooks  */
+        var subscriptionNames = [];
+        var registrationNames = [];
+        var hookNames = [];
         for (id in comp.__subscription)
-            if (_cs.isown(comp.__subscription, id))
-                if (typeof comp.__subscription[id] === "object")
-                    if (typeof comp.__subscription[id].name === "string")
-                        if (!comp.__subscription[id].name.match(/^ComponentJS:/))
-                            subscriptions += "<code>" + comp.__subscription[id].name + "</code>, ";
-        subscriptions = subscriptions.replace(/, $/, "");
-        if (subscriptions === "")
-            subscriptions = "<span class=\"none\">none</span>";
-        html += "<tr>" +
-            "<td class=\"label\">Event Subscriptions:</td>" +
-            "<td class=\"value\">" + subscriptions + "</td>" +
-            "</tr>";
-
-        /*  service registrations  */
-        var registrations = "";
-        for (id in comp.__subscription)
-            if (_cs.isown(comp.__subscription, id))
-                if (typeof comp.__subscription[id] === "object")
-                    if (typeof comp.__subscription[id].name === "string")
-                        if (comp.__subscription[id].name.match(/^ComponentJS:service:/))
-                            registrations += "<code>" + comp.__subscription[id].name
-                                .replace(/^ComponentJS:service:/, "") + "</code>, ";
-        registrations = registrations.replace(/, $/, "");
-        if (registrations === "")
-            registrations = "<span class=\"none\">none</span>";
-        html += "<tr>" +
-            "<td class=\"label\">Service Registrations:</td>" +
-            "<td class=\"value\">" + registrations + "</td>" +
-            "</tr>";
-
-        /*  hooks  */
-        var hooks = "";
-        for (id in comp.__subscription)
-            if (_cs.isown(comp.__subscription, id))
-                if (typeof comp.__subscription[id] === "object")
-                    if (typeof comp.__subscription[id].name === "string")
-                        if (comp.__subscription[id].name.match(/^ComponentJS:hook:/))
-                            hooks += "<code>" + comp.__subscription[id].name
-                                .replace(/^ComponentJS:hook:/, "") + "</code>, ";
-        hooks = hooks.replace(/, $/, "");
-        if (hooks === "")
-            hooks = "<span class=\"none\">none</span>";
-        html += "<tr>" +
-            "<td class=\"label\">Hook Points:</td>" +
-            "<td class=\"value\">" + hooks + "</td>" +
-            "</tr>";
+            if (   _cs.isown(comp.__subscription, id)
+                && typeof comp.__subscription[id] === "object"
+                && typeof comp.__subscription[id].name === "string") {
+                if (!comp.__subscription[id].name.match(/^ComponentJS:/))
+                    subscriptionNames.push(comp.__subscription[id].name);
+                if (comp.__subscription[id].name.match(/^ComponentJS:service:/))
+                    registrationNames.push(comp.__subscription[id].name
+                        .replace(/^ComponentJS:service:/, ""));
+                if (comp.__subscription[id].name.match(/^ComponentJS:hook:/))
+                    hookNames.push(comp.__subscription[id].name
+                        .replace(/^ComponentJS:hook:/, "") );
+            }
+        html += generateHTMLTableRow("Event Subscriptions:", arrayToSortedCodeElements(subscriptionNames));
+        html += generateHTMLTableRow("Service Registrations:", arrayToSortedCodeElements(registrationNames));
+        html += generateHTMLTableRow("Hook Points:", arrayToSortedCodeElements(hookNames));
 
         /*  finish and return table  */
         html = "<table>" + html + "</table>";
@@ -814,6 +792,26 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
                                 _cs.dbg_reposition();
                             }
                         });
+
+                        /*  filter handling  */
+                        _cs.dbg_filter_timeout = null;
+                        _cs.jq(".dbg .filter input", _cs.dbg.document).bind("keydown", function (ev) {
+                            ev.stopPropagation();
+                        });
+                        _cs.jq(".dbg .filter input", _cs.dbg.document).bind("keyup", function (ev) {
+                            if (_cs.dbg_filter_timeout) {
+                                GLOBAL.clearTimeout(_cs.dbg_filter_timeout);
+                                _cs.dbg_filter_timeout = null;
+                            }
+                            _cs.dbg_filter_timeout = GLOBAL.setTimeout(function () {
+                                _cs.dbg_filter = ev.target.value;
+                                _cs.dbg_update_once();
+                                if (_cs.dbg_filter_timeout) {
+                                    GLOBAL.clearTimeout(_cs.dbg_filter_timeout);
+                                    _cs.dbg_filter_timeout = null;
+                                }
+                            }, 1000);
+                        });
                     });
                 }), 500);
             }
@@ -857,9 +855,9 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
 
         /*  calculate viewer and console sizes based on grabber offset  */
         var h1 =      _cs.dbg_grabber_offset - _cs.jq(".dbg .header", _cs.dbg.document).height();
-        var h2 = vh - _cs.dbg_grabber_offset + _cs.jq(".dbg .status", _cs.dbg.document).height();
+        var h2 = vh - _cs.dbg_grabber_offset - _cs.jq(".dbg .status", _cs.dbg.document).height();
         _cs.jq(".dbg .viewer",  _cs.dbg.document).height(h1);
-        _cs.jq(".dbg .console", _cs.dbg.document).height(h2);
+        _cs.jq(".dbg .console", _cs.dbg.document).height(h2 - _cs.jq(".dbg .filter", _cs.dbg.document).height());
         _cs.jq(".dbg .infobox", _cs.dbg.document).height(h2);
         _cs.jq(".dbg .infobox", _cs.dbg.document).css("top",
             _cs.dbg_grabber_offset + _cs.jq(".dbg .status", _cs.dbg.document).height());
@@ -914,7 +912,7 @@ ComponentJS.plugin("debugger", function (_cs, $cs, GLOBAL) {
     _cs.dbg_update_once = function () {
         /*  update console information  */
         if (_cs.dbg_state_invalid.console) {
-            _cs.jq(".dbg .console .text", _cs.dbg.document).html(_cs.dbg_logbook);
+            _cs.jq(".dbg .console .text", _cs.dbg.document).html(_cs.dbg_logbook_render());
             _cs.jq(".dbg .console", _cs.dbg.document).scrollTop(0);
             _cs.dbg_state_invalid.console = true;
         }

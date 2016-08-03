@@ -1,6 +1,6 @@
 ComponentJS
 Application Programming Interface (API)
-1.4.0
+1.4.1
 ComponentJS
 
 API Management

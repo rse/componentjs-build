@@ -16,6 +16,7 @@
 
 /* global ComponentJS: false */
 /* global Vue: false */
+/* global Event: false */
 /* eslint no-unused-vars: 0 */
 /* jshint unused: false */
 
@@ -103,8 +104,9 @@ ComponentJS.plugin("vue", function (_cs, $cs, GLOBAL) {
                     var symbol = name.replace(/[^a-zA-Z0-9_$]+/g, "_");
                     if (symbol.match(/^event.+$/)) {
                         /*  ComponentJS event values are implemented as Vue methods  */
-                        params.options.methods[symbol] = function (ev) {
-                            $cs(self).value(name, symbol.match(/^eventRaw.+$/) ? ev : true);
+                        params.options.methods[symbol] = function (value) {
+                            $cs(self).value(name,
+                                (typeof value === "object" && value instanceof Event) ? true : value);
                         };
                     }
                     else {
@@ -165,17 +167,21 @@ ComponentJS.plugin("vue", function (_cs, $cs, GLOBAL) {
                 });
 
                 /*  automatically create ComponentJS sockets for all
-                    Vue-referenced DOM elements which are named sockets  */
-                for (var ref in vm.$refs) {
-                    (function (name, ref) {
-                        if (name.match(/^socket.*/)) {
-                            var id = $cs(self).socket({
-                                name:  name === "socket" ? "default" : name,
-                                ctx:   ref
-                            });
-                            vm.__ComponentJS.sockets.push(id);
-                        }
-                    })(ref, vm.$refs[ref]);
+                    DOM elements which are tagged as sockets  */
+                var elements = vm.$el.querySelectorAll("*[data-socket]");
+                for (var i = 0; i < elements.length; i++) {
+                    var socketName  = elements[i].getAttribute("data-socket");
+                    var socketScope = "";
+                    var m = socketName.match(/^(.*)@(.+)$/);
+                    if (m !== null) {
+                        socketName  = m[1];
+                        socketScope = m[2];
+                    }
+                    var opts = { ctx: elements[i] };
+                    if (socketName  !== "") opts.name  = socketName;
+                    if (socketScope !== "") opts.scope = socketScope;
+                    var id = $cs(self).socket(opts);
+                    vm.__ComponentJS.sockets.push(id);
                 }
 
                 /*  optionally spool Vue instance destruction  */

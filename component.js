@@ -90,8 +90,8 @@
     $cs.version = {
         major: 1,
         minor: 4,
-        micro: 2,
-        date:  20160813
+        micro: 3,
+        date:  20160816
     };
 
 
@@ -2593,7 +2593,7 @@
 
                             /*  verbosity  */
                             if (!params.silent)
-                                $cs.debug(1, "event: " + comp.path("/") + ": dispatch on " + state);
+                                $cs.debug(1, "event: " + comp.path("/") + ": dispatch " + ev.name() + " to subscriber on " + state);
 
                             /*  further annotate event object  */
                             ev.state(state);

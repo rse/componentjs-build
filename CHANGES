@@ -1,6 +1,6 @@
 
     ComponentJS -- Component System for JavaScript <http://componentjs.com>
-    Copyright (c) 2009-2016 Ralf S. Engelschall <http://engelschall.com>
+    Copyright (c) 2009-2017 Ralf S. Engelschall <http://engelschall.com>
 
     Changes
     =======
@@ -9,6 +9,20 @@
     more fine-granular commit-based change information,
     have a look at the version control history under
     https://github.com/rse/componentjs/commits/master
+
+    Major changes between ComponentJS 1.4.3 and 1.4.4
+    -------------------------------------------------
+
+    o IMPROVEMENT:
+      Allow the Vue plugin method vue() method to accept either
+      option.template or option.render to be more flexible.
+
+    o IMPROVEMENT:
+      Improve TypeScript definition of API.
+
+    o BUGFIX:
+      Allow the automatic socket generation for all "data-socket"
+      attributes in the Vue plugin to also handle root elements.
 
     Major changes between ComponentJS 1.4.2 and 1.4.3
     -------------------------------------------------

@@ -1,6 +1,6 @@
 /*
 **  ComponentJS -- Component System for JavaScript <http://componentjs.com>
-**  Copyright (c) 2009-2016 Ralf S. Engelschall <http://engelschall.com>
+**  Copyright (c) 2009-2017 Ralf S. Engelschall <http://engelschall.com>
 **
 **  This Source Code Form is subject to the terms of the Mozilla Public
 **  License (MPL), version 2.0. If a copy of the MPL was not distributed
@@ -104,20 +104,23 @@ ComponentJS.plugin("vue", function (_cs, $cs, GLOBAL) {
                 });
 
                 /*  prepare the HTML mask template  */
-                if (typeof params.options.template === "undefined")
-                    throw _cs.exception("vue", "missing mandatory Vue template");
-                if (isjQuery(params.options.template))
-                    params.options.template = params.options.template.get(0);
-                if (typeof params.options.template === "string") {
-                    for (;;) {
-                        var reduced = params.options.template.replace(/^\s*<!--.*?-->\s*/, "");
-                        if (params.options.template !== reduced)
-                            params.options.template = reduced;
-                        else
-                            break;
+                if (   typeof params.options.template === "undefined"
+                    && typeof params.options.render   === "undefined")
+                    throw _cs.exception("vue", "missing mandatory Vue options \"template\" or \"render\"");
+                if (typeof params.options.template !== "undefined") {
+                    if (isjQuery(params.options.template))
+                        params.options.template = params.options.template.get(0);
+                    if (typeof params.options.template === "string") {
+                        for (;;) {
+                            var reduced = params.options.template.replace(/^\s*<!--.*?-->\s*/, "");
+                            if (params.options.template !== reduced)
+                                params.options.template = reduced;
+                            else
+                                break;
+                        }
+                        params.options.template = params.options.template
+                            .replace(/^\s+/, "").replace(/\s+$/, "");
                     }
-                    params.options.template = params.options.template
-                        .replace(/^\s+/, "").replace(/\s+$/, "");
                 }
 
                 /*  iterate over all models towards the root component and find all model values  */
@@ -238,21 +241,25 @@ ComponentJS.plugin("vue", function (_cs, $cs, GLOBAL) {
 
                 /*  automatically create ComponentJS sockets for all
                     DOM elements which are tagged as sockets  */
-                var elements = vm.$el.querySelectorAll("*[data-socket]");
-                for (var i = 0; i < elements.length; i++) {
-                    var socketName  = elements[i].getAttribute("data-socket");
+                var createSocketForElement = function (element) {
+                    var socketName  = element.getAttribute("data-socket");
                     var socketScope = "";
                     var m = socketName.match(/^(.*)@(.+)$/);
                     if (m !== null) {
                         socketName  = m[1];
                         socketScope = m[2];
                     }
-                    var opts = { ctx: elements[i] };
+                    var opts = { ctx: element };
                     if (socketName  !== "") opts.name  = socketName;
                     if (socketScope !== "") opts.scope = socketScope;
                     var id = $cs(self).socket(opts);
                     vm.__ComponentJS.sockets.push(id);
-                }
+                };
+                if (vm.$el.hasAttribute("data-socket"))
+                    createSocketForElement(vm.$el);
+                var elements = vm.$el.querySelectorAll("*[data-socket]");
+                for (var i = 0; i < elements.length; i++)
+                    createSocketForElement(elements[i]);
 
                 /*  optionally spool Vue instance destruction  */
                 if (params.spool !== null) {

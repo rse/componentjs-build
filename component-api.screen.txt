@@ -1,6 +1,6 @@
 ComponentJS
 Application Programming Interface (API)
-1.4.3
+1.4.4
 ComponentJS
 
 API Management
@@ -1170,6 +1170,18 @@ provide various getter/setter methods:
         this case subselector is ignored).
         cs.once("ul.list", "click", "li").then(function (ev) { ... })
 
+    Vue Data Binding
+
+    ComponentJS has optional support for bidirectional data binding with the
+    help of the vie plugin and the underlying VueJS rendering engine.
+      + ComponentJS.vue({ options: Object, spool: String }): Object
+        ComponentJS.vue(options: Object, spool: String): Object
+        Notice: requires ComponentJS plugin vue to be loaded!
+        Notice: requires external library VueJS to be loaded!
+        FIXME
+        /* open test-drive suite from within application */ if (cs.plugin
+        ("testdrive")) cs.suite();
+
     API Management
 
       + symbol
@@ -1289,5 +1301,9 @@ provide various getter/setter methods:
       + poll
       + sleep
       + once
+
+    Vue Data Binding
+
+      + vue
     ComponentJS
     Application Programming Interface (API)

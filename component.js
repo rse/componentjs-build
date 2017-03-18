@@ -7,7 +7,7 @@
 **  with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-(function (GLOBAL, EXPORTS, DEFINE) {
+(function (GLOBAL, MODULE, DEFINE) {
     /*
     **  GLOBAL LIBRARY NAMESPACING
     */
@@ -89,9 +89,9 @@
     /*  API version  */
     $cs.version = {
         major: 1,
-        minor: 4,
-        micro: 4,
-        date:  20170310
+        minor: 5,
+        micro: 0,
+        date:  20170318
     };
 
 
@@ -4738,21 +4738,20 @@
 
 
     /*  export our global API...  */
-    if (   (   typeof EXPORTS === "object"
+    if (   (   typeof MODULE === "object"
+            && typeof MODULE.exports !== "undefined"
             && typeof GLOBAL.ComponentJS_export === "undefined")
         || (   typeof GLOBAL.ComponentJS_export !== "undefined"
             && GLOBAL.ComponentJS_export === "CommonJS"        ))
-        /*  ...to scoped CommonJS environment  */
-        EXPORTS.ComponentJS = $cs;
+        /*  ...to CommonJS environment  */
+        MODULE.exports = $cs;
     else if (   (   typeof DEFINE === "function"
                  && typeof DEFINE.amd === "object"
                  && typeof GLOBAL.ComponentJS_export === "undefined")
              || (   typeof GLOBAL.ComponentJS_export !== "undefined"
                  && GLOBAL.ComponentJS_export === "AMD"             ))
-        /*  ...to scoped AMD environment  */
-        DEFINE("ComponentJS", function () {
-            return $cs;
-        });
+        /*  ...to AMD environment  */
+        DEFINE("ComponentJS", function () { return $cs; });
     else {
         /*  ...to regular global environment  */
         $cs.symbol("ComponentJS");
@@ -4797,7 +4796,7 @@
 })(
     /* global window:false */
     /* global global:false */
-    /* global exports:false */
+    /* global module:false */
     /* global define:false */
     ( typeof window !== "undefined"
         ? window
@@ -4806,8 +4805,8 @@
             : ( typeof this !== "undefined"
                 ? this
                 : {} ))),
-    ( typeof exports === "object"
-        ? exports
+    ( typeof module === "object"
+        ? module
         : undefined ),
     ( typeof define === "function"
         ? define

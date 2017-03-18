@@ -20,5 +20,5 @@ or download only the main file from the repository:
     $ curl -O https://raw.github.com/rse/componentjs-build/master/component.js
 
     # install a particular version
-    $ curl -O https://raw.github.com/rse/componentjs-build/1.3.0/component.js
+    $ curl -O https://raw.github.com/rse/componentjs-build/1.5.0/component.js
 

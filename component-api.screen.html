@@ -391,7 +391,7 @@
             <div id="head1" class="head1">ComponentJS</div>
             <div id="head2" class="head2">Application Programming Interface (API)</div>
         </div>
-        <div id="the_version" class="the_version">1.4.4</div>
+        <div id="the_version" class="the_version">1.5.0</div>
         <div class="spec">
             <img class="logo" src="http://componentjs.com/ComponentJS-logo.svg" alt="ComponentJS"/>
             <h2><a name="api_management">API Management</a></h2>
@@ -2087,29 +2087,86 @@ return $cs.promise(function (fulfill, reject) {
 <h2><a name="vue_data_binding">Vue Data Binding</a></h2>
 <div class="intro">
 ComponentJS has optional support for bidirectional data binding
-with the help of the <code>vie</code> plugin and the underlying VueJS rendering engine.
+with the help of the <code>vue</code> plugin and the underlying Vue rendering engine.
+The <code>vue</code> plugin provides the following distinct features:<p/>
+<ul><li>It provides a new ComponentJS API method <span class="M"><a href="#vue()">vue()</a></span> for rendering
+  a view mask into a Vue instance (see below).</li></ul><p/>
+<ul><li>It provides a new ComponentJS API method <span class="M"><a href="#unvue()">unvue()</a></span> which accepts a
+  Vue instance (as previously created by the <span class="M"><a href="#vue()">vue()</a></span> method) and unplugs
+  and destroys it (see below).</li></ul><p/>
+<ul><li>For all generated Vue instances, it generates for all ComponentJS model
+  values (from the current component, usually a view component,
+  up to the root component) Vue computed getter/setter fields
+  (<span class="F">name</span>) which perform true bi-directional data-binding. They can
+  be used like e.g. <code>v-bind:</code><span class="F">attr</span><code>="</code><span class="F">name</span><code>"</code> in the view mask. The
+  ComponentJS model values (by convention) named <code>eventXXX</code> are
+  treated specially: Vue methods of the same name are generated
+  for them, which can be used like e.g. <code>v-on:click="eventXXX"</code> (for
+  passing a Vue <code>Event</code> instance, which is then converted into <code>true</code>)
+  or <code>v-on:click="eventXXX(</code><span class="F">arg</span><code>)"</code> (for receiving an arbitrary
+  single argument <span class="F">arg</span>) in the view mask. The names of ComponentJS
+  model values are converted into valid Vue symbols by replacing
+  all <code>[^a-zA-Z0-9_$]</code> characters with <code>"_"</code> characters. Hence it
+  is recommended to use camel-case ComponentJS model values like
+  <code>paramFooBar</code>, <code>commandFooBar</code>, <code>stateFooBar</code>, <code>dataFooBar</code>, and
+  <code>eventFooBar</code> only.</li></ul><p/>
+<ul><li>For all generated Vue instances, it generates trampoline methods for all
+  methods named <code>utilXXX</code> in the backing object of the ComponentJS
+  (view) component. They can be used like <code>v-if="utilXXX(...)"</code> in the
+  view masks for complex checks or calculations, if really necessary.</li></ul><p/>
+<ul><li>For all generated Vue instances, it creates ComponentJS sockets for all
+  DOM elements in the Vue template which are tagged as sockets. For
+  this, all HTML elements with <code>data-socket="</code>[<span class="F">name</span>][<code>@</code><span class="F">scope</span>]<code>"</code>
+  lead to a ComponentJS socket with <span class="F">name</span> and <span class="F">scope</span>. The default
+  <span class="F">name</span> is <code>default</code>. The default <span class="F">scope</span> is no scope at all.
+  The <code>ctx</code> parameter of ComponentJS <span class="M"><a href="#socket()">socket()</a></span> is the DOM element
+  itself.</li></ul><p/>
+<ul><li>It intercepts the ComponentJS <span class="M"><a href="#socket()">socket()</a></span> method and makes its <span class="F">plug</span>
+  and <span class="F">unplug</span> parameters optional instead of required. The provided
+  fallback <span class="F">plug</span> and <span class="F">unplug</span> functions now accept Vue (and
+  jQuery) instances as returned by the ComponentJS API method <span class="M"><a href="#vue()">vue()</a></span>.
+  This plugin requires Vue, but jQuery is not directly required.</li></ul><p/>
+The extra ComponentJS API methods are:
 </div><ul>
 <li><div class="synopsis">ComponentJS.<span class="M"><a name="vue">vue</a></span>({
  <span class="F">options</span><span class="meta">:</span> <span class="T">Object</span>,
- <span class="F">spool</span><span class="meta">:</span> <span class="T">String</span>
+ <span class="meta">[</span><span class="F">spool</span><span class="meta">:</span> <span class="T">String</span><span class="meta">]</span>
  })<span class="meta">:</span> <span class="T">Object</span></div><div class="synopsis">
  ComponentJS.<span class="M">vue</span>(<span class="P">options</span><span class="meta">:</span> <span class="T">Object</span>,
- <span class="P">spool</span><span class="meta">:</span> <span class="T">String</span>)<span class="meta">:</span> <span class="T">Object</span>
+ <span class="meta">[</span><span class="P">spool</span><span class="meta">:</span> <span class="T">String</span><span class="meta">]</span>)<span class="meta">:</span> <span class="T">Object</span>
 </div><div class="notice">  Notice: requires ComponentJS plugin <code>vue</code> to be loaded!
 
 </div><div class="notice">
   Notice: requires external library VueJS to be loaded!
 
 </div><div class="desc">
- <span class="FIXME">FIXME</span>
+ This method accepts a required Vue <span class="F">options</span> parameter (also accepted
+ as a first positional parameter) and an optional ComponentJS <span class="F">spool</span>
+ parameter (also accepted as a second positional parameter). The
+ <span class="F">options</span> parameter is required to have either a Vue <code>template</code>
+ field (with the view mask as either a string, a DOM fragment or a
+ jQuery DOM fragment) or a Vue <code>render</code> field (with a compiled Vue
+ render function). The result is a rendered but unmounted Vue model instance
+ which can be later plugged into a ComponentJS socket with <span class="M"><a href="#plug()">plug()</a></span>
+ and/or further manipulated (with jQuery) through its Vue <code>$el</code> field.
 
-</div><div class="example">/*  open test-drive suite from within application  */
-if (cs.plugin("testdrive"))
-    cs.suite();
-</div><div class="example"><!-
 </div></li></ul>
 <ul>
-</ul>
+<li><div class="synopsis">ComponentJS.<span class="M"><a name="unvue">unvue</a></span>({
+ <span class="F">vm</span><span class="meta">:</span> <span class="T">Object</span>
+ })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
+ ComponentJS.<span class="M">unvue</span>(<span class="P">vm</span><span class="meta">:</span> <span class="T">Object</span>)<span class="meta">:</span> <span class="T">Void</span>
+</div><div class="notice">  Notice: requires ComponentJS plugin <code>vue</code> to be loaded!
+
+</div><div class="notice">
+  Notice: requires external library VueJS to be loaded!
+
+</div><div class="desc">
+ Unplug and destroy the Vue model instance. Usually this is not called
+ directly, as one should use the <span class="F">spool</span> parameter of <span class="M"><a href="#vue()">vue()</a></span> to
+ automatically unplug and destroy the Vue model instance.
+
+</div></li></ul>
 
         </div>
         <div class="navi">
@@ -2166,7 +2223,7 @@ if (cs.plugin("testdrive"))
 <li><a href="#suite">suite</a></li><li><a href="#promise">promise</a></li><li><a href="#usecase">usecase</a></li><li><a href="#drive">drive</a></li><li><a href="#ensure">ensure</a></li><li><a href="#await">await</a></li><li><a href="#poll">poll</a></li><li><a href="#sleep">sleep</a></li><li><a href="#once">once</a></li></ul>
 <h2><a href="#vue_data_binding">Vue Data Binding</a></h2>
 <ul>
-<li><a href="#vue">vue</a></li></ul>
+<li><a href="#vue">vue</a></li><li><a href="#unvue">unvue</a></li></ul>
 
         </div>
         <div id="foot" class="foot">

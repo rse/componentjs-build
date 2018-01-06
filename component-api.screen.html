@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
     ComponentJS - Component System for JavaScript <http://componentjs.com>
-    Copyright (c) 2009-2017 Ralf S. Engelschall <http://engelschall.com>
+    Copyright (c) 2009-2018 Ralf S. Engelschall <http://engelschall.com>
 
     This Source Code Form is subject to the terms of the Mozilla Public
     License (MPL), version 2.0. If a copy of the MPL was not distributed
@@ -1114,6 +1114,36 @@ $.get(url2, function (data) {
     cs(self).guard("render", -1)
 });
 </div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="await">await</a></span>({
+ <span class="F">state</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="F">func</span><span class="meta">:</span> <span class="T">Function</span>,
+ <span class="F">direction</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="F">spool</span><span class="meta">:</span> <span class="T">String</span>
+ })<span class="meta">:</span> <span class="T">Number</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">await</span>(<span class="P">state</span><span class="meta">:</span> <span class="T">String</span>,
+ <span class="P">func</span><span class="meta">:</span> <span class="T">Function</span>)<span class="meta">:</span> <span class="T">Number</span>
+</div><div class="desc"> Await once that component <span class="O">component</span> reaches <span class="F">state</span> while
+ the Component System goes in "<code>upward</code>" or "<code>downward</code>" <span class="F">direction</span>
+ during the state transition process.
+
+</div><div class="example">cs("/foo/bar/quux").await({
+    state:     "visible",
+    direction: "upward",
+    func:      function () { ... }
+})
+</div></li></ul>
+<ul>
+<li><div class="synopsis"><span class="O">component</span>.<span class="M"><a name="unawait">unawait</a></span>({ <span class="F">id</span><span class="meta">:</span> <span class="T">Number</span> })<span class="meta">:</span> <span class="T">Void</span></div><div class="synopsis">
+ <span class="O">component</span>.<span class="M">unawait</span>(<span class="P">id</span><span class="meta">:</span> <span class="T">Number</span>)<span class="meta">:</span> <span class="T">Void</span>
+</div><div class="desc"> Destroy the state awaiting request identified by <span class="F">id</span>, previously
+ created by a call to <span class="M"><a href="#await">await</a></span>(). This is usually done implicitly
+ through the spooling mechanism or once the <span class="M"><a href="#await">await</a></span>() callback was
+ called. But it can be called manually in case one no longer wants to
+ await the state.
+
+</div><div class="example">cs(this).unawait(id)
+</div></li></ul>
 <h2><a name="spools">Spools</a></h2>
 <div class="intro">
 In ComponentJS there are at least 4 resource allocating operations which have corresponding deallocation operations:
@@ -1980,7 +2010,7 @@ return $cs.promise(function (fulfill, reject) {
 });
 </div></li></ul>
 <ul>
-<li><div class="synopsis">ComponentJS.<span class="M"><a name="await">await</a></span>({
+<li><div class="synopsis">ComponentJS.<span class="M">await</span>({
  <span class="F">path</span><span class="meta">:</span> <span class="T">String</span>,
  <span class="F">state</span><span class="meta">:</span> <span class="T">String</span>,
  <span class="meta">[</span><span class="F">direction</span><span class="meta">:</span> <span class="T">String</span><span class="meta"> = </span><code>"enter"</code><span class="meta">]</span>
@@ -2196,7 +2226,7 @@ The extra ComponentJS API methods are:
 <li><a href="#path">path</a></li><li><a href="#parent">parent</a></li><li><a href="#children">children</a></li><li><a href="#attach">attach</a></li><li><a href="#detach">detach</a></li><li><a href="#walk_up">walk_up</a></li><li><a href="#walk_down">walk_down</a></li></ul>
 <h2><a href="#states">States</a></h2>
 <ul>
-<li><a href="#transition">transition</a></li><li><a href="#state">state</a></li><li><a href="#state_compare">state_compare</a></li><li><a href="#state_auto_increase">state_auto_increase</a></li><li><a href="#state_auto_decrease">state_auto_decrease</a></li><li><a href="#guard">guard</a></li></ul>
+<li><a href="#transition">transition</a></li><li><a href="#state">state</a></li><li><a href="#state_compare">state_compare</a></li><li><a href="#state_auto_increase">state_auto_increase</a></li><li><a href="#state_auto_decrease">state_auto_decrease</a></li><li><a href="#guard">guard</a></li><li><a href="#await">await</a></li><li><a href="#unawait">unawait</a></li></ul>
 <h2><a href="#spools">Spools</a></h2>
 <ul>
 <li><a href="#spool">spool</a></li><li><a href="#spooled">spooled</a></li><li><a href="#unspool">unspool</a></li></ul>

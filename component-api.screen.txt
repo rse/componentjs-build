@@ -530,6 +530,23 @@ transitions, enter and leave methods are called accordingly.
     self.data1 = data; cs(self).guard("render", -1) }); $.get(url2, function
     (data) { self.data2 = data; cs(self).guard("render", -1) });
 
+  * component.await({ state: String, func: Function, direction: String, spool: 
+    String }): Number
+    component.await(state: String, func: Function): Number
+    Await once that component component reaches state while the Component
+    System goes in "upward" or "downward" direction during the state transition
+    process.
+    cs("/foo/bar/quux").await({ state: "visible", direction: "upward", func:
+    function () { ... } })
+
+  * component.unawait({ id: Number }): Void
+    component.unawait(id: Number): Void
+    Destroy the state awaiting request identified by id, previously created by
+    a call to await(). This is usually done implicitly through the spooling
+    mechanism or once the await() callback was called. But it can be called
+    manually in case one no longer wants to await the state.
+    cs(this).unawait(id)
+
 Spools
 
 In ComponentJS there are at least 4 resource allocating operations which have
@@ -1301,6 +1318,8 @@ provide various getter/setter methods:
       + state_auto_increase
       + state_auto_decrease
       + guard
+      + await
+      + unawait
 
     Spools
 

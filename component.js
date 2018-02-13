@@ -89,9 +89,9 @@
     /*  API version  */
     $cs.version = {
         major: 1,
-        minor: 5,
-        micro: 0,
-        date:  20170318
+        minor: 6,
+        micro: 1,
+        date:  20180213
     };
 
 
@@ -4770,6 +4770,11 @@
             throw _cs.exception("destroy", "root component cannot be destroyed");
         var path = comp.path("/");
         var id   = comp.id();
+
+        /*  tear down the whole subtree  */
+        _cs.foreach(comp.children(), function (child) {
+            child.destroy();
+        });
 
         /*  switch component state to "dead"
             (here synchronously as one expects that after a destruction of a

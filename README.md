@@ -12,7 +12,7 @@ Either install as a client component via the Bower component manager:
     $ bower install componentjs
 
     # install a particular version
-    $ bower install "componentjs#1.6.1"
+    $ bower install "componentjs#1.6.2"
 
 or download only the main file from the repository:
 
@@ -20,5 +20,5 @@ or download only the main file from the repository:
     $ curl -O https://raw.github.com/rse/componentjs-build/master/component.js
 
     # install a particular version
-    $ curl -O https://raw.github.com/rse/componentjs-build/1.6.1/component.js
+    $ curl -O https://raw.github.com/rse/componentjs-build/1.6.2/component.js
 
